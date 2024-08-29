@@ -46,6 +46,28 @@ services:
     networks:
       - ft_transcendence
     
+  tournament:
+    build: ./requirements/tournament
+    container_name: tournament
+    volumes:
+      - ./requirements/tournament:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - ft_transcendence
+    
+  matchmaking:
+    build: ./requirements/matchmaking
+    container_name: matchmaking
+    volumes:
+      - ./requirements/matchmaking:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - ft_transcendence
+    
 networks:
   ft_transcendence:
     driver: bridge
