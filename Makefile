@@ -1,9 +1,6 @@
 DC_FILE	= ./srcs/docker-compose.yml
 
-init_dir:
-	mkdir -p ~/ft_transcendence_data/frontend
-
-start: #init_dir
+start:
 	@echo "Building and starting Docker containers and volumes"
 	docker-compose -f $(DC_FILE) up -d --build
 
@@ -17,7 +14,6 @@ fclean:
 
 remove_db:
 	@echo "Removing volumes content"
-	rm -rf	~/ft_transcendence_data
 
 re: stop fclean start
 
