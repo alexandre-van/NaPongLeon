@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: on-failure
+    volumes:
+      - ./.conf/nginx:/etc/nginx/conf.d
+    networks:
+      - ft_transcendence
+    ports:
+      - "8080:8080"
+
+        #  frontend:
+        #    build: ./requirements/frontend
+        #    container_name: frontend
+        #    depends_on:
+        #      - nginx
+        #    networks:
+        #      - ft_transcendence
+        #    command: npm start
+        #    volumes:
+        #      - frontend_data:/app
+        #      - /app/node_modules
+
+  authentication:
+    build: ./requirements/authentication
+    container_name: authentication
+    volumes:
+      - ./requirements/authentication:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - ft_transcendence
+
+  game:
+    build: ./requirements/game
+    container_name: game
+    volumes:
+      - ./requirements/game:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - ft_transcendence
+    
+networks:
+  ft_transcendence:
+    driver: bridge
+
+volumes:
+  frontend_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ~/ft_transcendence_data/frontend
+      o: bind
