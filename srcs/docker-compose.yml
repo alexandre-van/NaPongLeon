@@ -12,17 +12,18 @@ services:
     ports:
       - "8080:8080"
 
-        #  frontend:
-        #    build: ./requirements/frontend
-        #    container_name: frontend
-        #    depends_on:
-        #      - nginx
-        #    networks:
-        #      - ft_transcendence
-        #    command: npm start
-        #    volumes:
-        #      - frontend_data:/app
-        #      - /app/node_modules
+  frontend:
+    build: ./requirements/frontend
+    container_name: frontend
+    depends_on:
+      - nginx
+    networks:
+      - ft_transcendence
+    volumes:
+    - frontend_data:/app
+    - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
   authentication:
     build: ./requirements/authentication
@@ -77,5 +78,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ~/ft_transcendence_data/frontend
+      device: ./requirements/frontend/data
       o: bind
