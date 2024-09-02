@@ -35,11 +35,11 @@ services:
     networks:
       - ft_transcendence
 
-  game:
-    build: ./requirements/game
-    container_name: game
+  pong:
+    build: ./requirements/pong
+    container_name: pong
     volumes:
-      - ./requirements/game:/app
+      - ./requirements/pong:/app
     restart: on-failure
     depends_on:
       - nginx
