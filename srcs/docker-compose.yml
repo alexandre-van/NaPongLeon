@@ -8,17 +8,19 @@ services:
     volumes:
       - ./.conf/nginx:/etc/nginx/conf.d
     networks:
-      - ft_transcendence
+      - backend
+      - frontend
     ports:
       - "8080:8080"
 
   frontend:
     build: ./requirements/frontend
     container_name: frontend
+    restart: on-failure
     depends_on:
       - nginx
     networks:
-      - ft_transcendence
+      - frontend
     volumes:
     - frontend_data:/app
     - /app/node_modules
@@ -34,7 +36,7 @@ services:
     depends_on:
       - nginx
     networks:
-      - ft_transcendence
+      - backend
 
   pong:
     build: ./requirements/pong
@@ -45,7 +47,7 @@ services:
     depends_on:
       - nginx
     networks:
-      - ft_transcendence
+      - backend
     
   tournament:
     build: ./requirements/tournament
@@ -56,7 +58,7 @@ services:
     depends_on:
       - nginx
     networks:
-      - ft_transcendence
+      - backend
     
   matchmaking:
     build: ./requirements/matchmaking
@@ -67,10 +69,12 @@ services:
     depends_on:
       - nginx
     networks:
-      - ft_transcendence
+      - backend
     
 networks:
-  ft_transcendence:
+  backend:
+    driver: bridge
+  frontend:
     driver: bridge
 
 volumes:
