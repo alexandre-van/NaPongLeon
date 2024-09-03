@@ -6,6 +6,7 @@ import NewsPage from './pages/NewsPage.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
+import RegisterPage from './pages/RegisterPage.js';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -28,6 +29,8 @@ function App() {
         return <LoginPage navigate={navigate} />;
       case 'news':
         return <NewsPage navigate={navigate} />;
+      case 'register':
+        return <RegisterPage navigate={navigate} />
       default:
         return <HomePage navigate={navigate} />;
     }
