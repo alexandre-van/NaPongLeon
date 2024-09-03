@@ -1,9 +1,5 @@
 FROM  node:14
 
-# For development
-RUN apt install git neovim
-RUN git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
-
 WORKDIR /app
 
 # Install create-react-app
