@@ -6,7 +6,7 @@ services:
     container_name: nginx
     restart: on-failure
     volumes:
-      - ./.conf/nginx:/etc/nginx/conf.d
+      - ./requirements/nginx/conf:/etc/nginx/conf.d
     networks:
       - backend
       - frontend
@@ -48,7 +48,7 @@ services:
       - nginx
     networks:
       - backend
-    
+
   tournament:
     build: ./requirements/tournament
     container_name: tournament
@@ -70,6 +70,14 @@ services:
       - nginx
     networks:
       - backend
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
     
 networks:
   backend:
@@ -83,4 +91,10 @@ volumes:
     driver_opts:
       type: none
       device: ./requirements/frontend/data
+      o: bind
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./requirements/redis/data
       o: bind

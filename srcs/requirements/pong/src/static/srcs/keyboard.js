@@ -1,44 +1,26 @@
-import { setPad1Dir, setPad2Dir, getPad1Dir, getPad2Dir } from './pad.js';
+import { sendMove } from '../main.js';
 
-const keyUp1 = 'z';
-const keyDown1 = 's';
-const keyUp2 = 'i';
-const keyDown2 = 'k';
+const keyUp = 'w';
+const keyDown = 's';
 
 document.addEventListener('keydown', (event) => {
 	switch(event.key) {
-		case keyUp1:
-			setPad1Dir(1);
+		case keyUp:
+			sendMove("keydown_up");
 			break;
-		case keyDown1:
-			setPad1Dir(-1);
-			break;
-		case keyUp2:
-			setPad2Dir(1);
-			break;
-		case keyDown2:
-			setPad2Dir(-1);
+		case keyDown:
+			sendMove("keydown_down");
 			break;
 	}
 });
 
 document.addEventListener('keyup', (event) => {
 	switch(event.key) {
-		case keyUp1:
-			if (getPad1Dir() === 1)
-				setPad1Dir(0);
+		case keyUp:
+			sendMove("keyup_up");
 			break;
-		case keyDown1:
-			if (getPad1Dir() === -1)
-				setPad1Dir(0);
-			break;
-		case keyUp2:
-			if (getPad2Dir() === 1)
-				setPad2Dir(0);
-			break;
-		case keyDown2:
-			if (getPad2Dir() === -1)
-				setPad2Dir(0);
+		case keyDown:
+			sendMove("keyup_down");
 			break;
 	}
 });

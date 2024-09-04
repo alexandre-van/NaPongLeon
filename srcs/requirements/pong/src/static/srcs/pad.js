@@ -12,9 +12,6 @@ let padX = 35;
 let padY = 0;
 let padZ = 1;
 
-let pad1Dir = 0;
-let pad2Dir = 0;
-
 //Create the paddles
 const geometry = new THREE.BoxGeometry(padWidth, padLength, padHeight);
 const material = new THREE.MeshStandardMaterial({ color: padColor });
@@ -26,27 +23,8 @@ scene.add(pad1);
 scene.add(pad2);
 
 //Function for paddles
-function updatePadsPosition() {
-	;
+function updatePadsPosition(position) {
+	pad1.position.set(-padX, position["player_1"], padZ);;
+	pad2.position.set(padX, position["player_2"], padZ);;
 }
-
-function setPad1Dir(dir) {
-	pad1Dir = dir;
-}
-
-function setPad2Dir(dir) {
-	pad2Dir = dir;
-}
-
-function getPad1Dir()
-{
-	return pad1Dir;
-}
-
-function getPad2Dir()
-{
-	return pad2Dir;
-}
-
-export { pad1, pad2, updatePadsPosition, setPad1Dir , setPad2Dir,
-		 getPad1Dir, getPad2Dir };
+export { pad1, pad2,updatePadsPosition };

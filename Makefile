@@ -2,7 +2,7 @@ DC_FILE	= ./srcs/docker-compose.yml
 
 start:
 	@echo "Building and starting Docker containers and volumes"
-	docker-compose -f $(DC_FILE) up -d --build
+	docker-compose -f $(DC_FILE) up -d --build --remove-orphans
 
 stop:
 	@echo "Shutting down Docker containers"

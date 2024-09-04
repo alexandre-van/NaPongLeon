@@ -1,26 +1,35 @@
+from .logger import logger
 import uuid
 from .game import PongGame
 
 class GameManager:
-    def __init__(self) :
-        self.games_room = {}
-        self.waiting_room = []
+	def __init__(self) :
+		self.games_room = {}
+		self.waiting_room = []
+		logger.debug("\nGameManager initialised\n")
 
-    def add_player(self, player):
-        if len(self.waiting_room) == 0:
-            self.waiting_room.append(player)
-            return None
-        else:
-            opponent = self.waiting_room.pop(0)
-            game_id = str(uuid.uuid4())
-            new_game = PongGame(player, opponent)
-            self.games_room[game_id] = new_game
-            return game_id
+	def add_player(self, player_1):
+		if len(self.waiting_room) == 0:
+			logger.debug("\nPlayer in waiting room\n")
+			self.waiting_room.append(player_1)
+			return None, None
+		else:
+			player_2 = self.waiting_room.pop(0)
+			game_id = str(uuid.uuid4())
+			new_game = PongGame(player_1, player_2)
+			self.games_room[game_id] = new_game
+			return game_id, player_2
 
-    def remove_player(self, player):
-        if player in self.waiting_room:
-            self.waiting_room.remove(player)
-            # Gérer le cas où le joueur est dans une partie en cours
+	def remove_player(self, player_1):
+		if player_1 in self.waiting_room:
+			self.waiting_room.remove(player_1)
 
-    def get_game(self, game_id):
-        return self.games_room.get(game_id)
+	def remove_game_roon(self, game_id):
+		if self.games_room.get(game_id):
+			del game_manager.games_room[game_id]
+
+	def get_game_room(self, game_id):
+		return self.games_room.get(game_id)
+	
+	
+game_manager = GameManager()

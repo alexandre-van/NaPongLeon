@@ -4,12 +4,22 @@ import { updatePadsPosition } from './pad.js'
 import { checkCollisions } from './collisions.js';
 import { renderer, camera, scene } from './renderer.js';
 
-function animate() {
-    requestAnimationFrame(animate);
+
+function startGame(gameId) {
+    // On commence la boucle de rendu
+    requestAnimationFrame(update);
+    // On peut ajouter ici d'autres initialisations si nécessaire
+}
+
+function update() {
+    requestAnimationFrame(update);
     updateControls();
-    updatePadsPosition();
-    updateBallPosition();
     renderer.render(scene, camera);
 }
 
-export default animate;
+function updateGame(state) {
+    updateBallPosition(state.ball);
+    updatePadsPosition(state.players_position_y);
+}
+
+export { startGame, updateGame };

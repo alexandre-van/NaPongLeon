@@ -133,14 +133,46 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Backend cache for channels
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis', 6379)],
+        },
+    },
+}
+
+
 CACHES = {
 	"default": 
     {
 		"BACKEND": "django_redis.cache.RedisCache",
-		"LOCATION": "redis://127.0.0.1:6379/1",
+		"LOCATION": "redis://redis:6379/1",
 		"OPTIONS":
         {
 			"CLIENT_CLASS": "django_redis.client.DefaultClient",
 		}
 	}
+}
+
+# Log
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'pong_debug.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'DEBUG',
+    },
 }
