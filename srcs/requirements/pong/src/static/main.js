@@ -18,7 +18,6 @@ socket.onopen = function(event) {
 };
 
 socket.onmessage = function(event) {
-	console.log('Message received:', event.data);
 	const data = JSON.parse(event.data);
 	switch (data.type) {
 		case "waiting_room":
@@ -27,11 +26,11 @@ socket.onmessage = function(event) {
 		case "game_start":
 			const game_id = data.game_id;
 			console.log("Game started! \nGame ID :", game_id);
-            startGame(game_id);
+			startGame(game_id);
 			break;
 		case "game_update":
-			console.log("Game state updated:", data.state);
-            updateGame(data);
+			console.log("Game state updated:", data);
+			updateGame(data);
 			break;
 		case "game_end":
 			console.log("Game ended. Reason:", data.reason);
@@ -51,10 +50,10 @@ socket.onerror = function(error) {
 };
 
 function sendMove(position) {
-    socket.send(JSON.stringify({
-        type: 'move',
-        position: position
-    }));
+	socket.send(JSON.stringify({
+		type: 'move',
+		position: position
+	}));
 }
 
 export { sendMove };

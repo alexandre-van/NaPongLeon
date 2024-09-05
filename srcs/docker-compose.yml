@@ -13,30 +13,30 @@ services:
     ports:
       - "8080:8080"
 
-  frontend:
-    build: ./requirements/frontend
-    container_name: frontend
-    restart: on-failure
-    depends_on:
-      - nginx
-    networks:
-      - frontend
-    volumes:
-    - frontend_data:/app
-    - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+  #frontend:
+  #  build: ./requirements/frontend
+  #  container_name: frontend
+  #  restart: on-failure
+  #  depends_on:
+  #    - nginx
+  #  networks:
+  #    - frontend
+  #  volumes:
+  #  - frontend_data:/app
+  #  - /app/node_modules
+  #  environment:
+  #    - CHOKIDAR_USEPOLLING=true
 
-  authentication:
-    build: ./requirements/authentication
-    container_name: authentication
-    volumes:
-      - ./requirements/authentication:/app
-    restart: on-failure
-    depends_on:
-      - nginx
-    networks:
-      - backend
+  #authentication:
+  #  build: ./requirements/authentication
+  #  container_name: authentication
+  #  volumes:
+  #    - ./requirements/authentication:/app
+  #  restart: on-failure
+  #  depends_on:
+  #    - nginx
+  #  networks:
+  #    - backend
 
   pong:
     build: ./requirements/pong
@@ -49,27 +49,27 @@ services:
     networks:
       - backend
 
-  tournament:
-    build: ./requirements/tournament
-    container_name: tournament
-    volumes:
-      - ./requirements/tournament:/app
-    restart: on-failure
-    depends_on:
-      - nginx
-    networks:
-      - backend
+  #tournament:
+  #  build: ./requirements/tournament
+  #  container_name: tournament
+  #  volumes:
+  #    - ./requirements/tournament:/app
+  #  restart: on-failure
+  #  depends_on:
+  #    - nginx
+  #  networks:
+  #    - backend
     
-  matchmaking:
-    build: ./requirements/matchmaking
-    container_name: matchmaking
-    volumes:
-      - ./requirements/matchmaking:/app
-    restart: on-failure
-    depends_on:
-      - nginx
-    networks:
-      - backend
+  #matchmaking:
+  #  build: ./requirements/matchmaking
+  #  container_name: matchmaking
+  #  volumes:
+  #    - ./requirements/matchmaking:/app
+  #  restart: on-failure
+  #  depends_on:
+  #    - nginx
+  #  networks:
+  #    - backend
 
   redis:
     image: redis:latest
@@ -86,12 +86,12 @@ networks:
     driver: bridge
 
 volumes:
-  frontend_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./requirements/frontend/data
-      o: bind
+#  frontend_data:
+#    driver: local
+#    driver_opts:
+#      type: none
+#      device: ./requirements/frontend/data
+#      o: bind
   redis_data:
     driver: local
     driver_opts:

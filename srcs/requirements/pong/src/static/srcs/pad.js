@@ -24,7 +24,7 @@ scene.add(pad2);
 
 //Function for paddles
 function updatePadsPosition(position) {
-	pad1.position.set(-padX, position["player_1"], padZ);;
-	pad2.position.set(padX, position["player_2"], padZ);;
+	pad1.position.set(-padX, position['p1'], padZ);
+	pad2.position.set(padX, position['p2'], padZ);
 }
 export { pad1, pad2,updatePadsPosition };

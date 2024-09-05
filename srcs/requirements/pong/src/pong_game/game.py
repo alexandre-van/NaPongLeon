@@ -6,40 +6,48 @@ class PongGame:
 		self.players = [player_1, player_2]
 		self.ball_position = {'x': 0, 'y': 0}
 		self.ball_direction = {'x': 1, 'y': 1}
-		self.ball_speed = 5
-		self.players_speed = 3
-		self.players_position_y = { 'player_1': 0, 'player_2': 0}
-		self.players_dir_y = { 'player_1': 0, 'player_2': 0}
+		self.ball_speed = 3
+		self.players_speed = 2
+		self.players_position = { 'p1': 0, 'p2': 0}
+		self.players_direction = { 'p1': 0, 'p2': 0}
 
-	def update_player_position(self, player, input):
-		player_key = 'player_1' if player == self.players[0] else 'player_2'
+	def input_players(self, player, input):
+		player_key = 'p1' if player == self.players[0] else 'p2'
 		if input == 'keydown_up':
-			self.players_dir_y[player_key] = 1
+			self.players_direction[player_key] = 1
 		elif input == 'keydown_down':
-			self.players_dir_y[player_key] = -1
-		elif input == 'keyup_up' and self.players_dir_y[player_key] == 1:
-			self.players_dir_y[player_key] = 0
-		elif input == 'keyup_down' and self.players_dir_y[player_key] == -1:
-			self.players_dir_y[player_key] = 0
+			self.players_direction[player_key] = -1
+		elif input == 'keyup_up' and self.players_direction[player_key] == 1:
+			self.players_direction[player_key] = 0
+		elif input == 'keyup_down' and self.players_direction[player_key] == -1:
+			self.players_direction[player_key] = 0
 
 	def update(self):
-		self.ball_position['x'] += self.ball_direction['x'] * self.ball_speed
-		self.ball_position['y'] += self.ball_direction['y'] * self.ball_speed
-		self.players_position_y['player_1'] += self.players_dir_y['player_1'] * self.players_speed
-		self.players_position_y['player_2'] += self.players_dir_y['player_2'] * self.players_speed
-		if self.ball_position['x'] >= 30 or self.ball_position['x'] <= -30:
-			self.ball_direction['x'] *= -1
-		if self.ball_position['y'] >= 40 or self.ball_position['y'] <= -40:
-			self.ball_direction['y'] *= -1
-		if self.players_position_y['player_1'] >= 30 or self.players_position_y['player_1'] <= -30:
-			self.players_dir_y['player_1'] *= 0
-		if self.players_position_y['player_2'] >= 30 or self.players_position_y['player_2'] <= -30:
-			self.players_dir_y['player_2'] *= 0
+		ball_pos = self.ball_position
+		ball_dir = self.ball_direction
+		players_pos = self.players_position
+		players_dir = self.players_direction
+
+		ball_pos['x'] += ball_dir['x'] * self.ball_speed
+		ball_pos['y'] += ball_dir['y'] * self.ball_speed
+
+		player_dest = players_pos['p1'] + players_dir['p1'] * self.players_speed
+		if player_dest <= 30 and player_dest >= -30:
+			players_pos['p1'] = player_dest
+		else:
+			players_pos['p1'] = players_dir['p1'] * 30
+		player_dest = players_pos['p2'] + players_dir['p2'] * self.players_speed
+		if player_dest <= 30 and player_dest >= -30:
+			players_pos['p2'] = player_dest
+		else:
+			players_pos['p2'] = players_dir['p2'] * 30
 		return json.dumps({
-			'type' : 'game_update',
-			'ball': self.ball_position,
-			'players_position_y': self.players_position_y
+			'type' : "game_update",
+			'ball_position': self.ball_position,
+			'players_position': self.players_position
 		})
+
+	def update_players_position(self):
 
 	def getopponent(self, player):
 		return self.players[0] if player == self.players[0] else self.players[1]

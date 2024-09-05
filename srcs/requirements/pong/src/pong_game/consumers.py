@@ -69,7 +69,7 @@ class PongConsumer(AsyncWebsocketConsumer):
 					game_id,
 					{
 						'type': 'game_update',
-						'state': game_state,
+						'state': game_state
 					}
 				)
 				await asyncio.sleep(0.05)  # ~20 FPS (50 ms entre les mises à jour)
@@ -77,4 +77,4 @@ class PongConsumer(AsyncWebsocketConsumer):
 				break  # Arrêter la boucle si le jeu est supprimé
 
 	async def game_update(self, event):
-		await self.send(text_data=json.dumps(event['state']))
+		await self.send(text_data=event['state'])

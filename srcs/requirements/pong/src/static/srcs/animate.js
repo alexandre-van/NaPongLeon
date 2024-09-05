@@ -18,8 +18,8 @@ function update() {
 }
 
 function updateGame(state) {
-    updateBallPosition(state.ball);
-    updatePadsPosition(state.players_position_y);
+    updateBallPosition(state.ball_position);
+    updatePadsPosition(state.players_position);
 }
 
 export { startGame, updateGame };
