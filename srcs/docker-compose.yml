@@ -31,8 +31,11 @@ services:
     build: ./requirements/authentication
     container_name: authentication
     volumes:
-      - ./requirements/authentication:/app
+      - ./requirements/authentication/src:/app
+      - secrets_vol:/run/secrets:ro
     restart: on-failure
+    env_file:
+      - .env/.env.web
     depends_on:
       - nginx
       - postgres
@@ -79,14 +82,19 @@ services:
     image: postgres:13
     container_name: postgres
     restart: on-failure
-    environment:
-      POSTGRES_DB: napongleon
-      POSTGRES_USER: dbuser
-      POSTGRES_PASSWORD: strongpassword
+    env_file:
+      - .env/.env.postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - secrets_vol:/run/secrets:ro
     networks:
       - backend
+    command: # pour les logs
+      - "postgres"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_connections=on"
     
 networks:
   backend:
@@ -106,4 +114,10 @@ volumes:
     driver_opts:
       type: none
       device: ./requirements/postgres/data
+      o: bind
+  secrets_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./.secrets
       o: bind

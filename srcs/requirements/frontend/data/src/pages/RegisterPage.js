@@ -11,11 +11,16 @@ export default function RegisterPage({ navigate }) {
 
   const handleRegister = async (userData) => {
     try {
-      const response = await fetch(`$(API_BASE_URL)/api/auth/register`, {
+      const response = await fetch(`/api/authentication/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      const responseBody = await response.text();
+      console.log('Response body:', responseBody);
+
       if (response.ok) {
         setRegistrationStatus('success');
       } else {
