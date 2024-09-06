@@ -6,20 +6,18 @@ import { renderer, camera, scene } from './renderer.js';
 
 
 function startGame(gameId) {
-    // On commence la boucle de rendu
-    requestAnimationFrame(update);
-    // On peut ajouter ici d'autres initialisations si nécessaire
+    requestAnimationFrame(animate);
 }
 
-function update() {
-    requestAnimationFrame(update);
+function animate() {
+    requestAnimationFrame(animate);
     updateControls();
     renderer.render(scene, camera);
 }
 
 function updateGame(state) {
-    updateBallPosition(state.ball_position);
-    updatePadsPosition(state.players_position);
+    updateBallPosition(state.bp);
+    updatePadsPosition(state.pp);
 }
 
 export { startGame, updateGame };

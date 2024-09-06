@@ -1,8 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
 import scene from './scene.js';
 
-const ballRay = 1;
-const geometry = new THREE.SphereGeometry(ballRay, 32, 32);
+const ballRad = 1;
+const geometry = new THREE.SphereGeometry(ballRad, 32, 32);
 const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 const ball = new THREE.Mesh(geometry, material);
 

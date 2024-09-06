@@ -6,4 +6,4 @@ COPY ./conf/requirements.txt ./conf/
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r conf/requirements.txt
 
-CMD [ "python", "src/manage.py", "runserver", "0.0.0.0:8000"]
+CMD [ "./conf/start_pong.sh"]

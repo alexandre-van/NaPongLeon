@@ -6,10 +6,10 @@ const keyDown = 's';
 document.addEventListener('keydown', (event) => {
 	switch(event.key) {
 		case keyUp:
-			sendMove("keydown_up");
+			sendMove(1);
 			break;
 		case keyDown:
-			sendMove("keydown_down");
+			sendMove(2);
 			break;
 	}
 });
@@ -17,10 +17,10 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
 	switch(event.key) {
 		case keyUp:
-			sendMove("keyup_up");
+			sendMove(3);
 			break;
 		case keyDown:
-			sendMove("keyup_down");
+			sendMove(4);
 			break;
 	}
 });

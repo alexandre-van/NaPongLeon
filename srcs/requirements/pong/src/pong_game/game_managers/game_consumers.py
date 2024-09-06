@@ -1,12 +1,11 @@
-from .logger import logger
+from ..utils.logger import logger
 import json
 import asyncio
 from .game_manager import game_manager
-from .game import PongGame
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 
-class PongConsumer(AsyncWebsocketConsumer):
+class GameConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		await self.accept()
 		player_1 = self
@@ -56,15 +55,13 @@ class PongConsumer(AsyncWebsocketConsumer):
 		if data['type'] == 'move':
 			game = game_manager.get_game_room(game_id)
 			if game:
-				game.update_player_position(self, data['position'])
+				game.input_players(self, data['input'])
 
 	async def game_loop(self, game_id):
 		while True:
 			game = game_manager.get_game_room(game_id)
 			if game:
 				game_state = game.update()
-
-				# Envoyer l'état du jeu à tous les joueurs dans le groupe
 				await self.channel_layer.group_send(
 					game_id,
 					{
@@ -72,9 +69,9 @@ class PongConsumer(AsyncWebsocketConsumer):
 						'state': game_state
 					}
 				)
-				await asyncio.sleep(0.05)  # ~20 FPS (50 ms entre les mises à jour)
+				await asyncio.sleep(0.05)
 			else:
-				break  # Arrêter la boucle si le jeu est supprimé
+				break
 
 	async def game_update(self, event):
 		await self.send(text_data=event['state'])

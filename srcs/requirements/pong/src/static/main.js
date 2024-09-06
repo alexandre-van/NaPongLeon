@@ -28,8 +28,8 @@ socket.onmessage = function(event) {
 			console.log("Game started! \nGame ID :", game_id);
 			startGame(game_id);
 			break;
-		case "game_update":
-			console.log("Game state updated:", data);
+		case "gu":
+			//console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "game_end":
@@ -49,10 +49,10 @@ socket.onerror = function(error) {
 	console.error("WebSocket error:", error);
 };
 
-function sendMove(position) {
+function sendMove(input) {
 	socket.send(JSON.stringify({
 		type: 'move',
-		position: position
+		input: input
 	}));
 }
 
