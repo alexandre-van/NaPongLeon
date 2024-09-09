@@ -1,9 +1,7 @@
-import DefaultLayout from "../layouts/DefaultLayout";
-
-export default function GameModePage({ navigate }) {
+export default function GameModePage() {
     return (
-        <DefaultLayout navigate={navigate}>
-            <p>Game modes Page</p>
-        </DefaultLayout>
+      <>
+        <p>Game modes Page</p>
+      </>
     );
 }

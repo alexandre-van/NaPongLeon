@@ -1,8 +1,10 @@
-export default function SpecialNavigation({ navigate }) {
+import { Link } from 'react-router-dom';
+
+export default function SpecialNavigation() {
     return (
         <div role='nav' className="nav-container">
             <div className="main-nav">
-                <button onClick={() => navigate('home')}>SPICE PONG</button>
+                <Link to='/'>SPICE PONG</Link>
             </div>
         </div>
     );

@@ -1,9 +1,7 @@
-import DefaultLayout from "../layouts/DefaultLayout";
-
-export default function Leaderboard({ navigate }) {
+export default function Leaderboard() {
     return (
-        <DefaultLayout navigate={navigate}>
-            <p>Leaderboard page</p>
-        </DefaultLayout>
+      <>
+        <p>Leaderboard page</p>
+      </>
     );
 }

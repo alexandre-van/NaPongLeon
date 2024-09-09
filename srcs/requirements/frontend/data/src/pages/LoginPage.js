@@ -1,10 +1,10 @@
-import SpecialLayout from "../layouts/SpecialLayout";
+import { Link } from 'react-router-dom';
 
-export default function LoginPage({ navigate }) {
+export default function LoginPage() {
     return (
-        <SpecialLayout navigate={navigate}>
-          <p>Login page</p>
-          <button onClick={() => navigate('register')}>SIGN UP</button>
-        </SpecialLayout>
+      <>
+        <p>Login page</p>
+        <Link to="/register">REGISTER</Link>
+      </>
     );
 }

@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import SpecialLayout from '../layouts/SpecialLayout.js';
+import { Link , useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
-import SelectFaction from '../components/SelectFaction.js';
-import RegisterFailure from '../components/RegisterFailure.js';
 
 import { API_BASE_URL } from '../config.js';
 
-export default function RegisterPage({ navigate }) {
+export function RegisterPage() {
   const [registrationStatus, setRegistrationStatus] = useState(null);
+  const navigate = useNavigate();
 
   const handleRegister = async (userData) => {
     try {
@@ -16,13 +15,10 @@ export default function RegisterPage({ navigate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      const responseBody = await response.text();
-      console.log('Response body:', responseBody);
 
       if (response.ok) {
         setRegistrationStatus('success');
+        navigate('/register-success');
       } else {
         setRegistrationStatus('failure');
       }
@@ -33,14 +29,18 @@ export default function RegisterPage({ navigate }) {
   };
 
   return (
-    <SpecialLayout navigate={navigate}>
-      {registrationStatus === 'success' ? (
-        <SelectFaction navigate={navigate} />
-      ) : registrationStatus === 'failure' ? (
-        <RegisterFailure onRegister={handleRegister} />
-      ) : (
-        <RegisterForm onRegister={handleRegister} /> 
-      )}
-    </SpecialLayout>
+    <>
+      {registrationStatus === 'failure' && (<p>An user with this name already exists</p>)}
+      <RegisterForm onRegister={handleRegister} />
+    </>
+  );
+}
+
+export function RegisterSuccessPage() {
+  return (
+    <>
+      <p>You are now registered, you may now log in</p>
+      <Link to="login">Login Page</Link>
+    </>
   );
 }

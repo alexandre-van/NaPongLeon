@@ -1,13 +1,14 @@
+import { Outlet } from 'react-router-dom';
 import SpecialNavigation from "../components/SpecialNavigation";
 
-export default function SpecialLayout({ children, navigate }) {
+export default function SpecialLayout() {
     return (
-        <div className='layout'>
+        <div className="layout">
             <header>
-                <SpecialNavigation navigate={navigate}/>
+                <SpecialNavigation />
             </header>
             <main>
-                {children}
+                <Outlet />
             </main>
         </div>
     );

@@ -2,19 +2,15 @@ FROM  node:14
 
 WORKDIR /app
 
-# Install create-react-app
-#RUN npm install -g create-react-app
-
-# Create new React app
-#RUN create-react-app .
-
-#COPY ./data/* .
 COPY data/package*.json ./
 
 RUN npm install
+RUN npm install react-router-dom
 
-#EXPOSE 3000
 COPY data/. .
 
-# Run app
+# Production
+# RUN npm run build
+
+# Run app 
 CMD [ "npm", "start" ]

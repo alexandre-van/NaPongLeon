@@ -1,8 +1,8 @@
-//import { useState } from 'react';
+import { useState } from 'react';
 
 //import { API_BASE_URL } from '../config.js';
 
-export default function SelectFaction({ navigate }) {
+export default function SelectFactionForm({ navigate }) {
  // const [faction, setFaction] = useState({
   //  faction: '',
  // });
