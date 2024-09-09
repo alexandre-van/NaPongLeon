@@ -96,5 +96,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ./requirements/redis/data
+      device: ./srcs/requirements/redis/data
       o: bind

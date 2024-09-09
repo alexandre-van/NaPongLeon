@@ -1,6 +1,6 @@
 import { sendMove } from '../main.js';
 
-const keyUp = 'w';
+const keyUp = 'z';
 const keyDown = 's';
 
 document.addEventListener('keydown', (event) => {

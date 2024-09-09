@@ -26,39 +26,30 @@ class Ball:
 			'x': arena_data['size']['x'] / 2,
 			'y': arena_data['size']['y'] / 2
 		}
-		if ball_destination['x'] < - padel_data['pos']['x']:
+		if ball_destination['x'] <= - padel_data['pos']['x'] + padel_data['size']['x']:
 			player = get_player_in_side('left')
-			from ..utils.logger import logger
-			logger.log("all point :",\
-				self.position['x'], self.position['y'], \
-				ball_collider['x'], ball_collider['y'],
-				player.padel.position['y'] + padel_data['size']['y'] / 2, - padel_data['pos']['x'],
-				player.padel.position['y'] - padel_data['size']['y'] / 2, - padel_data['pos']['x'])
-			cross_point = check_collisions( \
-				self.position['x'], self.position['y'], \
-				ball_collider['x'], ball_collider['y'],
-				player.padel.position['y'] + padel_data['size']['y'] / 2, - padel_data['pos']['x'],
-				player.padel.position['y'] - padel_data['size']['y'] / 2, - padel_data['pos']['x']
+			cross_point = check_collisions(
+				{ 'x': self.position['x'], 'y': self.position['y'] }, 
+				{ 'x': ball_collider['x'], 'y': ball_collider['y'] },
+				{ 'x': -padel_data['pos']['x'] + padel_data['size']['x'], 'y': player.padel.position['y'] + padel_data['size']['y'] / 2 },
+				{ 'x': -padel_data['pos']['x'] + padel_data['size']['x'], 'y': player.padel.position['y'] - padel_data['size']['y'] / 2 }
 			)
-			logger.log()
-			if cross_point['cross'] == True:
-				self.position['x'] = cross_point['point']['x']
-				self.position['y'] = cross_point['point']['y']
+			if cross_point != None:
+				self.position['x'] = cross_point['x']
+				self.position['y'] = cross_point['y']
 				self.direction['x'] *= -1
 				return
-		elif ball_destination['x'] > padel_data['pos']['x']:
+		elif ball_destination['x'] >= padel_data['pos']['x'] - padel_data['size']['x']:
 			player = get_player_in_side('right')
-			cross_point = check_collisions( \
-				self.position['x'], self.position['y'], \
-				ball_collider['x'], ball_collider['y'],
-				player.padel.position['y'] + padel_data['size']['y'] / 2, - padel_data['pos']['x'],
-				player.padel.position['y'] - padel_data['size']['y'] / 2, - padel_data['pos']['x']
+			cross_point = check_collisions(
+				{ 'x': self.position['x'], 'y': self.position['y'] }, 
+				{ 'x': ball_collider['x'], 'y': ball_collider['y'] },
+				{ 'x': padel_data['pos']['x'] - padel_data['size']['x'], 'y': player.padel.position['y'] + padel_data['size']['y'] / 2 },
+				{ 'x': padel_data['pos']['x'] - padel_data['size']['x'], 'y': player.padel.position['y'] - padel_data['size']['y'] / 2 }
 			)
-			from pong_game.utils.logger import logger
-			if cross_point['cross'] == True:
-				logger.debug('point =', cross_point['point'])
-				self.position['x'] = cross_point['point']['x']
-				self.position['y'] = cross_point['point']['y']
+			if cross_point != None:
+				self.position['x'] = cross_point['x']
+				self.position['y'] = cross_point['y']
 				self.direction['x'] *= -1
 				return
 

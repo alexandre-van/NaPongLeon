@@ -1,37 +1,38 @@
+def cross_product(v1, v2):
+    return v1['x'] * v2['y'] - v1['y'] * v2['x']
 
-def det(a, b, c, d):
-    return a * d - b * c
+def is_point_on_segment(p, seg_start, seg_end):
+    """Vérifie si le point p est sur le segment défini par seg_start et seg_end."""
+    return (min(seg_start['x'], seg_end['x']) <= p['x'] <= max(seg_start['x'], seg_end['x']) and
+            min(seg_start['y'], seg_end['y']) <= p['y'] <= max(seg_start['y'], seg_end['y']))
 
-def on_segment(xi, yi, xj, yj, xk, yk):
-    return (min(xi, xj) <= xk <= max(xi, xj)) and (min(yi, yj) <= yk <= max(yi, yj))
+def check_collisions(p1, p2, p3, p4):
+    """Vérifie si les segments (p1, p2) et (p3, p4) se croisent et renvoie le point de croisement."""
+    # Calcul des vecteurs des segments
+    d1 = {'x': p2['x'] - p1['x'], 'y': p2['y'] - p1['y']}
+    d2 = {'x': p4['x'] - p3['x'], 'y': p4['y'] - p3['y']}
 
-def is_point_on_segment(px, py, x1, y1, x2, y2):
-    return on_segment(x1, y1, x2, y2, px, py)
+    # Déterminer si les segments sont parallèles
+    denominator = cross_product(d1, d2)
+    if denominator == 0:
+        return None  # Les segments sont parallèles et ne se croisent pas
 
-def check_collisions(xA, yA, xB, yB, xC, yC, xD, yD):
-    d1 = det(xB - xA, yB - yA, xC - xA, yC - yA)
-    d2 = det(xB - xA, yB - yA, xD - xA, yD - yA)
-    d3 = det(xD - xC, yD - yC, xA - xC, yA - yC)
-    d4 = det(xD - xC, yD - yC, xB - xC, yB - yC)
+    # Calcul des différences entre les points de départ des segments
+    diff = {'x': p3['x'] - p1['x'], 'y': p3['y'] - p1['y']}
 
-    if (d1 * d2 <= 0) and (d3 * d4 <= 0):
-        denom = det(xB - xA, yB - yA, xD - xC, yD - yC)
-        if denom == 0:
-            if (on_segment(xA, yA, xB, yB, xC, yC) or 
-                on_segment(xA, yA, xB, yB, xD, yD) or 
-                on_segment(xC, yC, xD, yD, xA, yA) or 
-                on_segment(xC, yC, xD, yD, xB, yB)):
-                return {'cross': True, 'point': None}
-            else:
-                return {'cross': False, 'point': None}
+    # Calcul des paramètres t et u (position des points d'intersection)
+    t = cross_product(diff, d2) / denominator
+    u = cross_product(diff, d1) / denominator
+
+    # Vérifier si t et u sont dans l'intervalle [0, 1] pour indiquer que les segments se croisent
+    if 0 <= t <= 1 and 0 <= u <= 1:
+        # Calculer le point de croisement
+        intersection_point = {'x': p1['x'] + t * d1['x'], 'y': p1['y'] + t * d1['y']}
+
+        # Vérifier que le point d'intersection est bien sur les segments
+        if is_point_on_segment(intersection_point, p1, p2) and is_point_on_segment(intersection_point, p3, p4):
+            return intersection_point
         else:
-            t = det(xC - xA, yC - yA, xD - xC, yD - yC) / denom
-            u = det(xC - xA, yC - yA, xB - xA, yB - yA) / denom
-            if 0 <= t <= 1 and 0 <= u <= 1:
-                intersection_x = xA + t * (xB - xA)
-                intersection_y = yA + t * (yB - yA)
-                return {'cross': True, 'point': {'x': intersection_x, 'y': intersection_y}}
-            else:
-                return {'cross': False, 'point': None}
-    else:
-        return {'cross': False, 'point': None}
+            return None  # Le point calculé n'est pas sur les segments
+
+    return None  # Les segments ne se croisent pas
