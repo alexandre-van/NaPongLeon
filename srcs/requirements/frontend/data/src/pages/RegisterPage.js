@@ -40,7 +40,7 @@ export function RegisterSuccessPage() {
   return (
     <>
       <p>You are now registered, you may now log in</p>
-      <Link to="login">Login Page</Link>
+      <Link to="/login">Login Page</Link>
     </>
   );
 }
