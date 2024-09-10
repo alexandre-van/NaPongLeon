@@ -96,5 +96,9 @@ volumes:
     driver: local
     driver_opts:
       type: none
+<<<<<<< HEAD
       device: ./requirements/redis/data
+=======
+      device: ./srcs/requirements/redis/data
+>>>>>>> 701bd7645a59dfe00177594a5322371256e1259a
       o: bind

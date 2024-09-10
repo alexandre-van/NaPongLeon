@@ -65,6 +65,7 @@ class Ball:
 			'x': arena_data['size']['x'] / 2,
 			'y': arena_data['size']['y'] / 2
 		}
+<<<<<<< HEAD
 	
 	def is_scored(self):
 		from .data import ball_data
@@ -86,4 +87,32 @@ class Ball:
 		#player.score += 1
 		#if player.score == 5:
 
+=======
+		if ball_destination['x'] <= - padel_data['pos']['x'] + padel_data['size']['x']:
+			player = get_player_in_side('left')
+			cross_point = check_collisions(
+				{ 'x': self.position['x'], 'y': self.position['y'] }, 
+				{ 'x': ball_collider['x'], 'y': ball_collider['y'] },
+				{ 'x': -padel_data['pos']['x'] + padel_data['size']['x'], 'y': player.padel.position['y'] + padel_data['size']['y'] / 2 },
+				{ 'x': -padel_data['pos']['x'] + padel_data['size']['x'], 'y': player.padel.position['y'] - padel_data['size']['y'] / 2 }
+			)
+			if cross_point != None:
+				self.position['x'] = cross_point['x']
+				self.position['y'] = cross_point['y']
+				self.direction['x'] *= -1
+				return
+		elif ball_destination['x'] >= padel_data['pos']['x'] - padel_data['size']['x']:
+			player = get_player_in_side('right')
+			cross_point = check_collisions(
+				{ 'x': self.position['x'], 'y': self.position['y'] }, 
+				{ 'x': ball_collider['x'], 'y': ball_collider['y'] },
+				{ 'x': padel_data['pos']['x'] - padel_data['size']['x'], 'y': player.padel.position['y'] + padel_data['size']['y'] / 2 },
+				{ 'x': padel_data['pos']['x'] - padel_data['size']['x'], 'y': player.padel.position['y'] - padel_data['size']['y'] / 2 }
+			)
+			if cross_point != None:
+				self.position['x'] = cross_point['x']
+				self.position['y'] = cross_point['y']
+				self.direction['x'] *= -1
+				return
+>>>>>>> 701bd7645a59dfe00177594a5322371256e1259a
 
