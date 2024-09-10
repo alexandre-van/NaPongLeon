@@ -4,9 +4,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from .serializers import UserSerializer
+from authenticationApp.auth_middleware import CustomJWTAuthentication
 
 class RegisterView(APIView):
     def post(self, request):
@@ -56,9 +57,29 @@ class LoginView(APIView):
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class CheckAuthView(APIView):
-    authentication_classes = [JWTAuthentication]
+class LogoutView(APIView):
+    authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        response = Response({"detail": "Logout successful"}, status=status.HTTP_200_OK)
+        response.delete_cookie(
+            'access_token',
+            #httponly=True,
+            #secure=False,
+            #samesite='Strict'
+        )
+        response.delete_cookie(
+            'refresh_token',
+            #httponly=True,
+            #secure=False,
+            #samesite='Strict'
+        )
+        return response
+
+class CheckAuthView(APIView):
+    authentication_classes = [CustomJWTAuthentication]
+    permission_classes = [IsAuthenticated] # if not, returns HTTP_401_UNAUTHORIZED
 
     def get(self, request):
         return Response({

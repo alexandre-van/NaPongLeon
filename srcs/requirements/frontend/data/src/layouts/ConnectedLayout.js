@@ -1,11 +1,11 @@
 import { Outlet } from 'react-router-dom';
-import SpecialNavigation from "../components/SpecialNavigation";
+import ConnectedNavigation from '../components/ConnectedNavigation.js';
 
-export default function SpecialLayout() {
+export default function ConnectedLayout() {
   return (
     <div className="layout">
       <header>
-        <SpecialNavigation />
+        <ConnectedNavigation />
       </header>
       <main>
         <Outlet />

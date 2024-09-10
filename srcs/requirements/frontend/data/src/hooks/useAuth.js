@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api.js';
 
 const useAuth = () => {
@@ -6,22 +6,24 @@ const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const checkAuth = async () => {
+    try {
+      const response = await api.get('/authentication/check-auth/');
+      setIsAuthenticated(true);
+      setUser(response.data);
+    } catch (error) {
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await api.get('/authentication/check-auth');
-        setIsAuthenticated(true);
-        setUser(response.data);
-      } catch (error) {
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkAuth();
   }, []);
-  return ({ isAuthenticated, user, loading });
+
+  return ({ isAuthenticated, user, loading, checkAuth });
 };
 
 export default useAuth;
