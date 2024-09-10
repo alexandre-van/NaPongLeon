@@ -1,11 +1,10 @@
-import { controls, updateControls } from './controls.js';
+import { updateControls } from './controls.js';
 import { updateBallPosition } from './ball.js'
 import { updatePadsPosition } from './pad.js'
-import { checkCollisions } from './collisions.js';
 import { renderer, camera, scene } from './renderer.js';
 
 
-function startGame(gameId) {
+function startGame() {
     requestAnimationFrame(animate);
 }
 

@@ -1,13 +1,7 @@
+import { init } from './srcs/init.js';
 import scene from './srcs/scene.js';
 import camera from './srcs/camera.js';
-import plateau from './srcs/plateau.js';
-import { borderTop, borderBottom, borderLeft, borderRight } from './srcs/border.js';
-import { ball } from './srcs/ball.js';
-import { pad1, pad2 } from './srcs/pad.js';
 import { startGame, updateGame } from './srcs/animate.js';
-import './srcs/lights.js';
-import './srcs/keyboard.js';
-import './srcs/collisions.js';
 
 let game_id = null;
 
@@ -23,14 +17,22 @@ socket.onmessage = function(event) {
 		case "waiting_room":
 			console.log("Waiting for an opponent to join...");
 			break;
+		case "export_data":
+			game_id = data.game_id
+			console.log("Game created! \nGame ID :", game_id);
+			init(data.data)
+			socket.send(JSON.stringify({type: 'ready'}));
+			break;
 		case "game_start":
-			const game_id = data.game_id;
-			console.log("Game started! \nGame ID :", game_id);
-			startGame(game_id);
+			console.log("Game started!");
+			startGame();
 			break;
 		case "gu":
 			//console.log("Game state updated:", data);
 			updateGame(data);
+			break;
+		case "scored":
+			console.log(data.msg);
 			break;
 		case "game_end":
 			console.log("Game ended. Reason:", data.reason);

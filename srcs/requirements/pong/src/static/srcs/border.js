@@ -1,28 +1,21 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
+import * as THREE from '../js/three.module.js';
 import scene from './scene.js';
 
-let borderTop, borderBottom, borderLeft, borderRight;
-
-const arenaLength = 80;
-const arenaWidth = 60;
-const wallWidth = 1;
-const wallHeight = 2;
-
-function createBorders() {
-    const borderGeometry = new THREE.BoxGeometry(arenaLength + wallWidth * 2, wallWidth, wallHeight);
-    const sideBorderGeometry = new THREE.BoxGeometry(wallWidth, arenaWidth, wallHeight);
+function createBorders(data) {
+    const borderGeometry = new THREE.BoxGeometry(data.size.x + data.wallWidth * 2, data.wallWidth, data.size.z);
+    const sideBorderGeometry = new THREE.BoxGeometry(data.wallWidth, data.size.y, data.size.z);
 
     const borderMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 
-    borderTop = new THREE.Mesh(borderGeometry, borderMaterial);
-    borderBottom = new THREE.Mesh(borderGeometry, borderMaterial);
-    borderLeft = new THREE.Mesh(sideBorderGeometry, borderMaterial);
-    borderRight = new THREE.Mesh(sideBorderGeometry, borderMaterial);
+    const borderTop = new THREE.Mesh(borderGeometry, borderMaterial);
+    const borderBottom = new THREE.Mesh(borderGeometry, borderMaterial);
+    const borderLeft = new THREE.Mesh(sideBorderGeometry, borderMaterial);
+    const borderRight = new THREE.Mesh(sideBorderGeometry, borderMaterial);
 
-    borderTop.position.set(0, arenaWidth / 2 + wallWidth / 2, 1);
-    borderBottom.position.set(0, -arenaWidth / 2 - wallWidth / 2, 1);
-    borderLeft.position.set(-arenaLength / 2 - wallWidth / 2, 0, 1);
-    borderRight.position.set(arenaLength / 2 + wallWidth / 2, 0, 1);
+    borderTop.position.set(0, data.size.y / 2 + data.wallWidth / 2, 1);
+    borderBottom.position.set(0, -data.size.y / 2 - data.wallWidth / 2, 1);
+    borderLeft.position.set(-data.size.x / 2 - data.wallWidth / 2, 0, 1);
+    borderRight.position.set(data.size.x / 2 + data.wallWidth / 2, 0, 1);
 
     scene.add(borderTop);
     scene.add(borderBottom);
@@ -31,10 +24,10 @@ function createBorders() {
 }
 
 
-function createDashedLine() {
+function createDashedLine(data) {
     const points = [];
-    const numberOfPoints = arenaWidth/10;
-    const lineLength = arenaWidth;
+    const numberOfPoints = data.size.y/10;
+    const lineLength = data.size.y;
     const step = lineLength / numberOfPoints;
     for (let i = -lineLength / 2; i <= lineLength / 2; i += step) {
       points.push(new THREE.Vector3(0, i, 0));
@@ -50,8 +43,4 @@ function createDashedLine() {
     scene.add(dashedLine);
 }
 
-
-createBorders();
-createDashedLine();
-
-export { borderTop, borderBottom, borderLeft, borderRight, arenaLength, arenaWidth, wallWidth };
+export { createBorders, createDashedLine };

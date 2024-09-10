@@ -9,6 +9,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		await self.accept()
 		player_1 = self
+		player_1.ready = False
 		game_id, player_2 = game_manager.add_player(self)
 		player_1.game_id = None
 		if game_id:
@@ -17,15 +18,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.debug(f'Player connected to game {game_id}')
 			await self.channel_layer.group_add(game_id, player_1.channel_name)
 			await self.channel_layer.group_add(game_id, player_2.channel_name)
-			await player_1.send(text_data=json.dumps({
-				'type': 'game_start',
-				'game_id': game_id
-			}))
-			await player_2.send(text_data=json.dumps({
-				'type': 'game_start',
-				'game_id': game_id
-			}))
-			logger.debug(f'Game start')
+			game_room = game_manager.get_game_room(game_id)
+			await self.channel_layer.group_send(game_id, {
+				'type': "send_state",
+				'state': {	
+					'type': "export_data",
+					'game_id': game_id,
+					'data': game_room.export_data()
+				}
+			})
+			logger.debug(f'Export data')
 			asyncio.create_task(player_1.game_loop(game_id))
 			asyncio.create_task(player_2.game_loop(game_id))
 		else:
@@ -50,12 +52,26 @@ class GameConsumer(AsyncWebsocketConsumer):
 			game_manager.remove_player(player_1)
 
 	async def receive(self, text_data):
+		player_1 = self
 		data = json.loads(text_data)
 		game_id = self.game_id
-		if data['type'] == 'move':
-			game = game_manager.get_game_room(game_id)
-			if game:
-				game.input_players(self, data['input'])
+		data_type = data['type']
+		game_room = game_manager.get_game_room(game_id)
+		if game_room:
+			if data_type == 'move':
+				game_room.input_players(self, data['input'])
+			elif data_type == 'ready':
+				player_1.ready = True
+				player_2 = game_room.getopponent(player_1)
+				if player_2.ready == True:
+					await self.channel_layer.group_send( game_id, {
+							'type': 'send_state',
+							'state': {
+								'type': 'game_start'
+							}
+					})
+					logger.debug(f'Game start')
+				
 
 	async def game_loop(self, game_id):
 		while True:
@@ -65,7 +81,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				await self.channel_layer.group_send(
 					game_id,
 					{
-						'type': 'game_update',
+						'type': 'send_state',
 						'state': game_state
 					}
 				)
@@ -73,5 +89,5 @@ class GameConsumer(AsyncWebsocketConsumer):
 			else:
 				break
 
-	async def game_update(self, event):
-		await self.send(text_data=event['state'])
+	async def send_state(self, event):
+		await self.send(text_data=json.dumps(event['state']))

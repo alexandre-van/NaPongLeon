@@ -1,17 +1,21 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
+import * as THREE from '../js/three.module.js';
+
 import scene from './scene.js';
 
-const ballRad = 1;
-const geometry = new THREE.SphereGeometry(ballRad, 32, 32);
-const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-const ball = new THREE.Mesh(geometry, material);
+let ball = null;
 
-ball.position.set(0, 0, 1);
-ball.castShadow = false;
-scene.add(ball);
+function ball_init(ball_data) {
+	const geometry = new THREE.SphereGeometry(ball_data.rad, 32, 32);
+	const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+	ball = new THREE.Mesh(geometry, material);
 
-function updateBallPosition(position) {
-	ball.position.set(position.x, position.y, 1);
+	ball.position.set(ball_data.pos.x, ball_data.pos.y, ball_data.pos.z);
+	ball.castShadow = false;
+	scene.add(ball);
 }
 
-export { ball, updateBallPosition };
+function updateBallPosition(position) {
+	ball.position.set(position.x, position.y, position.z);
+}
+
+export { updateBallPosition, ball_init };

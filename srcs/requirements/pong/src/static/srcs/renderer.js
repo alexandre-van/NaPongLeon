@@ -1,11 +1,11 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
+import * as THREE from '../js/three.module.js';
 import scene from './scene.js';
 import camera from './camera.js';
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false;
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;

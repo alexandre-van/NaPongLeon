@@ -15,6 +15,6 @@ fclean:
 remove_db:
 	@echo "Removing volumes content"
 
-re: stop fclean start
+re: stop start
 
 .PHONY: start fclean re remove_db

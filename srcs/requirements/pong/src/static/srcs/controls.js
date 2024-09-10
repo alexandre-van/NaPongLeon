@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
+import * as THREE from '../js/three.module.js';
 import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 import { camera, renderer } from './renderer.js';
 

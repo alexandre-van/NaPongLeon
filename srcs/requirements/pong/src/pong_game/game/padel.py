@@ -1,27 +1,40 @@
 
 class Padel:
-	def __init__(self):
+	def __init__(self, player):
 		import copy
 		from .data import padel_data
 
+		self.player = player
 		self.position = copy.copy(padel_data['pos'])
 		self.direction = 0
 		self.speed = padel_data['spd']
+		self.position['x'] *= 1 if self.player.side == 'right' else -1
 
 	def update_padel_position(self):
 		from .data import arena_data
 		from .data import padel_data
 
-		padel_destination = self.position['y'] + self.direction * self.speed
-		padel_collider = padel_destination + (padel_data['size']['y'] / 2) * self.direction
+		destination = self.position['y'] + self.direction * self.speed
+		collider = destination + (padel_data['size']['y'] / 2) * self.direction
 		border_collider = arena_data['size']['y'] / 2
 
-		if padel_collider <= border_collider and padel_collider >= - border_collider:
-			self.position['y'] = padel_destination
+		if collider <= border_collider and collider >= - border_collider:
+			self.position['y'] = destination
 		elif self.direction == 1:
 			self.position['y'] = border_collider - (padel_data['size']['y'] / 2)
 		elif self.direction == -1:
 			self.position['y'] = - border_collider + (padel_data['size']['y'] / 2)
+
+	def get_collider(self):
+		from .data import padel_data
+		dir = 1 if self.player.side == 'left' else -1
+		return {
+			'x': self.position['x'] + padel_data['size']['x'] / 2 * dir,
+			'y': {
+				'top': self.position['y'] + padel_data['size']['y'] / 2,
+				'bottom': self.position['y'] - padel_data['size']['y'] / 2
+			}
+		}
 
 	def up(self):
 		self.direction = 1

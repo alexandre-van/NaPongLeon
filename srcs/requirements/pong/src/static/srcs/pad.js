@@ -1,30 +1,47 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js';
+import * as THREE from '../js/three.module.js';
+import { STLLoader } from '../js/STLLoader.js';
 import scene from './scene.js';
 
-//Variable for paddles
-const	padWidth = 1
-const	padLength = 8;
-const	padHeight = 2;
+let pad1, pad2; // Les objets mesh seront créés ici
+let padX, padZ; 
 
-const	padColor = 0x0000ff 
+function padels_init(data) {
+    padX = data.pos.x;
+    padZ = data.pos.z;
+    const material = new THREE.MeshStandardMaterial({ color: 0x0000ff });
 
-let padX = 35;
-let padY = 0;
-let padZ = 1;
+    const loader = new STLLoader(); // Utilise un seul loader
+    loader.load('/api/pong/static/models/pad.stl', function (geometry) {
+        // Créer un mesh à partir de la géométrie STL
+        const mesh1 = new THREE.Mesh(geometry, material);
+        mesh1.position.set(-data.pos.x, data.pos.y, data.pos.z);
+        scene.add(mesh1);
+        pad1 = mesh1; // Stocker le mesh dans pad1
+    }, undefined, function (error) {
+        console.error('Error loading pad1 STL:', error);
+    });
 
-//Create the paddles
-const geometry = new THREE.BoxGeometry(padWidth, padLength, padHeight);
-const material = new THREE.MeshStandardMaterial({ color: padColor });
-const pad1 = new THREE.Mesh(geometry, material);
-const pad2 = new THREE.Mesh(geometry, material);
-pad1.position.set(-padX, padY, padZ);
-pad2.position.set(padX, padY, padZ);
-scene.add(pad1);
-scene.add(pad2);
-
-//Function for paddles
-function updatePadsPosition(position) {
-	pad1.position.set(-padX, position['p1'], padZ);
-	pad2.position.set(padX, position['p2'], padZ);
+    loader.load('/api/pong/static/models/pad.stl', function (geometry) {
+        // Créer un mesh à partir de la géométrie STL
+        const mesh2 = new THREE.Mesh(geometry, material);
+        mesh2.position.set(-data.pos.x, data.pos.y, data.pos.z);
+        scene.add(mesh2);
+        pad2 = mesh2; // Stocker le mesh dans pad2
+    }, undefined, function (error) {
+        console.error('Error loading pad2 STL:', error);
+    });
 }
-export { pad1, pad2,updatePadsPosition };
+
+function updatePadsPosition(position) {
+	console.log('pad1:', pad1);
+    console.log('pad2:', pad2);
+    console.log('position:', position);
+    if (pad1 && pad2) {
+        pad1.position.set(-padX, position['p1'], padZ);
+        pad2.position.set(padX, position['p2'], padZ);
+    } else {
+        console.error('Pads are not yet loaded');
+    }
+}
+
+export { padels_init, updatePadsPosition };
