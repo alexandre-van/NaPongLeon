@@ -1,6 +1,6 @@
 import { init } from './srcs/init.js';
 import scene from './srcs/scene.js';
-import camera from './srcs/camera.js';
+import camera from './srcs/object/camera.js';
 import { startGame, updateGame } from './srcs/animate.js';
 
 let game_id = null;

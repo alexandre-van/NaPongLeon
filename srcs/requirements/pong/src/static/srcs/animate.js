@@ -1,7 +1,7 @@
-import { updateControls } from './controls.js';
-import { updateBallPosition } from './ball.js'
-import { updatePadsPosition } from './pad.js'
+import { updateBallPosition } from './object/ball.js'
+import { updatePadsPosition } from './object/pad.js'
 import { renderer, camera, scene } from './renderer.js';
+import { updateControls } from './controls.js';
 
 
 function startGame() {

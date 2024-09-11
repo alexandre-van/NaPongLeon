@@ -17,28 +17,31 @@ ball_data = {
 		'y': 0, # coordinate y
         'z': 1
 	},
-	'spd': 0.5, # speed
+	'spd': {
+        'x': 0.5, # speed
+        'y': 0.5
+	},
 	'rad': 1 # radius
 }
 
 padel_data = {
 	'pos': {
-		'x': 36, # coordinate x
+		'x': 39, # coordinate x
 		'y': 0, # coordinate y
-        'z': 1
+        'z': 1.25
 	},
 	'spd': 1, # speed
 	'size': {
-        'x': 1,
-		'y': 8,
-        'z': 2
+        'x': 4,
+		'y': 12,
+        'z': 4
 	},
 }
 
 arena_data = {
 	'size': {
-		'x': 80,
-		'y': 60,
+		'x': 86,
+		'y': 64,
         'z': 2
 	},
 	'wallWidth': 1

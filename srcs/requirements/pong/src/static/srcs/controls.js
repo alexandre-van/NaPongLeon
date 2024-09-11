@@ -1,5 +1,5 @@
 import * as THREE from '../js/three.module.js';
-import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from '../js/OrbitControls.js';
 import { camera, renderer } from './renderer.js';
 
 const controls = new OrbitControls(camera, renderer.domElement);
