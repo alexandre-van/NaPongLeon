@@ -110,11 +110,6 @@ volumes:
       device: ./requirements/frontend/data
       o: bind
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./requirements/postgres/data
-      o: bind
   secrets_vol:
     driver: local
     driver_opts:
