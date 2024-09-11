@@ -6,7 +6,7 @@ class Ball:
 
 		self.position = copy.copy(ball_data['pos'])
 		self.direction = {'x': 1, 'y': 1}
-		self.speed = ball_data['spd']
+		self.speed = copy.copy(ball_data['spd'])
 
 	def update_ball_position(self, get_player_in_side):
 		from .data import arena_data
@@ -32,6 +32,7 @@ class Ball:
 					self.position['x'] = contact_point['x'] - ball_data['rad'] * dirX
 					self.position['y'] = contact_point['y']
 					self.direction['x'] *= -1
+					self.speed['x'] += 0.05
 					return
 
 		border_collider = self.get_border_collider()
@@ -47,8 +48,8 @@ class Ball:
 		
 	def get_destination(self):
 		return {
-			'x': self.position['x'] + self.direction['x'] * self.speed,
-			'y': self.position['y'] + self.direction['y'] * self.speed
+			'x': self.position['x'] + self.direction['x'] * self.speed['x'],
+			'y': self.position['y'] + self.direction['y'] * self.speed['y']
 		}
 		
 	def get_destination_collider(self, destination):
@@ -80,6 +81,7 @@ class Ball:
 		from .data import ball_data
 		self.position['x'] = ball_data['pos']['x']
 		self.position['y'] = ball_data['pos']['y']
+		self.speed['x'] = ball_data['spd']['x']
 
 		#player = get_player_in_side\
 		#	('left' if self.position['x'] == border_collider else 'right')
