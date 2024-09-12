@@ -5,7 +5,7 @@ import { updateControls } from './controls.js';
 
 
 function startGame() {
-    requestAnimationFrame(animate);
+    animate();
 }
 
 function animate() {

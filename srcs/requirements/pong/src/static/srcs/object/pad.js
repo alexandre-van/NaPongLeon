@@ -9,16 +9,17 @@ async function padels_init(data) {
     try {
         padX = data.pos.x;
         padZ = data.pos.z;
-        const material = new THREE.MeshStandardMaterial({ color: 0x476CDC });
-        const geometry1 = await loadModelSTL('padel.stl');
-        const model1 = new THREE.Mesh(geometry1, material);
+        const material1 = new THREE.MeshStandardMaterial({ color: 0x318CE7 });
+        const geometry1 = await loadModelSTL('padel2.stl');
+        const model1 = new THREE.Mesh(geometry1, material1);
         model1.position.set(-data.pos.x, data.pos.y, data.pos.z);
         model1.castShadow = false;
         model1.receiveShadow = false;
         scene.add(model1);
         pad1 = model1;
-        const geometry2 = await loadModelSTL('padel.stl');
-        const model2 = new THREE.Mesh(geometry2, material);
+        const material2 = new THREE.MeshStandardMaterial({ color: 0x01D758 });
+        const geometry2 = await loadModelSTL('padel1.stl');
+        const model2 = new THREE.Mesh(geometry2, material2);
         model2.position.set(-data.pos.x, data.pos.y, data.pos.z);
         model2.castShadow = false;
         model2.receiveShadow = false;

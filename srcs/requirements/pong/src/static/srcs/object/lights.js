@@ -2,35 +2,22 @@ import * as THREE from '../../js/three.module.js';
 import scene from '../scene.js';
 
 function createSunlight() {
-    // Ajouter une lumière ambiante pour un éclairage de base
-    const ambientLight = new THREE.AmbientLight(0x404040); // Lumière ambiante douce
-    scene.add(ambientLight);
-
-    // Ajouter une lumière directionnelle pour simuler la lumière du soleil
-    const directionalLight = new THREE.DirectionalLight(0xffaa00, 3); // Lumière directionnelle blanche
-    directionalLight.position.set(100, 100, 100); // Positionner la lumière au-dessus de la scène
-    scene.fog = new THREE.FogExp2(0xffd700, 0.0001);
-    directionalLight.castShadow = true; // Activer les ombres pour la lumière directionnelle
-
-    // Configurer les ombres
-    directionalLight.shadow.mapSize.width = 2048; // Résolution de la carte des ombres
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5; // Propriétés de la caméra d'ombre
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.camera.left = -100; // Limites de la caméra d'ombre
-    directionalLight.shadow.camera.right = 100;
-    directionalLight.shadow.camera.top = 100;
-    directionalLight.shadow.camera.bottom = -100;
-
-    scene.add(directionalLight);
-
-   // // Optionnel : Ajouter un helper pour visualiser la direction de la lumière
-    //const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
-    //scene.add(lightHelper);
-
-    // Optionnel : Ajouter un helper pour visualiser les ombres
-   // const shadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
-    //scene.add(shadowHelper);
+	const pointLight = new THREE.PointLight(0xffaa00, 200000000, 50000);
+	pointLight.position.set(5000, 5000, 2500);
+	scene.add(pointLight);
+	pointLight.castShadow = true;
+	pointLight.shadow.mapSize.width = 1024;
+	pointLight.shadow.mapSize.height = 1024;
 }
 
-export { createSunlight };
+function createPlateauLight()
+{
+	const pointLight = new THREE.PointLight(0xffffff, 4000, 1000);
+	pointLight.position.set(0, 0, 100);
+	scene.add(pointLight);
+	pointLight.castShadow = true;
+	pointLight.shadow.mapSize.width = 1024;
+	pointLight.shadow.mapSize.height = 1024;
+}
+
+export { createSunlight, createPlateauLight };

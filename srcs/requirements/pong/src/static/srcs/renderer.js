@@ -5,7 +5,7 @@ import camera from './object/camera.js';
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-renderer.shadowMap.enabled = false;
+renderer.shadowMap.enabled = true;
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;

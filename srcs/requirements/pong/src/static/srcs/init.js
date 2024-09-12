@@ -3,7 +3,7 @@ import { ball_init } from './object/ball.js';
 import { padels_init } from './object/pad.js';
 import { createBorders, createDashedLine } from './object/border.js';
 import { createPlateau } from './object/plateau.js';
-import { createSunlight } from './object/lights.js';
+import { createSunlight, createPlateauLight } from './object/lights.js';
 import { createTable } from './object/table.js';
 import { createMap } from './object/map.js';
 import { createCoins } from './object/coin.js';
@@ -15,6 +15,7 @@ async function init(data, ws){
 	createBorders(data.arena);
 	createDashedLine(data.arena);
 	createSunlight();
+	createPlateauLight();
 	
 	await padels_init(data.padel);
 	await createPlateau(data.arena);
