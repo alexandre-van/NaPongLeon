@@ -2,6 +2,7 @@
 class Padel:
 	def __init__(self, player):
 		import copy
+		from .timer import Timer
 		from .data import padel_data
 
 		self.player = player
@@ -9,12 +10,15 @@ class Padel:
 		self.direction = 0
 		self.speed = padel_data['spd']
 		self.position['x'] *= 1 if self.player.side == 'right' else -1
+		self.timer = Timer()
 
 	def update_padel_position(self):
 		from .data import arena_data
 		from .data import padel_data
 
-		destination = self.position['y'] + self.direction * self.speed
+		destination = self.position['y'] + self.direction \
+			* self.speed * self.timer.get_elapsed_time()
+		self.timer.reset()
 		collider = destination + (padel_data['size']['y'] / 2) * self.direction
 		border_collider = arena_data['size']['y'] / 2
 

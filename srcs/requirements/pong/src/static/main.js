@@ -20,8 +20,7 @@ socket.onmessage = function(event) {
 		case "export_data":
 			game_id = data.game_id
 			console.log("Game created! \nGame ID :", game_id);
-			init(data.data)
-			socket.send(JSON.stringify({type: 'ready'}));
+			init(data.data, socket);
 			break;
 		case "game_start":
 			console.log("Game started!");

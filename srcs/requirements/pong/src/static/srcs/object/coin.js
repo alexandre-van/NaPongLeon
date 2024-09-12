@@ -1,24 +1,21 @@
 import * as THREE from '../../js/three.module.js';
-import { GLTFLoader } from '../../js/GLTFLoader.js';
+import { loadModelSTL, loadTexture } from '../load.js';
 import scene from '../scene.js';
 
-function createCoins() {
-	const loader = new GLTFLoader();
-	loader.load('static/models/coin.glb', function (gltf) {
-		const model = gltf.scene;
-		model.position.set(20, -35, 1);
-        model.scale.set(2, 2, 2);
-		const textureLoader = new THREE.TextureLoader();
-		textureLoader.load('static/texture/coin/PIECE_PIECE_BaseColor.png', function (texture) {
-			model.traverse(function (child) {
-				if (child.isMesh) {
-					child.material.map = texture;
-					child.material.needsUpdate = true;
-				}
-			});
-		});
+async function createCoins() {
+	try {
+		const geometry = await loadModelSTL('coin.stl');
+		const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+		const texture = await loadTexture('coin.jpg');
+        material.map = texture;
+        material.needsUpdate = true;
+		const model = new THREE.Mesh(geometry, material);
+        model.position.set(20, -35, 0);
+        model.scale.set(1.5, 1.5, 1.5);
 		scene.add(model);
-	});
+	} catch (error) {
+		console.error("Error: ", error);
+	}
 }
 
 export { createCoins };

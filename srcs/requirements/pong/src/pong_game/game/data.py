@@ -18,8 +18,8 @@ ball_data = {
         'z': 1
 	},
 	'spd': {
-        'x': 0.5, # speed
-        'y': 0.5
+        'x': 15, # speed
+        'y': 15
 	},
 	'rad': 1 # radius
 }
@@ -30,7 +30,7 @@ padel_data = {
 		'y': 0, # coordinate y
         'z': 1.25
 	},
-	'spd': 1, # speed
+	'spd': 30, # speed
 	'size': {
         'x': 4,
 		'y': 12,

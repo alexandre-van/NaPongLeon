@@ -1,4 +1,5 @@
 from .padel import Padel
+from .timer import Timer
 
 class Player:
 	def __init__(self, player_consumer, side):
