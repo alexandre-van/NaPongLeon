@@ -1,33 +1,36 @@
 import * as THREE from '../../js/three.module.js';
-import { STLLoader } from '../../js/STLLoader.js';
+import { loadModelSTL } from '../load.js';
 import scene from '../scene.js';
 
 let pad1, pad2;
 let padX, padZ; 
 
-function padels_init(data) {
-    padX = data.pos.x;
-    padZ = data.pos.z;
-    const material = new THREE.MeshStandardMaterial({ color: 0x0000ff });
-    const loader = new STLLoader();
-    loader.load('/api/pong/static/models/pad.stl', function (geometry) {
-        const mesh1 = new THREE.Mesh(geometry, material);
-        mesh1.position.set(-data.pos.x, data.pos.y, data.pos.z);
-        scene.add(mesh1);
-        pad1 = mesh1;
-    }, undefined, function (error) {
-        console.error('Error loading pad1 STL:', error);
-    });
+async function padels_init(data) {
+    try {
+        padX = data.pos.x;
+        padZ = data.pos.z;
+        const material = new THREE.MeshStandardMaterial({ color: 0x476CDC });
+        const geometry1 = await loadModelSTL('padel.stl');
+        const model1 = new THREE.Mesh(geometry1, material);
+        model1.position.set(-data.pos.x, data.pos.y, data.pos.z);
+        model1.castShadow = false;
+        model1.receiveShadow = false;
+        scene.add(model1);
+        pad1 = model1;
+        const geometry2 = await loadModelSTL('padel.stl');
+        const model2 = new THREE.Mesh(geometry2, material);
+        model2.position.set(-data.pos.x, data.pos.y, data.pos.z);
+        model2.castShadow = false;
+        model2.receiveShadow = false;
+        scene.add(model2);
+        pad2 = model2;
 
-    loader.load('/api/pong/static/models/pad.stl', function (geometry) {
-        const mesh2 = new THREE.Mesh(geometry, material);
-        mesh2.position.set(-data.pos.x, data.pos.y, data.pos.z);
-        scene.add(mesh2);
-        pad2 = mesh2;
-    }, undefined, function (error) {
-        console.error('Error loading pad2 STL:', error);
-    });
+    } catch (error) {
+        console.error("Error: ", error);
+    }
 }
+
+
 
 function updatePadsPosition(position) {
     if (pad1 && pad2) {

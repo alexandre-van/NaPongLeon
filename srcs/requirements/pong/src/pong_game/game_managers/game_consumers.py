@@ -28,8 +28,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 				}
 			})
 			logger.debug(f'Export data')
-			asyncio.create_task(player_1.game_loop(game_id))
-			asyncio.create_task(player_2.game_loop(game_id))
 		else:
 			await player_1.send(text_data=json.dumps({'type': 'waiting_room'}))
 
@@ -63,13 +61,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 			elif data_type == 'ready':
 				player_1.ready = True
 				player_2 = game_room.getopponent(player_1)
-				if player_2.ready == True:
+				if not game_room.started and player_2.ready:
+					game_room.started = True
 					await self.channel_layer.group_send( game_id, {
 							'type': 'send_state',
 							'state': {
 								'type': 'game_start'
 							}
 					})
+					asyncio.create_task(player_1.game_loop(game_id))
+					asyncio.create_task(player_2.game_loop(game_id))
 					logger.debug(f'Game start')
 				
 

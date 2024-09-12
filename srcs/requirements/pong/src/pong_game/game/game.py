@@ -11,6 +11,7 @@ class Game:
 			'p2': Player(player_2, side2)
 		}
 		self.ball = Ball()
+		self.started = False
 
 	def input_players(self, player, input):
 		pn = 'p1' if player == self.players['p1'].player_consumer else 'p2'
