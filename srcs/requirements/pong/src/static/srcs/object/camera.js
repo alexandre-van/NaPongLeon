@@ -4,7 +4,7 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 //camera.position.z = 45;
 
 camera.position.z = 25;
-camera.position.y = -45;
-camera.rotateX(45);
+camera.position.y = -60;
+camera.rotateX(45.3);
 
 export default camera;
