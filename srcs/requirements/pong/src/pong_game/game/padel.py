@@ -39,6 +39,16 @@ class Padel:
 				'bottom': self.position['y'] - padel_data['size']['y'] / 2
 			}
 		}
+	
+	def get_collider_side(self, dirY):
+		from .data import padel_data
+		return {
+			'x': {
+				'right': self.position['x'] + padel_data['size']['x'] / 2,
+				'left' : self.position['x'] - padel_data['size']['x'] / 2
+			},
+			'y': self.position['y'] - padel_data['size']['y'] / 2 * dirY
+		}
 
 	def up(self):
 		self.direction = 1

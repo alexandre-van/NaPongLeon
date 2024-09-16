@@ -86,7 +86,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 						'state': game_state
 					}
 				)
-				await asyncio.sleep(0.05)
+				await asyncio.sleep(0.025)
 			else:
 				break
 
