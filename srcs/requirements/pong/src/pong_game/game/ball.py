@@ -32,6 +32,15 @@ class Ball:
 				if contact_point != None:
 					self.position['x'] = contact_point['x'] - ball_data['rad'] * dirX
 					self.position['y'] = contact_point['y']
+					if (ball_data['spd']['y'] > ball_data['spd']['y'] / 1.5):
+						self.speed['y'] = ball_data['spd']['y'] / 1.5
+					else:
+						self.speed['y'] = ball_data['spd']['y']
+					if padel.direction != 0:
+						if (padel.direction != self.direction['y']):
+							self.speed['y'] /= 1.5
+						else:
+							self.speed['y'] *= 1.5
 					self.direction['x'] *= -1
 					self.speed['x'] *= 1.05
 					return	
@@ -45,9 +54,11 @@ class Ball:
 					if contact_point != None:
 						self.position['x'] = contact_point['x']
 						self.position['y'] = contact_point['y'] - ball_data['rad']
-						self.direction['x'] *= -1
+						if (self.position['x'] * dirX <= padel.position['x']):
+							self.direction['x'] *= -1
 						self.direction['y'] *= -1
 						self.speed['x'] *= 1.05
+						self.speed['y'] = ball_data['spd']['y'] * 2
 						return
 				if destination_collider['y'] <= padel.position['y'] + padel_data['size']['y'] / 2 \
 					and self.position['y'] >= padel.position['y'] + padel_data['size']['y'] / 2 :
@@ -57,7 +68,8 @@ class Ball:
 					if contact_point != None:
 						self.position['x'] = contact_point['x']
 						self.position['y'] = contact_point['y'] + ball_data['rad']
-						self.direction['x'] *= -1
+						if (self.position['x'] * dirX <= padel.position['x']):
+							self.direction['x'] *= -1
 						self.direction['y'] *= -1
 						self.speed['x'] *= 1.05
 						self.speed['y'] = ball_data['spd']['y'] * 2
@@ -114,6 +126,7 @@ class Ball:
 		self.position['x'] = ball_data['pos']['x']
 		self.position['y'] = ball_data['pos']['y']
 		self.speed['x'] = ball_data['spd']['x']
+		self.speed['y'] = ball_data['spd']['x']
 
 		#player = get_player_in_side\
 		#	('left' if self.position['x'] == border_collider else 'right')
