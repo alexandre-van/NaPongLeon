@@ -8,6 +8,7 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -29,15 +30,10 @@ export function UserProvider({ children }) {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const register = async (userData) => {
     const response = await api.post('/authentication/register/', userData);
-    if (!response.ok) {
-      console.log('register error');
-      throw new Error("Registration failed");
-    }
-    //await login(userData);
   };
 
   const login = async (userData) => {
@@ -46,24 +42,6 @@ export function UserProvider({ children }) {
       throw new Error("Login failed");
     };
     await checkAuth();
- //   return true;
-
-
-/*    try {
-      setLoading(true);
-      const response = await api.post('/authentication/login/', userData);
-      if (response.data.message === 'Login successful') {
-        await checkAuth();
-        return true;
-      }
-      setError('Login failed'):
-      return false;
-    } catch (err) {
-      setError('Login failed');
-      return false;
-    } finally {
-      setLoading(false);
-    }*/
   };
 
   const logout = async () => {
@@ -72,19 +50,27 @@ export function UserProvider({ children }) {
     setIsAuthenticated(false);
     navigate('/logout-success');
     await checkAuth();
-
-/*    try {
-      await api.post('/authentication/logout/');
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
-      navigate('/logout-success');
-    } catch (err) {
-      setError('Logout failed');
-    } finally {
-      await checkAuth();
-    }*/
   };
+
+  // For any user update
+  const updateUser = useCallback((updates) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updates
+    }));
+  }, []);
+
+  // To force a reload of the avatar image and not use browser cache
+  const updateAvatarVersion = useCallback(() => {
+    setAvatarVersion(v => v + 1);
+  }, []);
+
+  const getAvatarUrl = useCallback(() => {
+    if (user?.avatar_url) {
+      return `${user.avatar_url}?v=${avatarVersion}`;
+    }
+    return null;
+  }, [user?.avatar_url, avatarVersion]);
 
   const value = {
     user,
@@ -95,7 +81,10 @@ export function UserProvider({ children }) {
     login,
     logout,
     checkAuth,
-    register
+    register,
+    updateUser,
+    updateAvatarVersion,
+    getAvatarUrl
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>

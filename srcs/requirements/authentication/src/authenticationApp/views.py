@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import CustomUser
 from .serializers import UserSerializer
@@ -67,6 +68,29 @@ class LoginView(APIView):
             return response
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class TokenRefreshView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES>get('refresh_token')
+        if refresh_token is None:
+            return Response({'error': 'Refresh token not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+            
+            response = Response({'message': 'Token refreshed successfully'})
+            response.set_cookie(
+                'access_token',
+                access_token,
+                httponly=True,
+                secure=False,
+                samesite='Strict',
+                max_age=60 * 60
+            )
+            return response
+        except TokenError:
+            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutView(APIView):
     authentication_classes = [CustomJWTAuthentication]
@@ -187,8 +211,10 @@ class GetAvatarView(APIView):
     def get(self, request):
         user = request.user
         if user.avatar:
+            logger.debug(f"Avatar_url: {user.avatar.url}")
             return Response({'avatar_url': user.avatar_url}, status=status.HTTP_200_OK)
         else:
+            logger.debug("No avatar found")
             return Response({'error': 'No avatar found'}, status=status.HTTP_404_NOT_FOUND)
 
 class UpdateNicknameView(APIView):

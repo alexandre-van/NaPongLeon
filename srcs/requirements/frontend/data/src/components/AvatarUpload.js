@@ -4,8 +4,8 @@ import useAvatarUpload from '../hooks/useAvatarUpdate.js';
 import Avatar from './Avatar.js';
 
 const AvatarUpload = () => {
-  const { user } = useUser();
-  const { updateAvatar, loading: avatarLoading } = useAvatarUpload();
+  const { user, getAvatarUrl } = useUser();
+  const { updateAvatar/*, loading: avatarLoading*/ } = useAvatarUpload();
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -44,12 +44,14 @@ const AvatarUpload = () => {
     }
   };
 
+  const avatarUrl = preview || getAvatarUrl();
+
   return (
     <div>
-      <Avatar user={{ ...user, avatar_url: preview || user.avatar_url }} />
-      <input type="file" onChange={handleFileSelect} accept="image/*" disabled={avatarLoading} />
-      <button onClick={handleUpdate} disabled={!selectedFile || avatarLoading}>
-        {avatarLoading ? 'Uploading...' : 'Upload Avatar'}
+      <Avatar user={{ ...user, avatar_url: avatarUrl/*preview || user.avatar_url*/ }} />
+      <input type="file" onChange={handleFileSelect} accept="image/*" />
+      <button onClick={handleUpdate} disabled={!selectedFile}>
+        Upload Avatar
       </button>
       {error && <p>{error}</p>}
     </div>
@@ -60,8 +62,9 @@ export default AvatarUpload;
 
 
 
-
-
+//      <input type="file" onChange={handleFileSelect} accept="image/*" disabled={avatarLoading} />
+//      <button onClick={handleUpdate} disabled={!selectedFile || avatarLoading}>
+        //{avatarLoading ? 'Uploading...' : 'Upload Avatar'}
 /*const AvatarUpload = ({ user, onAvatarUpdate }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);

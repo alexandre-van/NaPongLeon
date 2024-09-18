@@ -16,13 +16,11 @@ import LogoutPage from './pages/LogoutPage.js';
 import NewsPage from './pages/NewsPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
 
-//import useAuth from './hooks/useAuth.js';
 
 import ProtectedRoute from './components/ProtectedRoute.js';
 //import './assets/App.css';
 
 function AppContent() {
-//  const { isAuthenticated, user, loading, checkAuth } = useAuth();
   const { user, isAuthenticated, loading, /*checkAuth*/ } = useUser();
   const location = useLocation();
 

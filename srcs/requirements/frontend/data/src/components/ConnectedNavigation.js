@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
-//import useLogout from '../hooks/useLogout.js';
 import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
 
 export default function ConnectedNavigation() {
-//  const logout = useLogout();
   const { logout } = useUser();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);

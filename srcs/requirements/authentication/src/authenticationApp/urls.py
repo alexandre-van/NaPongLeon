@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, LogoutView, CheckAuthView, UploadAvatarView, GetAvatarView, UpdateNicknameView, GetSelfInfoView
+from .views import RegisterView, LoginView, LogoutView, CheckAuthView, UploadAvatarView, GetAvatarView, UpdateNicknameView, GetSelfInfoView, TokenRefreshView
 
 # for development
 from django.conf import settings
@@ -14,6 +14,7 @@ urlpatterns = [
     path('get-avatar/', GetAvatarView.as_view(), name='get_avatar'),
     path('update-nickname/', UpdateNicknameView.as_view(), name='update_nickname'),
     path('get-self-info/', GetSelfInfoView.as_view(), name='get_self_info'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 ]
 
 if settings.DEBUG:

@@ -21,6 +21,7 @@ export function RegisterPage() {
       navigate('/register-success');
     } catch (error) {
       setError(true);
+      console.log('Error during registering:', error.response);
     } finally {
       setLoading(false);
     }
@@ -58,8 +59,9 @@ export function RegisterPage() {
 export function RegisterSuccessPage() {
   return (
     <>
-      <p>You are now registered and logged in</p>
-      <Link to="/">Profile Page</Link>
+      <p>You are now registered and you may now log in</p>
+      <Link to="/login">Profile Page</Link>
     </>
   );
 }
+
