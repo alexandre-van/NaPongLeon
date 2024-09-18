@@ -1,14 +1,32 @@
 import { useState } from 'react';
 import { Link , useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
+import { useUser } from '../contexts/UserContext.js';
 
-import { API_BASE_URL } from '../config.js';
+//import { API_BASE_URL } from '../config.js';
 
 export function RegisterPage() {
-  const [registrationStatus, setRegistrationStatus] = useState(null);
+//  const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const { register } = useUser();
   const navigate = useNavigate();
 
+
   const handleRegister = async (userData) => {
+    setLoading(true);
+    setError(false);
+    try {
+      await register(userData);
+      navigate('/register-success');
+    } catch (error) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+/*  const handleRegister = async (userData) => {
     try {
       const response = await fetch(`/api/authentication/register/`, {
         method: 'POST',
@@ -26,11 +44,12 @@ export function RegisterPage() {
       console.error('Error while sign up:', error);
       setRegistrationStatus('failure');
     }
-  };
+  };*/
 
   return (
     <>
-      {registrationStatus === 'failure' && (<p>An user with this name already exists</p>)}
+      {loading && <p>Registering...</p>}
+      {error && <p>An user with this name already exists</p>}
       <RegisterForm onRegister={handleRegister} />
     </>
   );
@@ -39,8 +58,8 @@ export function RegisterPage() {
 export function RegisterSuccessPage() {
   return (
     <>
-      <p>You are now registered, you may now log in</p>
-      <Link to="/login">Login Page</Link>
+      <p>You are now registered and logged in</p>
+      <Link to="/">Profile Page</Link>
     </>
   );
 }

@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+
+import { useUser, UserProvider } from './contexts/UserContext.js';
 
 import ConnectedLayout from './layouts/ConnectedLayout.js';
 import DefaultLayout from './layouts/DefaultLayout.js';
@@ -10,22 +12,23 @@ import Formations from './pages/Formations.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
+import LogoutPage from './pages/LogoutPage.js';
 import NewsPage from './pages/NewsPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
 
-import useAuth from './hooks/useAuth.js';
+//import useAuth from './hooks/useAuth.js';
 
 import ProtectedRoute from './components/ProtectedRoute.js';
 //import './assets/App.css';
 
 function AppContent() {
-  const { isAuthenticated, user, loading, checkAuth } = useAuth();
-  const navigate = useNavigate();
+//  const { isAuthenticated, user, loading, checkAuth } = useAuth();
+  const { user, isAuthenticated, loading, /*checkAuth*/ } = useUser();
   const location = useLocation();
 
-  useEffect(() => {
+  /*useEffect(() => {
     checkAuth();
-  }, [location.pathname]);
+  }, [location.pathname], checkAuth());*/
 
   if (loading) {
     return <div>Loading...</div>;
@@ -34,12 +37,11 @@ function AppContent() {
   return (
       <Routes>
         <Route element={isAuthenticated ? <ConnectedLayout /> : <DefaultLayout />} >
-          <Route index element={<HomePage isAuthenticated={isAuthenticated} />} />
+          <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="game-modes" element={<GameModePage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="logout" element={<Navigate to="/" replace />} />
+          <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path="*" element={<HomePage />} />
         </Route>
 
@@ -50,6 +52,8 @@ function AppContent() {
         </Route>
 
         <Route element={<SpecialLayout />} >
+          <Route path="login" element={<LoginPage />} />
+          <Route path="logout-success" element={<LogoutPage /> } />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
         </Route>
@@ -60,7 +64,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
     </Router>
   );
 }

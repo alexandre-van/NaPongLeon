@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, LogoutView, CheckAuthView
+from .views import RegisterView, LoginView, LogoutView, CheckAuthView, UploadAvatarView, GetAvatarView, UpdateNicknameView, GetSelfInfoView
 
 # for development
 from django.conf import settings
@@ -10,6 +10,10 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('check-auth/', CheckAuthView.as_view(), name='check_auth'),
+    path('upload-avatar/', UploadAvatarView.as_view(), name='upload_avatar'),
+    path('get-avatar/', GetAvatarView.as_view(), name='get_avatar'),
+    path('update-nickname/', UpdateNicknameView.as_view(), name='update_nickname'),
+    path('get-self-info/', GetSelfInfoView.as_view(), name='get_self_info'),
 ]
 
 if settings.DEBUG:
