@@ -1,15 +1,9 @@
-import { useState, useEffect } from 'react';
-import useNicknameUpdate from '../hooks/useNicknameUpdate.js';
+import { useUser } from '../contexts/UserContext.js';
+import { useState } from 'react';
 
-const NicknameForm = ({ onNicknameUpdate }) => {
-  const [nicknameForm, setNicknameForm] = useState('');
-  const { updateNickname, error } = useNicknameUpdate();
-  const [actualNickname, setActualNickname] = use
-
-  useEffect(() => {
-    const fetchNickname = async () => {
-    };
-  }, []);
+const NicknameForm = ({ onUpload, onError }) => {
+  const [nicknameForm, setNicknameForm] = useState(null);
+  const { user } = useUser();
 
   const handleNicknameChange = (e) => {
     setNicknameForm(e.target.value);
@@ -17,19 +11,18 @@ const NicknameForm = ({ onNicknameUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = onNicknameUpdate(nicknameForm);
-    if (success) {
-
-
+    if (!nicknameForm) {
+      onUpload({ nickname: null, error: "Please submit a nickname"});
+      return;
     }
+    onUpload({ nickname: nicknameForm, error: null });
   };
 
   return (
     <div>
-      <label htmlFor="actual-nickname">Actual nickname:</label>
-      <p>{actualNickname}</p>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="nickname">Update Nickname</label>
+        <label htmlFor="current nickname">Current nickname: {user.nickname ? user.nickname : 'No nickname yet'}</label>
+        <label htmlFor="update nickname">Update Nickname</label>
         <input
           type="text"
           id="nickname"
@@ -39,7 +32,6 @@ const NicknameForm = ({ onNicknameUpdate }) => {
           placeholder="Enter your new nickname"
         />
         <button type="submit">Update nickname</button>
-        {error && <p>{error}</p>}
       </form>
     </div>
   );

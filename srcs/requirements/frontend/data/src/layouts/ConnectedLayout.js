@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import ConnectedNavigation from '../components/ConnectedNavigation.js';
+import FriendsList from '../components/FriendsList.js';
 
 export default function ConnectedLayout() {
   return (
@@ -10,6 +11,7 @@ export default function ConnectedLayout() {
       <main>
         <Outlet />
       </main>
+      <FriendsList />
     </div>
   );
 }

@@ -9,6 +9,7 @@ export function UserProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [avatarVersion, setAvatarVersion] = useState(0);
+  const [nicknameVersion, setNicknameVersion] = useState(0);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -40,7 +41,7 @@ export function UserProvider({ children }) {
     const response = await api.post('/authentication/login/', userData);
     if (response.data.message !== "Login successful") {
       throw new Error("Login failed");
-    };
+    }
     await checkAuth();
   };
 
@@ -65,6 +66,10 @@ export function UserProvider({ children }) {
     setAvatarVersion(v => v + 1);
   }, []);
 
+  const updateNicknameVersion = useCallback(() => {
+    setNicknameVersion(v => v + 1);
+  }, []);
+
   const getAvatarUrl = useCallback(() => {
     if (user?.avatar_url) {
       return `${user.avatar_url}?v=${avatarVersion}`;
@@ -84,10 +89,11 @@ export function UserProvider({ children }) {
     register,
     updateUser,
     updateAvatarVersion,
+    updateNicknameVersion,
     getAvatarUrl
   };
 
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {

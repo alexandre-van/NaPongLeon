@@ -14,6 +14,7 @@ import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
 import LogoutPage from './pages/LogoutPage.js';
 import NewsPage from './pages/NewsPage.js';
+import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
 
 
@@ -46,6 +47,7 @@ function AppContent() {
         <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />} >
           <Route element={<ConnectedLayout />} >
             <Route path="formations" element={<Formations />} />
+            <Route path="user-personalization" element={<UserPersonalizationPage />} />
           </Route>
         </Route>
 

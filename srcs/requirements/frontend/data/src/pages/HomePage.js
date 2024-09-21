@@ -1,8 +1,6 @@
-import AvatarUpload from '../components/AvatarUpload.js';
-import NicknameForm from '../components/NicknameForm.js';
-import useNicknameUpdate from '../hooks/useNicknameUpdate.js';
 import Avatar from '../components/Avatar.js';
 
+import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
 
 export default function HomePage({ isAuthenticated }) {
@@ -19,49 +17,15 @@ export default function HomePage({ isAuthenticated }) {
 }
 
 function AuthenticatedHomePage() {
-  const { user } = useUser();
+  const { user, getAvatarUrl } = useUser();
 
   return (
     <div className="profile">
       <h2>{user.username}'s Profile</h2>
-      <AvatarUpload /> 
+      <Link to="/user-personalization">Personalize Profile</Link>
+      <Avatar user={{ ...user, avatar_url: getAvatarUrl() }} />
+      {user.nickname ? <h3>My nickname: {user.nickname}</h3> : <p>No nickname yet</p>}
     </div>
   );
 }
 
-      //<Avatar user={user} />
-/*  if (isAuthenticated) {
-    const { updateNickname, error } = useNicknameUpdate();
-
-    const handleNicknameUpdate = async (nickname) {
-      try {
-        const success = await updateNickname(nickname);
-        if (success) {
-
-        }
-      } catch (error) {
-
-      }
-    };
-    
-
-    const handleAvatarUpdate = (newAvatarUrl) => {
-      console.log("Avatar updated", newAvatarUrl);
-    };
-
-    return (
-      <>
-        <div className="profile">
-          <h2>{user.username}'s Profile</h2>
-          <h4>Nickname: <stong>{user.nickname ? <user.nickname> : No nickname}</strong><h4>
-          <NicknameForm user={user}/>
-          <AvatarUpload user={user} onAvatarUpdate={handleAvatarUpdate} />
-
-        </div>
-        <p> YOU ARE CONNECTED, THIS THE HOME PAGE </p>
-      </>
-    );
-  }
-  return (
-
-}*/

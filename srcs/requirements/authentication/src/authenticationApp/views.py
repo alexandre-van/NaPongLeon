@@ -35,6 +35,8 @@ class RegisterView(APIView):
         logger.debug(f"Request data: {request.data}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -69,6 +71,8 @@ class LoginView(APIView):
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
+
 class TokenRefreshView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES>get('refresh_token')
@@ -92,6 +96,8 @@ class TokenRefreshView(APIView):
         except TokenError:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
+
 class LogoutView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -112,6 +118,8 @@ class LogoutView(APIView):
         )
         return response
 
+
+
 class CheckAuthView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated] # if not, returns HTTP_401_UNAUTHORIZED
@@ -125,6 +133,8 @@ class CheckAuthView(APIView):
                 "avatar_url": request.user.avatar_url
             }
         }, status=status.HTTP_200_OK)
+
+
 
 class UploadAvatarView(APIView):
     authentication_classes = [CustomJWTAuthentication]
@@ -204,6 +214,8 @@ class UploadAvatarView(APIView):
             logger.error(f"Unexpected error while uploading avatar: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 class GetAvatarView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permissions_classes = [IsAuthenticated]
@@ -216,6 +228,8 @@ class GetAvatarView(APIView):
         else:
             logger.debug("No avatar found")
             return Response({'error': 'No avatar found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 class UpdateNicknameView(APIView):
     authentication_classes = [CustomJWTAuthentication]
@@ -234,7 +248,11 @@ class UpdateNicknameView(APIView):
         user.nickname = nickname
         user.save()
 
-        return Response({'message': 'Nickname updated successfully'}, status=status.HTTP_200_OK)
+        return Response({
+            'nickname': nickname
+        }, status=status.HTTP_200_OK)
+
+
 
 class GetSelfInfoView(APIView):
     authentication_classes = [CustomJWTAuthentication]

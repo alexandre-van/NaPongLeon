@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext.js';
-import useAvatarUpload from '../hooks/useAvatarUpdate.js';
 import Avatar from './Avatar.js';
 
-const AvatarUpload = () => {
+const AvatarUpload = ({ onUpload, onError }) => {
   const { user, getAvatarUrl } = useUser();
-  const { updateAvatar/*, loading: avatarLoading*/ } = useAvatarUpload();
-
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     console.log('User in AvatarUpload:', user);
@@ -20,40 +16,30 @@ const AvatarUpload = () => {
     if (file && file.type.substr(0, 5) === "image") {
       setSelectedFile(file);
       setPreview(URL.createObjectURL(file));
-      setError(null);
     } else {
       setSelectedFile(null);
       setPreview(null);
-      setError("Please select an image file");
+      onError("Please select an image file");
     }
   };
 
   const handleUpdate = async () => {
     if (!selectedFile) {
-      setError("Please select a file first");
+      onUpload({ file: null, error: "Please select an image file "});
       return;
     }
-    try {
-      await updateAvatar(selectedFile);
-      setSelectedFile(null);
-      setPreview(null);
-      setError(null);
-      console.log('Avatar uploaded successfully');
-    } catch (error) {
-      setError(error.message);
-    }
+    onUpload({ file: selectedFile, error: null });
   };
 
   const avatarUrl = preview || getAvatarUrl();
 
   return (
     <div>
-      <Avatar user={{ ...user, avatar_url: avatarUrl/*preview || user.avatar_url*/ }} />
+      <Avatar user={{ ...user, avatar_url: avatarUrl }} />
       <input type="file" onChange={handleFileSelect} accept="image/*" />
       <button onClick={handleUpdate} disabled={!selectedFile}>
         Upload Avatar
       </button>
-      {error && <p>{error}</p>}
     </div>
   );
 };

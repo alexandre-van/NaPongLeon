@@ -3,10 +3,7 @@ import { Link , useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
 import { useUser } from '../contexts/UserContext.js';
 
-//import { API_BASE_URL } from '../config.js';
-
 export function RegisterPage() {
-//  const [registrationStatus, setRegistrationStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const { register } = useUser();
@@ -27,26 +24,6 @@ export function RegisterPage() {
     }
   };
 
-/*  const handleRegister = async (userData) => {
-    try {
-      const response = await fetch(`/api/authentication/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-
-      if (response.ok) {
-        setRegistrationStatus('success');
-        navigate('/register-success');
-      } else {
-        setRegistrationStatus('failure');
-      }
-    } catch (error) {
-      console.error('Error while sign up:', error);
-      setRegistrationStatus('failure');
-    }
-  };*/
-
   return (
     <>
       {loading && <p>Registering...</p>}
@@ -60,7 +37,7 @@ export function RegisterSuccessPage() {
   return (
     <>
       <p>You are now registered and you may now log in</p>
-      <Link to="/login">Profile Page</Link>
+      <Link to="/login">Login Page</Link>
     </>
   );
 }
