@@ -1,7 +1,7 @@
 import { updateBallPosition } from './object/ball.js'
 import { updatePadsPosition } from './object/pad.js'
 import { renderer, camera, scene } from './renderer.js';
-//import { updateControls } from './controls.js';
+import { updateControls } from './controls.js';
 
 
 function startGame() {
@@ -10,7 +10,7 @@ function startGame() {
 
 function animate() {
 	requestAnimationFrame(animate);
-	//updateControls();
+	updateControls();
 	renderer.render(scene, camera);
 }
 

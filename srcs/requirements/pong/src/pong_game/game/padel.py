@@ -7,47 +7,51 @@ class Padel:
 
 		self.player = player
 		self.position = copy.copy(padel_data['pos'])
+		self.position['x'] *= 1 if self.player.side == 'right' else -1
+		self.destination = copy.copy(self.position)
 		self.direction = 0
 		self.speed = padel_data['spd']
-		self.position['x'] *= 1 if self.player.side == 'right' else -1
 		self.timer = Timer()
 
 	def update_padel_position(self):
+		self.position = self.destination
+
+	def update_padel_desination(self):
 		from .data import arena_data
 		from .data import padel_data
 
-		destination = self.position['y'] + self.direction \
-			* self.speed * self.timer.get_elapsed_time()
+		self.destination['y'] = self.position['y'] + self.direction \
+							* self.speed * self.timer.get_elapsed_time()
 		self.timer.reset()
-		collider = destination + (padel_data['size']['y'] / 2) * self.direction
+		collider = self.destination['y'] + (padel_data['size']['y'] / 2) * self.direction
 		border_collider = arena_data['size']['y'] / 2
 
 		if collider <= border_collider and collider >= - border_collider:
-			self.position['y'] = destination
+			return
 		elif self.direction == 1:
-			self.position['y'] = border_collider - (padel_data['size']['y'] / 2)
+			self.destination['y'] = border_collider - (padel_data['size']['y'] / 2)
 		elif self.direction == -1:
-			self.position['y'] = - border_collider + (padel_data['size']['y'] / 2)
+			self.destination['y'] = - border_collider + (padel_data['size']['y'] / 2)
 
-	def get_collider(self):
-		from .data import padel_data
-		dir = 1 if self.player.side == 'left' else -1
-		return {
-			'x': self.position['x'] + padel_data['size']['x'] / 2 * dir,
-			'y': {
-				'top': self.position['y'] + padel_data['size']['y'] / 2,
-				'bottom': self.position['y'] - padel_data['size']['y'] / 2
-			}
-		}
-	
-	def get_collider_side(self, dirY):
+	def get_hitbox(self, position):
 		from .data import padel_data
 		return {
-			'x': {
-				'right': self.position['x'] + padel_data['size']['x'] / 2,
-				'left' : self.position['x'] - padel_data['size']['x'] / 2
+			'A': {
+				'x': position['x'] + padel_data['size']['x'] / 2,
+				'y': position['y'] + padel_data['size']['y'] / 2
 			},
-			'y': self.position['y'] - padel_data['size']['y'] / 2 * dirY
+			'B': {
+				'x': position['x'] + padel_data['size']['x'] / 2,
+				'y': position['y'] - padel_data['size']['y'] / 2
+			},
+			'C': {
+				'x': position['x'] - padel_data['size']['x'] / 2,
+				'y': position['y'] - padel_data['size']['y'] / 2
+			},
+			'D': {
+				'x': position['x'] - padel_data['size']['x'] / 2,
+				'y': position['y'] + padel_data['size']['y'] / 2
+			}
 		}
 
 	def up(self):

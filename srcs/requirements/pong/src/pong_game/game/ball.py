@@ -14,57 +14,18 @@ class Ball:
 		from .data import arena_data
 		from .data import padel_data
 		from .data import ball_data
-		from .collisions import get_contact_point, get_contact_point_side, get_vector_direction
+		from .collisions import get_position_physic
 
 		destination = self.get_destination()
 		destination_collider = self.get_destination_collider(destination)
-		for dirX in [1, -1]:
-			from ..utils.logger import logger
-			padel = get_player_in_side ('right' if dirX == 1 else 'left').padel
-			v_dir = get_vector_direction(self.position, destination)
-			if destination_collider['x'] * dirX \
-					>= padel_data['pos']['x'] - padel_data['size']['x'] / 2 \
-				and self.position['x'] * dirX \
-					<= padel_data['pos']['x'] - padel_data['size']['x'] / 2 :
-				padel_collider = padel.get_collider()
-				contact_point = get_contact_point\
-					(self.position, ball_data['rad'], v_dir, padel_collider)
-				if contact_point != None:
-					self.position['x'] = contact_point['x'] - ball_data['rad'] * dirX
-					self.position['y'] = contact_point['y']
-					self.updateSpeedAndDir(padel)
-					return	
-			if (self.position['x'] < 0 and self.direction['x'] < 0) \
-					or (self.position['x'] > 0 and self.direction['x'] > 0):
-				if (destination_collider['y'] >= padel.position['y'] - padel_data['size']['y'] / 2 \
-					and self.position['y'] <= padel.position['y'] - padel_data['size']['y'] / 2):
-					padel_collider_side = padel.get_collider_side(1)
-					contact_point = get_contact_point_side\
-						(self.position, ball_data['rad'], v_dir, padel_collider_side)
-					if contact_point != None:
-						self.position['x'] = contact_point['x']
-						self.position['y'] = contact_point['y'] - ball_data['rad']
-						if (self.position['x'] * dirX <= padel.position['x']):
-							self.direction['x'] *= -1
-						self.direction['y'] *= -1
-						self.speed['x'] *= 1.05
-						self.speed['y'] = ball_data['spd']['y'] * 2
-						return
-				if destination_collider['y'] <= padel.position['y'] + padel_data['size']['y'] / 2 \
-					and self.position['y'] >= padel.position['y'] + padel_data['size']['y'] / 2 :
-					padel_collider_side = padel.get_collider_side(-1)
-					contact_point = get_contact_point_side\
-						(self.position, ball_data['rad'], v_dir, padel_collider_side)
-					if contact_point != None:
-						self.position['x'] = contact_point['x']
-						self.position['y'] = contact_point['y'] + ball_data['rad']
-						if (self.position['x'] * dirX <= padel.position['x']):
-							self.direction['x'] *= -1
-						self.direction['y'] *= -1
-						self.speed['x'] *= 1.05
-						self.speed['y'] = ball_data['spd']['y'] * 2
-						return
-
+		padel = get_player_in_side('right' if destination['x'] > 0 else 'left').padel
+		padel_hitbox = padel.get_hitbox(padel.position)
+		padel_hitbox_dest = padel.get_hitbox(padel.destination)
+		physic_position = get_position_physic(self.position, destination, ball_data['rad'],\
+					padel_hitbox, padel_hitbox_dest)
+		if physic_position != None:
+			self.padel_contact(physic_position, padel)
+			return
 		border_collider = self.get_border_collider()
 		for axis in ['x', 'y']:
 			if destination_collider[axis] <= border_collider[axis] \
@@ -123,17 +84,34 @@ class Ball:
 		#player.score += 1
 		#if player.score == 5:
 
-	def updateSpeedAndDir(self, padel):
+	def updateSpeedAndDir(self, padel, point_contact, segment):
 		from .data import ball_data
-		if padel.direction == 0:
-			if ball_data['spd']['y'] > ball_data['spd']['y']:
-				self.speed['y'] -= ball_data['spd']['y'] / 4
-			if ball_data['spd']['y'] < ball_data['spd']['y']:
-				self.speed['y'] += ball_data['spd']['y'] / 4
-		elif self.speed['y'] > ball_data['spd']['y'] / 2 \
-			and padel.direction != self.direction['y']:
-			self.speed['y'] -= ball_data['spd']['y'] / 2
-		elif self.speed['y'] < ball_data['spd']['y'] * 2:
-			self.speed['y'] += ball_data['spd']['y'] / 2
-		self.direction['x'] *= -1
-		self.speed['x'] *= 1.05
+		if segment == 'AB' or segment == 'CD':
+			if padel.direction == 0:
+				if ball_data['spd']['y'] > ball_data['spd']['y']:
+					self.speed['y'] -= ball_data['spd']['y'] / 4
+				elif ball_data['spd']['y'] < ball_data['spd']['y']:
+					self.speed['y'] += ball_data['spd']['y'] / 4
+			elif padel.direction != self.direction['y']:
+				if self.speed['y'] > ball_data['spd']['y'] / 2:
+					self.speed['y'] -= ball_data['spd']['y'] / 2
+			elif self.speed['y'] < ball_data['spd']['y'] * 2:
+				self.speed['y'] += ball_data['spd']['y'] / 2
+			self.direction['x'] *= -1
+			self.speed['x'] *= 1.05
+		elif segment == 'BC' or segment == 'DA':
+			if (padel.position['x'] < 0 and padel.position['x'] <= point_contact['x']) \
+				or (padel.position['x'] > 0 and padel.position['x'] >= point_contact['x']):
+				self.direction['x'] *= -1
+			self.direction['y'] *= -1
+			self.speed['y'] += ball_data['spd']['y']
+			if self.speed['y'] > ball_data['spd']['y'] * 3:
+				self.speed['y'] = ball_data['spd']['y'] * 3
+
+	def padel_contact(self, physic_position, padel):
+		center_at_contact = physic_position['center_at_contact']
+		point_contact = physic_position['point_contact']
+		segment = physic_position['segment']
+		self.position['x'] = center_at_contact['x']# - ball_data['rad'] * dirX
+		self.position['y'] = center_at_contact['y']
+		self.updateSpeedAndDir(padel, point_contact, segment)
