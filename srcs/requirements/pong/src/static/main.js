@@ -1,11 +1,11 @@
 import { init } from './srcs/init.js';
 import scene from './srcs/scene.js';
-import camera from './srcs/object/camera.js';
+import camera from './srcs/object/camera.js';	
 import { startGame, updateGame } from './srcs/animate.js';
 
 let game_id = null;
 
-const socket = new WebSocket("ws://localhost:8080/ws/pong/");
+const socket = new WebSocket("wss://cd80-81-65-161-75.ngrok-free.app/ws/pong/");
 
 socket.onopen = function(event) {
 	console.log("WebSocket connection established.");
