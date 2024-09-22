@@ -3,6 +3,7 @@ from .ball import Ball
 
 class Game:
 	def __init__(self, player_1, player_2):
+		from .timer import Timer
 		import random
 
 		side1, side2 = ('left', 'right') if random.randint(1, 2) == 1 else ('right', 'left')
@@ -11,7 +12,10 @@ class Game:
 			'p2': Player(player_2, side2)
 		}
 		self.ball = Ball()
+		self.timer = Timer()
+		self.timer.settup(None)
 		self.started = False
+		self.wait = 3
 
 	def input_players(self, player, input):
 		pn = 'p1' if player == self.players['p1'].player_consumer else 'p2'
@@ -21,11 +25,17 @@ class Game:
 		scoring_side = self.ball.is_scored()
 		if scoring_side != None:
 			return self.scored(scoring_side)
+		self.players['p1'].padel.update_padel_desination()
+		self.players['p2'].padel.update_padel_desination()
+		if (self.timer.waiting(self.wait)):
+			self.wait = 0
+			self.ball.update_ball_position(self.get_player_in_side)
+		else:
+			self.ball.timer.reset()
 		self.players['p1'].padel.update_padel_position()
 		self.players['p2'].padel.update_padel_position()
-		self.ball.update_ball_position(self.get_player_in_side)
 		return {
-			'type' : "gu", #game update
+			'type': "gu", #game update
 			'bp': self.ball.position,
 			'pp': {
 				'p1': self.get_player_in_side('left').padel.position['y'],
@@ -63,7 +73,10 @@ class Game:
 				'reason': 'The ' + str(scoring_side) + ' side wins !'
 			}
 		else:
+			self.timer.reset()
+			self.wait = 1
 			return {
 				'type': 'scored',
 				'msg': 'The ' + str(scoring_side) + ' scores : ' + str(player.score)
 			}
+		

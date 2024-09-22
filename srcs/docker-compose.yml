@@ -93,8 +93,8 @@ volumes:
 #      device: ./requirements/frontend/data
 #      o: bind
   redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./srcs/requirements/redis/data
-      o: bind
+#    driver: local
+#    driver_opts:
+#      type: none
+#      device: ./requirements/redis/data
+#      o: bind3
