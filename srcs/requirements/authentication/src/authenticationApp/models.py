@@ -7,9 +7,6 @@ import os
 def user_avatar_path(instance, filename):
     return f'users/{instance.id}/avatar/{filename}'
 
-def default_avatar_path():
-    return ''
-
 class FriendshipStatus(models.TextChoices):
     PENDING = 'PE', 'Pending'
     ACCEPTED = 'AC', 'Accepted'
@@ -54,11 +51,12 @@ class CustomUser(AbstractUser):
 
     def send_friend_request(self, to_user):
         if (to_user != self):
-            Friendship.objects.get_or_create(
+            return Friendship.objects.get_or_create(
                 from_user=self,
                 to_user=to_user,
                 defaults={'status': FriendshipStatus.PENDING}
             )
+        return None
 
     def accept_friend_request(self, from_user):
         if (to_user != self):
@@ -92,19 +90,71 @@ class CustomUser(AbstractUser):
             models.Q(friendships_received__to_user=self, friendships_received__status=FriendshipStatus.ACCEPTED)
         ).distinct()
 
-    def get_pending_friends_request(self):
+    def get_pending_friend_requests(self):
         return CustomUser.objects.filter(
             friendships_sent__to_user=self,
             friendships_sent__status=FriendshipStatus.PENDING
         )
 
+
+
 class Friendship(models.Model):
     from_user = models.ForeignKey(CustomUser, related_name='friendships_sent', on_delete=models.CASCADE)
     to_user = models.ForeignKey(CustomUser, related_name='friendships_received', on_delete=models.CASCADE)
-    status = models.CharField(max_length=2, choices=FriendshipStatus.choices, default=FriendshipStatus.PENDING)
+    status = models.CharField(max_length=2, choices=FriendshipStatus.choices, default=FriendshipStatus.PENDING, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ( 'from_user', 'to_user')
+        indexes = [
+            models.Index(fields=['status', 'from_user']),
+            models.Index(fields=['status', 'to_user']),
+        ]
 
 
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('friend_request_sent', 'Friend request sent'),
+        ('friend_request_received', 'Friend request received'),
+        ('accept_friend_request', 'Accept friend request'),
+        ('friend_request_accepted', 'Friend request accepted'),
+        ('reject_friend_request', 'Reject friend request'),
+        ('friend_request_rejected', 'Friend request rejected')
+    ]
+
+    user = models.ForeignKey(CustomUser, related_name='notifications', on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    notification_type = models.Charfield(max_length=50, choices=NOTIFICATION_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created at']
+
+    def to_dict(self):
+        return {
+            "id": self.user.id,
+            "content": self.content,
+            "notification_type": self.notification_type,
+            "created_at": self.created_at.isoformat(),
+            "is_read": self.is_read
+        }
+
+    def to_group_send_format(self):
+        return {
+            "type": f"notification"
+                "notification": self.to_dict()
+        }
+
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
+    @classmethod
+    def get_unread_notifications(cls, user):
+        return cls.objects.filter(user=user, is_read=False)
+
+    @classmethod
+    def get_all_notifications(cls, user):
+        return cls.objects.filter(user=user)

@@ -16,7 +16,7 @@ export function UserProvider({ children }) {
   const checkAuth = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/authentication/check-auth/');
+      const response = await api.get('/authentication/users/me/'); // gets a "user" object
       setUser(response.data.user);
       setIsAuthenticated(true);
       setError(null);
@@ -34,11 +34,11 @@ export function UserProvider({ children }) {
   }, [checkAuth]);
 
   const register = async (userData) => {
-    const response = await api.post('/authentication/register/', userData);
+    const response = await api.post('/authentication/users/', userData);
   };
 
   const login = async (userData) => {
-    const response = await api.post('/authentication/login/', userData);
+    const response = await api.post('/authentication/auth/login/', userData);
     if (response.data.message !== "Login successful") {
       throw new Error("Login failed");
     }
@@ -46,7 +46,7 @@ export function UserProvider({ children }) {
   };
 
   const logout = async () => {
-    await api.post('/authentication/logout/');
+    await api.post('/authentication/auth/logout/');
     setUser(null);
     setIsAuthenticated(false);
     navigate('/logout-success');

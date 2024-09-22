@@ -24,7 +24,7 @@ function UserPersonalizationPage() {
       console.log('Nickname uploaded successfully');
       setError(null);
     } catch (updateNicknameError) {
-      setError(updateNicknameError.message);
+      setError(updateNicknameError.response.data.nickname[0]);
     }
   };
 

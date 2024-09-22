@@ -53,8 +53,9 @@ services:
     env_file:
       - .env/.env.web
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
+        #        condition: service_healthy
+      - redis
     networks:
       - backend
 
@@ -67,6 +68,7 @@ services:
     depends_on:
       - nginx
       - postgres
+      - redis
     networks:
       - backend
     
@@ -91,6 +93,15 @@ services:
     depends_on:
       - nginx
       - postgres
+    networks:
+      - backend
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: on-failure
+    volumes:
+      - redis_data:/data
     networks:
       - backend
 
@@ -166,3 +177,4 @@ volumes:
     #      type: none
     #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/static
     #      o: bind
+  redis_data:

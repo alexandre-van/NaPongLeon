@@ -10,7 +10,9 @@ const useAvatarUpload = () => {
     }
     const formData = new FormData();
     formData.append('avatar', file);
-    const uploadResponse = await api.post('/authentication/upload-avatar/', formData, {
+    //const uploadResponse = await api.post('/authentication/upload-avatar/', formData, {
+
+    const uploadResponse = await api.post('/authentication/users/me/avatar/', formData, {
       headers: {
         'Content-Type': "multipart/form-data",
       }
@@ -20,7 +22,9 @@ const useAvatarUpload = () => {
       throw new Error("Failed to update avatar");
     }
 
-    const avatarResponse = await api.get('/authentication/get-avatar/');
+//    const avatarResponse = await api.get('/authentication/get-avatar/');
+
+    const avatarResponse = await api.get('/authentication/users/me/avatar/');
     if (avatarResponse.data && avatarResponse.data.avatar_url) {
       updateUser({ avatar_url: avatarResponse.data.avatar_url});
       updateAvatarVersion();
