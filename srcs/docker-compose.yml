@@ -78,7 +78,7 @@ services:
       - redis_data:/data
     networks:
       - backend
-    
+
 networks:
   backend:
     driver: bridge

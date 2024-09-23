@@ -1,9 +1,5 @@
 import numpy as np
 
-# Interpolates between two positions based on a ratio of time passed
-def interp_pos(start, end, ratio):
-	return start + ratio * (end - start)
-
 # Calculates the intersection point between the ball's trajectory and a segment with the ball's radius
 def intersec_point(A, B, ball_pos, ball_dest, r):
 	ball_dir = ball_dest - ball_pos  # Ball's direction vector
@@ -43,23 +39,20 @@ def intersec_point(A, B, ball_pos, ball_dest, r):
 	return ball_center_contact, contact_point
 
 # Main function to get ball and padel collision position
-def get_position_physic(ball_pos, ball_dest, r, pad, pad_dest):
+def get_position_physic(ball_pos, ball_dest, r, pad):
 	b_pos = np.array([ball_pos['x'], ball_pos['y']])
 	b_dest = np.array([ball_dest['x'], ball_dest['y']])
-	total_ball_dist = np.linalg.norm(b_dest - b_pos)  # Total distance ball will travel
 
-	# Calculate the interpolated position of the padel based on ball travel ratio
-	def calc_contact(p1_start, p2_start, p1_end, p2_end):
-		travel_ratio = np.linalg.norm(b_dest - b_pos) / total_ball_dist
-		p1_interp = interp_pos(np.array([p1_start['x'], p1_start['y']]), np.array([p1_end['x'], p1_end['y']]), travel_ratio)
-		p2_interp = interp_pos(np.array([p2_start['x'], p2_start['y']]), np.array([p2_end['x'], p2_end['y']]), travel_ratio)
-		return intersec_point(p1_interp, p2_interp, b_pos, b_dest, r)
+	A = np.array([pad['A']['x'], pad['A']['y']])
+	B = np.array([pad['B']['x'], pad['B']['y']])
+	C = np.array([pad['C']['x'], pad['C']['y']])
+	D = np.array([pad['D']['x'], pad['D']['y']])
 
 	# Check all four segments of the padel for a potential collision
-	contact_AB, point_AB = calc_contact(pad['A'], pad['B'], pad_dest['A'], pad_dest['B'])
-	contact_BC, point_BC = calc_contact(pad['B'], pad['C'], pad_dest['B'], pad_dest['C'])
-	contact_CD, point_CD = calc_contact(pad['C'], pad['D'], pad_dest['C'], pad_dest['D'])
-	contact_DA, point_DA = calc_contact(pad['D'], pad['A'], pad_dest['D'], pad_dest['A'])
+	contact_AB, point_AB = intersec_point(A, B, b_pos, b_dest, r)
+	contact_BC, point_BC = intersec_point(B, C, b_pos, b_dest, r)
+	contact_CD, point_CD = intersec_point(C, D, b_pos, b_dest, r)
+	contact_DA, point_DA = intersec_point(D, A, b_pos, b_dest, r)
 
 	# Store all potential contact points
 	positions = [

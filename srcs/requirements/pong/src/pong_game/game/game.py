@@ -25,15 +25,13 @@ class Game:
 		scoring_side = self.ball.is_scored()
 		if scoring_side != None:
 			return self.scored(scoring_side)
-		self.players['p1'].padel.update_padel_desination()
-		self.players['p2'].padel.update_padel_desination()
+		self.players['p1'].padel.update_padel_position()
+		self.players['p2'].padel.update_padel_position()
 		if (self.timer.waiting(self.wait)):
 			self.wait = 0
 			self.ball.update_ball_position(self.get_player_in_side)
 		else:
 			self.ball.timer.reset()
-		self.players['p1'].padel.update_padel_position()
-		self.players['p2'].padel.update_padel_position()
 		return {
 			'type': "gu", #game update
 			'bp': self.ball.position,
