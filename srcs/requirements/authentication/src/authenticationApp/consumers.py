@@ -1,4 +1,5 @@
 import json
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
@@ -11,14 +12,18 @@ from django.conf import settings
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = await self.get_user_from_token()
+        logger.debug('Connection attempt')
         if not self.user:
+            logger.debug('No user, no connection')
             await self.close()
         else:
+            logger.debug('Trying to add to group')
             await self.channel_layer.group_add(
                 f"user_{self.user.id}",
                 self.channel_name
             )
             await self.accept()
+            logger.debug('Connection accepted')
 
     @database_sync_to_async
     def get_user_from_token(self):
@@ -67,7 +72,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group.send(
                 f"user_{target_user.id}",
                 {
-                    "type": "friend_request_sent",
+                    "type": "friend_request_received",
                     "user": {
                         "id": self.user.id,
                         "username": self.user.username,

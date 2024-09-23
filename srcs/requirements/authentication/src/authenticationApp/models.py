@@ -125,12 +125,12 @@ class Notification(models.Model):
 
     user = models.ForeignKey(CustomUser, related_name='notifications', on_delete=models.CASCADE)
     content = models.TextField(blank=True)
-    notification_type = models.Charfield(max_length=50, choices=NOTIFICATION_TYPES)
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['-created at']
+        ordering = ['-created_at']
 
     def to_dict(self):
         return {
@@ -143,8 +143,8 @@ class Notification(models.Model):
 
     def to_group_send_format(self):
         return {
-            "type": f"notification"
-                "notification": self.to_dict()
+            "type": f"notification",
+            "notification": self.to_dict()
         }
 
     def mark_as_read(self):

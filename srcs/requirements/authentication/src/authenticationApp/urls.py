@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserView, LoginView, LogoutView, UserNicknameView, TokenRefreshView, UserAvatarView
+from .views import UserView, LoginView, LogoutView, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView
 
 # for development
 from django.conf import settings
@@ -17,6 +17,7 @@ urlpatterns = [
     # Authentication
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
+    path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 
 ]

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 
 import { useUser, UserProvider } from './contexts/UserContext.js';
+import { WebSocketProvider } from './contexts/WebSocketContext.js';
 
 import ConnectedLayout from './layouts/ConnectedLayout.js';
 import DefaultLayout from './layouts/DefaultLayout.js';
@@ -65,10 +66,11 @@ function App() {
   return (
     <Router>
       <UserProvider>
-        <AppContent />
+        <WebSocketProvider>
+          <AppContent />
+        </WebSocketProvider>
       </UserProvider>
     </Router>
   );
 }
-
 export default App;
