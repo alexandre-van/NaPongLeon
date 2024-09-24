@@ -73,13 +73,12 @@ const getWindowURLinfo = () => {
 };
 
 export const WebSocketProvider = ({ children }) => {
+  const [friends, setFriends] = useState([]);
   const [socket, setSocket] = useState(null);
   const { isAuthenticated } = useUser();
   const socketRef = useRef(null);
 
-  console.log('WebSocketProvider debut');
   const createWebSocketConnection = useCallback(async () => {
-    console.log('createWebSocketConnection debut');
     if (!isAuthenticated || socketRef.current) {
       return;
     }
@@ -90,12 +89,18 @@ export const WebSocketProvider = ({ children }) => {
       const wsToken = response.data.token;
       const { host, port, protocol } = getWindowURLinfo();
 
-      const newSocket = new WebSocket(`${protocol}://${host}:${port}/ws/authentication/friend-requests/?token=${wsToken}`);
-
+      const newSocket = new WebSocket(`${protocol}://${host}:8080/ws/authentication/?token=${wsToken}/`);
       newSocket.onopen = () => {
         console.log('WebSocket connected');
         setSocket(newSocket);
         socketRef.current = newSocket;
+      };
+
+      newSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'friend_list_update') {
+          setFriends(data.friends);
+        }
       };
 
       newSocket.onclose = () => {
@@ -124,7 +129,8 @@ export const WebSocketProvider = ({ children }) => {
   
   const value = React.useMemo(() => ({
     socket,
-  }), [socket]);
+    friends,
+  }), [socket, friends]);
 
   return (
     <WebSocketContext.Provider value={value}>

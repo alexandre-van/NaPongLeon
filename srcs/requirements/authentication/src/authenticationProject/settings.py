@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,7 +54,17 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [{"redis", 6379}],
+            "hosts": [("redis", 6379)],
+        }
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
 }
@@ -192,7 +203,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'authenticationApp': {  # remplacez par le nom de votre application
+        'authenticationApp': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,

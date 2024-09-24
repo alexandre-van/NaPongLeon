@@ -4,6 +4,10 @@ from django.db import models
 from django.templatetags.static import static
 import os
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 def user_avatar_path(instance, filename):
     return f'users/{instance.id}/avatar/{filename}'
 
@@ -133,18 +137,22 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
     def to_dict(self):
+        logger.debug(f"to_dict notification")
         return {
             "id": self.user.id,
+            "receiver_username": self.user.username,
             "content": self.content,
             "notification_type": self.notification_type,
             "created_at": self.created_at.isoformat(),
-            "is_read": self.is_read
+            "is_read": self.is_read,
+            "type": 'notification'
         }
 
     def to_group_send_format(self):
+        logger.debug(f"to_group_send_format notification username: {self.user.username}")
         return {
-            "type": f"notification",
-            "notification": self.to_dict()
+                "type": "notification", # Gets the notification method in Consumers called
+                "notification": self.to_dict()
         }
 
     def mark_as_read(self):

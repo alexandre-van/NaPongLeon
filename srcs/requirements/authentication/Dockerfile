@@ -10,4 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 #RUN python manage.py migrate
 
 
-CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000"]
+#CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+CMD [ "daphne", "-b", "0.0.0.0", "-p", "8000", "authenticationProject.asgi:application"]

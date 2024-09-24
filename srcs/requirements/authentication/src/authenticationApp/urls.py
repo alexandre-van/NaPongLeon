@@ -18,7 +18,7 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 ]
 
