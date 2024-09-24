@@ -10,7 +10,7 @@ function startGame() {
 
 function animate() {
 	requestAnimationFrame(animate);
-	updateControls();
+	//updateControls();
 	renderer.render(scene, camera);
 }
 

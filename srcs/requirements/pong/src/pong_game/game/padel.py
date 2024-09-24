@@ -1,36 +1,67 @@
+from .data import padel_data
 
 class Padel:
 	def __init__(self, player):
 		import copy
 		from .timer import Timer
-		from .data import padel_data
 
 		self.player = player
 		self.position = copy.copy(padel_data['pos'])
 		self.position['x'] *= 1 if self.player.side == 'right' else -1
+		self.destination = None
 		self.direction = 0
+		self.ball_contact = None
 		self.speed = padel_data['spd']
 		self.timer = Timer()
 
-	def update_padel_position(self):
+	def border_collision(self, collider):
 		from .data import arena_data
-		from .data import padel_data
+		border_collider = arena_data['size']['y'] / 2
+		if collider < border_collider and collider > - border_collider:
+			return
+		elif self.direction == 1:
+			self.destination = border_collider - (padel_data['size']['y'] / 2)
+		elif self.direction == -1:
+			self.destination = - border_collider + (padel_data['size']['y'] / 2)
 
-		self.position['y'] = self.position['y'] + self.direction \
+	def padel_collision(self, collider, ball):
+		from .data import ball_data
+		ball_collider = ball.position['y'] - ball_data['rad'] * self.direction
+		if ball.position['x'] <= self.position['x'] - padel_data['size']['x'] / 2 \
+			or self.position['x'] + padel_data['size']['x'] / 2 <= ball.position['x']:
+			return
+		if self.direction == 1 and collider > ball_collider \
+				and self.position['y'] < ball_collider:
+			self.destination = ball_collider - (padel_data['size']['y'] / 2)
+			if ball.priority == False:
+				self.ball_contact = {
+					'x': ball.position['x'],
+					'y': ball_collider - (padel_data['size']['y'] / 2)
+				}
+		elif self.direction == -1 and collider < ball_collider \
+				and self.position['y'] > ball_collider:
+			self.destination = ball_collider + (padel_data['size']['y'] / 2)
+			if ball.priority == False:
+				self.ball_contact = {
+					'x': ball.position['x'],
+					'y': ball_collider + (padel_data['size']['y'] / 2)
+				}
+
+	def update_padel_position(self, ball):
+		if self.ball_contact != None:
+			self.ball_contact = None
+			return
+		self.destination = self.position['y'] + self.direction \
 							* self.speed * self.timer.get_elapsed_time()
 		self.timer.reset()
 		collider = self.position['y'] + (padel_data['size']['y'] / 2) * self.direction
-		border_collider = arena_data['size']['y'] / 2
-
-		if collider <= border_collider and collider >= - border_collider:
-			return
-		elif self.direction == 1:
-			self.position['y'] = border_collider - (padel_data['size']['y'] / 2)
-		elif self.direction == -1:
-			self.position['y'] = - border_collider + (padel_data['size']['y'] / 2)
+		self.border_collision(collider)
+		self.padel_collision(collider, ball)
+		self.position['y'] = self.destination
+		if ball.priority == True:
+			ball.priority = False
 
 	def get_hitbox(self):
-		from .data import padel_data
 		return {
 			'A': {
 				'x': self.position['x'] + padel_data['size']['x'] / 2,

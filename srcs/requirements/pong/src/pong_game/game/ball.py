@@ -13,39 +13,24 @@ class Ball:
 		self.direction = {'x': 1, 'y': 1}
 		self.speed = copy.copy(ball_data['spd'])
 		self.timer = Timer()
+		self.priority = False
 
 	def update_ball_position(self, get_player_in_side):
+		logger.debug("update_ball_position")
 		destination = self.get_destination()
 		destination_collider = self.get_destination_collider(destination)
 		padel = get_player_in_side('right' if destination['x'] > 0 else 'left').padel
+		if padel.ball_contact != None:
+			self.updateSpeedAndDir(padel, padel.ball_contact, \
+				'DA' if padel.direction == 1 else 'BC')
+			return
 		padel_hitbox = padel.get_hitbox()
 		physic_position = get_position_physic(self.position, destination, ball_data['rad'],\
 					padel_hitbox)
 		if physic_position != None:
 			self.padel_contact(physic_position, padel)
+			self.priority = True
 			return
-		if destination['x'] * self.direction['x'] > padel_data['pos']['x'] - padel_data['size']['x'] / 2\
-			and self.position['x'] * self.direction['x'] < padel_data['pos']['x'] + padel_data['size']['x'] / 2:
-			if destination['y'] - ball_data['rad'] <= padel.position['y'] + padel_data['size']['y'] / 2 \
-				and self.position['y'] - ball_data['rad'] >= padel.position['y'] + padel_data['size']['y'] / 2 \
-				and padel.direction == 1:
-				if (padel.position['x'] < 0 and padel.position['x'] <= self.position['x']) \
-					or (padel.position['x'] > 0 and padel.position['x'] >= self.position['x']):
-					self.direction['x'] *= -1
-				self.position['y'] = padel.position['y'] + padel_data['size']['y'] / 2 + ball_data['rad']
-				self.direction['y'] = 1
-				self.incrased_y_speed(ball_data['spd']['y'])
-				return
-			if destination['y'] + ball_data['rad'] >= padel.position['y'] - padel_data['size']['y'] / 2 \
-				and self.position['y'] <= padel.position['y'] - padel_data['size']['y'] / 2 \
-				and padel.direction == -1:
-				if (padel.position['x'] < 0 and padel.position['x'] <= self.position['x']) \
-					or (padel.position['x'] > 0 and padel.position['x'] >= self.position['x']):
-					self.direction['x'] *= -1
-				self.position['y'] = padel.position['y'] - padel_data['size']['y'] / 2 - ball_data['rad']
-				self.direction['y'] = -1
-				self.incrased_y_speed(ball_data['spd']['y'])
-				return
 		border_collider = self.get_border_collider()
 		for axis in ['x', 'y']:
 			if destination_collider[axis] <= border_collider[axis] \
@@ -110,6 +95,8 @@ class Ball:
 
 
 	def updateSpeedAndDir(self, padel, point_contact, segment):
+		logger.debug("\n\nupdateSpeedAndDir\n\n")
+		logger.debug(f"{point_contact}, {segment}")
 		if segment == 'AB' or segment == 'CD':
 			self.direction['x'] *= -1
 			self.speed['x'] *= 1.05
@@ -126,8 +113,10 @@ class Ball:
 			if (padel.position['x'] < 0 and padel.position['x'] <= point_contact['x']) \
 				or (padel.position['x'] > 0 and padel.position['x'] >= point_contact['x']):
 				self.direction['x'] *= -1
-			self.direction['y'] *= -1
+			self.direction['y'] = 1 if segment == 'DA' else -1
 			self.speed['x'] *= 1.025
+			if self.speed['y'] < ball_data['spd']['y']:
+				self.speed['y'] = ball_data['spd']['y']
 			if padel.direction == 0:
 				self.incrased_y_speed(ball_data['spd']['y'] * 0.75)
 			elif padel.direction != self.direction['y']:
@@ -136,6 +125,7 @@ class Ball:
 				self.incrased_y_speed(ball_data['spd']['y'] / 2)
 
 	def padel_contact(self, physic_position, padel):
+		logger.debug("\n\npadel_contact\n\n")
 		center_at_contact = physic_position['center_at_contact']
 		point_contact = physic_position['point_contact']
 		segment = physic_position['segment']
