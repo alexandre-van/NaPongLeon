@@ -33,7 +33,7 @@ async function init(data, ws){
 	
 	await padels_init(data.padel);
 	await createPlateau(data.arena);
-	await init_map1();
+	//await init_map1();
 	await init_map2();
 	ws.send(JSON.stringify({type: 'ready'}));
 }

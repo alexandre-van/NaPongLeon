@@ -1,5 +1,9 @@
+# Django Framework
 Django==4.2.7
-gunicorn==20.1.0
+
+# Library to connect to PostgreSQL, binary to fully run without compilation on host machine
 psycopg2-binary==2.9.9
+
+# Library to manage env variables, can read from .env files
 django-environ==0.11.2
-whitenoise==6.5.0
+
