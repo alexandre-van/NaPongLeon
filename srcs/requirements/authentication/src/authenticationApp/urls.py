@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserView, LoginView, LogoutView, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView
+from .views import UserView, LoginView, LogoutView, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView, FriendsView, FriendsRequestView
 
 # for development
 from django.conf import settings
@@ -19,6 +19,10 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Friends
+    path('friends/', FriendsView.as_view(), name='friends'),
+    path('friends/requests/', FriendsRequestView.as_view(), name='friends_requests'),
 
 ]
 

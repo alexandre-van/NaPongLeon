@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext.js';
 import AddFriendButton from './AddFriendButton.js';
 import { useUser } from '../contexts/UserContext.js';
@@ -16,6 +16,8 @@ const FriendsList = () => {
         switch (data.type) {
           case 'notification':
             console.log(`New notification: ${data.content}`);
+            console.log(`notification_type: ${data.notification_type}`)
+
             setNotifications(prev => [...prev, data]);
             break;
           case 'error':
@@ -25,9 +27,40 @@ const FriendsList = () => {
             console.log(data.message);
             break;
         }
+        console.log(`notifications.length = ${notifications.length}`);
       };
     }
   }, [socket]);
+
+  const handleMessage = useCallback((event) => {
+    const data = JSON.parse(event.data);
+    console.log(`data :\ndata.type = ${data.type}`);
+    switch (data.type) {
+      case 'notification':
+        console.log(`New notification: ${data.content}`);
+        console.log(`notification_type: ${data.notification_type}`)
+        setNotifications(prev => [...prev, data]);
+        break;
+      case 'error':
+        console.error(data.message);
+        break;
+      default:
+        console.log(data.message);
+        break;
+    }
+    console.log(`notifications.length = ${notifications.length}`);
+
+    
+  });
+
+  useEffect(() => {
+    if (socket) {
+      socket.addEventListener('message', handleMessage);
+      return (
+        socket.removeEventListener('message', handleMessage)
+      );
+    }
+  }, [socket, handleMessage]);
 
   return (
     <div>

@@ -1,9 +1,11 @@
 import { useWebSocket } from '../contexts/WebSocketContext.js';
+import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
 
 const AddFriendButton = () => {
-  const [friendId, setFriendId] = useState('');
+  const [targetUsername, setTargetUsername] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const { sendFriendRequest } = useUser();
   const { socket } = useWebSocket();
 
   const showInputAddButton = () => {
@@ -15,7 +17,7 @@ const AddFriendButton = () => {
   };
 
   const handleAddFriend = async () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+/*    if (socket && socket.readyState === WebSocket.OPEN) {
       const message = {
         action: 'send_request',
         target_user_id: friendId
@@ -25,6 +27,14 @@ const AddFriendButton = () => {
       setIsAdding(false);
     } else {
       console.error("WebSocket is not open. Unable to send friend request");
+    }*/
+
+    try {
+      if (socket) {
+        await sendFriendRequest(targetUsername);
+      }
+    } catch (error) {
+      console.error(error.message);
     }
   };
 
@@ -33,8 +43,8 @@ const AddFriendButton = () => {
       <div>
         <input 
           type="text"
-          value={friendId}
-          onChange={(e) => setFriendId(e.target.value)}
+          value={targetUsername}
+          onChange={(e) => setTargetUsername(e.target.value)}
           placeholder="Enter friend's ID"
         />
         <button onClick={handleAddFriend}>Add Friend</button>

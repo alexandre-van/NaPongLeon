@@ -58,3 +58,20 @@ class AutoRefreshTokenMiddleware:
 
         # If valid access_token or no token at all
         return self.get_response(request)
+
+from asgiref.sync import sync_to_async
+
+class AsyncCustomJWTAuthentication(JWTAuthentication):
+    async def authenticate(self, request):
+        header = self.get_header(request)
+
+        if header is None:
+            raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE']) or None
+        else:
+            raw_token = self.get_raw_token(header)
+
+        if raw_token is None:
+            return None
+        
+        validated_token = await sync_to_async(self.get_validated_token)(raw_token)
+        return await sync_to_async(self.get_user)(validated_token), validated_token

@@ -39,7 +39,7 @@ export function UserProvider({ children }) {
 
   const login = async (userData) => {
     const response = await api.post('/authentication/auth/login/', userData);
-    if (response.data.message !== "Login successful") {
+    if (response.data && response.data.message !== "Login successful") {
       throw new Error("Login failed");
     }
     await checkAuth();
@@ -50,6 +50,14 @@ export function UserProvider({ children }) {
     setUser(null);
     setIsAuthenticated(false);
     navigate('/logout-success');
+    await checkAuth();
+  };
+
+  const sendFriendRequest = async (target_username) => {
+    const response = await api.post('/authentication/friends/requests/', target_username);
+    if (response.data && response.data.message !== "Friend request sent") {
+      throw new Error('Could not send friend request');
+    }
     await checkAuth();
   };
 
@@ -87,6 +95,7 @@ export function UserProvider({ children }) {
     logout,
     checkAuth,
     register,
+    sendFriendRequest,
     updateUser,
     updateAvatarVersion,
     updateNicknameVersion,

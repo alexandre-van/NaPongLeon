@@ -12,6 +12,12 @@ from rest_framework_simplejwt.exceptions import TokenError
 from .models import CustomUser
 from .serializers import UserSerializer, FriendshipSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication
+from authenticationApp.services.AsyncJWTChecks import AsyncCustomJWTAuthentication, AsyncIsAuthenticated
+
+from .services.FriendRequestService import FriendRequestService
+
+from channels.layers import get_channel_layer
+from asgiref.sync import sync_to_async, async_to_sync
 
 from PIL import Image
 import io
@@ -20,6 +26,59 @@ import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Async APIView for async views
+
+class AsyncAPIView(APIView):
+    async def dispatch(self, request, *args, **kwargs):
+        try:
+            auth_tuple = await self.perform_authentication(request)
+            if auth_tuple is None:
+                raise AuthenticationFailed('Authentication failed')
+            request.user, request.auth = auth_tuple
+
+            if not await self.check_permissions(request):
+                return await sync_to_async(self.permission_denied)(request)
+
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+            response = await handler(request, *args, **kwargs)
+
+            if isawaitable(response):
+                response = await response
+
+        except Exception as exc:
+            response = await sync_to_async(self.handle_exception)(exc)
+
+        return response
+
+    async def perform_authentication(self, request):
+        for authenticator in self.get_authenticators():
+            try:
+                user_auth_tuple = await authenticator.authenticate(request)
+            except Exception as exc:
+                await sync_to_async(self.authentication_failed)(request, exc)
+            if user_auth_tuple is not None:
+                return user_auth_tuple
+        return None
+
+    async def check_permissions(self, request):
+        for permission in self.get_permissions():
+            if not await permission.has_permission(request, self):
+                return False
+        return True
+
+    @sync_to_async
+    def authentication_failed(self, request, exc):
+        super().authentication_failed(request, exc)
+
+    @sync_to_async
+    def permission_denied(self, request):
+        super().permission_denied(request)
+
+    @sync_to_async
+    def handle_exception(self, exc):
+        return super().handle_exception(exc)
+
 
 class UserView(APIView):
     # These two methods are used to check the JWT when method is 'GET'
@@ -230,30 +289,56 @@ class UserNicknameView(APIView):
 
 # Friends related views
 
-class FriendRequestView(APIView):
+class FriendsView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    # Get waiting requests
+    # Get All Friends
     def get(self, request):
         pass
 
+#class FriendsRequestView(AsyncAPIView):
+class FriendsRequestView(APIView):
+#    authentication_classes = [CustomJWTAuthentication]
+#    permission_classes = [IsAuthenticated]
+#    authentication_classes = [AsyncCustomJWTAuthentication]
+#    permission_classes = [AsyncIsAuthenticated]
+
+    # Get waiting requests
+    async def get(self, request):
+        return Response({'message': 'Get method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
+
     # Send a friend request
-    def post(self, request):
-        user_id = request.data.get('user_id')
-        if user_id:
-            self.send_friend_request(user_id)
-            return Response({'message': 'Friend request sent'}, status=status.HTTP_200_OK)
-        return Response({'error': 'User ID required'}, status=status.HTTP_400_BAD_REQUEST)
+    async def post(self, request):
+        sender = request.user
+        receiver_username = request.data.get('target_user')
+
+        if not receiver_username:
+            return Response({'error': 'Username needed'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'Target user does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        if sender == receiver:
+            return Response({'error': 'Cannot be yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
+            if result:
+                return Response({'message': 'Friend request sent'}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'error': 'Friend request already exists'}, status=status.HTTP_409_CONFLICT)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
     # Accept a friend request
-    def patch(self, request, request_id):
-        pass
+    async def patch(self, request, request_id):
+        return Response({'message': 'Patch method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
     # Refuse or cancel a friend request
-    def delete(self, request, request_id):
-        pass
+    async def delete(self, request, request_id):
+        return Response({'message': 'Delete method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 class UserFriendView(APIView):

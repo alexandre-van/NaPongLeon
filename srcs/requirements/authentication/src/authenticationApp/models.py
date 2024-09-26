@@ -53,25 +53,26 @@ class CustomUser(AbstractUser):
                 print(f"Deleted avatar during user deletion: {avatar_path}")
         super().delete(*args, **kwargs)
 
-    def send_friend_request(self, to_user):
+    async def send_friend_request(self, to_user):
         if (to_user != self):
-            return Friendship.objects.get_or_create(
+            return Friendship.objects.aget_or_create(
                 from_user=self,
                 to_user=to_user,
                 defaults={'status': FriendshipStatus.PENDING}
             )
         return None
 
-    def accept_friend_request(self, from_user):
+    async def accept_friend_request(self, from_user):
         if (to_user != self):
-            friendship = Friendship.objects.filter(
+            friendship = await Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,
                 status=FriendshipStatus.PENDING
             ).first()
             if friendship:
                 friendship.status = FriendshipStatus.ACCEPTED
-                friendship.save()
+                friendship.asave()
+
 
     def reject_friend_request(self, from_user):
         if (to_user != self):
@@ -155,14 +156,14 @@ class Notification(models.Model):
                 "notification": self.to_dict()
         }
 
-    def mark_as_read(self):
+    async def mark_as_read(self):
         self.is_read = True
-        self.save()
+        self.asave()
 
     @classmethod
-    def get_unread_notifications(cls, user):
-        return cls.objects.filter(user=user, is_read=False)
+    async def get_unread_notifications(cls, user):
+        return await cls.objects.filter(user=user, is_read=False)
 
     @classmethod
-    def get_all_notifications(cls, user):
-        return cls.objects.filter(user=user)
+    async def get_all_notifications(cls, user):
+        return await cls.objects.filter(user=user)
