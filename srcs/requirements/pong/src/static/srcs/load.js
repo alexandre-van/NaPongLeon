@@ -7,7 +7,7 @@ function loadModelGLT(url) {
         const loader = new GLTFLoader();
         
         loader.load("static/models/" + url, function (gltf) {
-            resolve(gltf.scene);
+            resolve(gltf);
         }, undefined, function (error) {
             reject(error);
         });

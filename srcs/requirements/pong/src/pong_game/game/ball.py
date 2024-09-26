@@ -10,13 +10,12 @@ class Ball:
 		from .timer import Timer
 
 		self.position = copy.copy(ball_data['pos'])
-		self.direction = {'x': 1, 'y': 1}
+		self.direction = {'x': 1, 'y': self.random_dir()}
 		self.speed = copy.copy(ball_data['spd'])
 		self.timer = Timer()
 		self.priority = False
 
 	def update_ball_position(self, get_player_in_side):
-		logger.debug("update_ball_position")
 		destination = self.get_destination()
 		destination_collider = self.get_destination_collider(destination)
 		padel = get_player_in_side('right' if destination['x'] > 0 else 'left').padel
@@ -74,10 +73,11 @@ class Ball:
 			return None
 
 	def reset_position(self):
-		self.position['x'] = ball_data['pos']['x']
-		self.position['y'] = ball_data['pos']['y']
-		self.speed['x'] = ball_data['spd']['x']
-		self.speed['y'] = ball_data['spd']['x']
+		import random
+		import copy
+		self.position = copy.copy(ball_data['pos'])
+		self.direction['y'] = self.random_dir()
+		self.speed = copy.copy(ball_data['spd'])
 
 	def incrased_y_speed(self, incrase):
 		if (self.speed['y'] > ball_data['spd']['y'] + incrase * 2):
@@ -95,8 +95,6 @@ class Ball:
 
 
 	def updateSpeedAndDir(self, padel, point_contact, segment):
-		logger.debug("\n\nupdateSpeedAndDir\n\n")
-		logger.debug(f"{point_contact}, {segment}")
 		if segment == 'AB' or segment == 'CD':
 			self.direction['x'] *= -1
 			self.speed['x'] *= 1.05
@@ -125,10 +123,13 @@ class Ball:
 				self.incrased_y_speed(ball_data['spd']['y'] / 2)
 
 	def padel_contact(self, physic_position, padel):
-		logger.debug("\n\npadel_contact\n\n")
 		center_at_contact = physic_position['center_at_contact']
 		point_contact = physic_position['point_contact']
 		segment = physic_position['segment']
 		self.position['x'] = center_at_contact['x']
 		self.position['y'] = center_at_contact['y']
 		self.updateSpeedAndDir(padel, point_contact, segment)
+
+	def random_dir(self):
+		import random
+		return 1 if random.randint(1, 2) == 1 else -1
