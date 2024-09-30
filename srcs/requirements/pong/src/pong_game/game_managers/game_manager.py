@@ -2,11 +2,11 @@ from ..game.game import Game
 from ..utils.logger import logger
 import uuid
 
-class GameManager:
+class game_manager:
 	def __init__(self) :
 		self.games_room = {}
 		self.waiting_room = []
-		logger.debug("\nGameManager initialised\n")
+		logger.debug("\ngame_manager initialised\n")
 
 	def add_player(self, player_1):
 		if len(self.waiting_room) == 0:
@@ -32,4 +32,4 @@ class GameManager:
 		return self.games_room.get(game_id)
 
 
-game_manager = GameManager()
+game_manager = game_manager()
