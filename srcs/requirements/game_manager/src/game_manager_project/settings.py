@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
     'game_manager_app',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -79,17 +79,23 @@ ASGI_APPLICATION = 'game_manager_project.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+def read_secret(secret_name):
+    file_path = os.environ.get(f'{secret_name}_FILE')
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            return file.read().strip()
+    return None
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'votre_nouvelle_base_de_donnees',
-        'USER': 'votre_utilisateur',
-        'PASSWORD': 'votre_mot_de_passe',
-        'HOST': 'postgres',
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME_2'),
+        'USER': read_secret('DB_USER'),
+        'PASSWORD': read_secret('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

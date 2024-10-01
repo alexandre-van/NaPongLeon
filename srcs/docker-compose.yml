@@ -87,7 +87,7 @@ services:
     build: ./requirements/game_manager
     container_name: game_manager
     volumes:
-      - ./requirements/game_manager:/app
+      - ./requirements/game_manager/src:/app
       - secrets_vol:/run/secrets:ro
     restart: on-failure
     env_file:

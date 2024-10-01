@@ -1,0 +1,1 @@
+def auth_required(view_fun):
