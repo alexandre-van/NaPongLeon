@@ -44,11 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'authenticationApp',
     'channels',
 ]
 
 ASGI_APPLICATION = "authenticationProject.asgi.application"
+WSGI_APPLICATION = 'authenticationProject.wsgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
@@ -71,12 +73,14 @@ CACHES = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'authenticationApp.auth_middleware.JWTAuthMiddleware',
     'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
 
@@ -104,7 +108,35 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'authenticationProject.wsgi.application'
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

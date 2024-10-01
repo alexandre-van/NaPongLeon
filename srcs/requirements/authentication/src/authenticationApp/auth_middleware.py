@@ -2,7 +2,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.utils.functional import SimpleLazyObject
-
+from django.contrib.auth.models import AnonymousUser
+from asgiref.sync import sync_to_async
 from django.conf import settings
 
 class CustomJWTAuthentication(JWTAuthentication):
@@ -19,6 +20,34 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         validated_token = self.get_validated_token(raw_token)
         return self.get_user(validated_token), validated_token
+
+class JWTAuthMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.jwt_auth = CustomJWTAuthentication()
+
+    async def __call__(self, request):
+        # When request.user called in a view, it will be sent here
+        request.user = SimpleLazyObject(lambda: self._get_user(request))
+        response = await self.get_response(request)
+        return response
+
+    @sync_to_async
+    def _get_user(self, request):
+        # check if user is already in request's cache
+        user = getattr(request, '_cached_user', None)
+        if user is not None:
+            return user
+        # if not then checks with db
+        auth_result = self.jwt_auth.authenticate(request)
+        if auth_result is not None:
+            user, _ = auth_result
+        else:
+            user = AnonymousUser()
+
+        request._cached_user = user
+        return user
+
 
 class AutoRefreshTokenMiddleware:
     def __init__(self, get_response):

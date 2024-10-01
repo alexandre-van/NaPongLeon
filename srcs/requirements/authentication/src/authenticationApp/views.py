@@ -1,14 +1,21 @@
 #from django.shortcuts import render
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.utils.decorators import method_decorator
+from django.middleware.csrf import get_token
+from django.http import HttpRequest
 from rest_framework import status, permissions
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
+from .utils import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseNotFoundJD, HttpResponseJDexception
 from .models import CustomUser
 from .serializers import UserSerializer, FriendshipSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication
@@ -22,7 +29,7 @@ from asgiref.sync import sync_to_async, async_to_sync
 from PIL import Image
 import io
 import os
-
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,12 +61,25 @@ class AsyncAPIView(APIView):
     async def perform_authentication(self, request):
         for authenticator in self.get_authenticators():
             try:
-                user_auth_tuple = await authenticator.authenticate(request)
+                user_auth_tuple = await sync_to_async(authenticator.authenticate)(request)
             except Exception as exc:
                 await sync_to_async(self.authentication_failed)(request, exc)
             if user_auth_tuple is not None:
                 return user_auth_tuple
         return None
+
+#    @sync_to_async
+#    def perform_authentication(self, request):
+#        logger.debug('here')
+#        for authenticator in self.get_authenticators():
+#            try:
+#                user_auth_tuple = authenticator.authenticate(request)
+#            except Exception as exc:
+#                self.authentication_failed(request, exc)
+#            if user_auth_tuple is not None:
+#                return user_auth_tuple
+#        logger.debug('here end')
+#        return None
 
     async def check_permissions(self, request):
         for permission in self.get_permissions():
@@ -78,6 +98,7 @@ class AsyncAPIView(APIView):
     @sync_to_async
     def handle_exception(self, exc):
         return super().handle_exception(exc)
+
 
 
 class UserView(APIView):
@@ -108,7 +129,7 @@ class UserView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -248,7 +269,7 @@ class UserAvatarView(APIView):
 
             user = request.user
             filename = f"avatar_{user.id}.jpg"
-            filepath = f"users/{user.id}/avatar/{filename}"
+            filepath = f"users/{user.id} /avatar/{filename}"
 
             # Check if file already exists, if true, deletes it and saves the new one
             if user.avatar:
@@ -264,7 +285,7 @@ class UserAvatarView(APIView):
                 'message': 'Avatar uploaded successfully'}, status=status.HTTP_200_OK)
 
         except IOError:
-            return Response({'error': 'Unable to process the image'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Unable to process the image'}, status=status.HTTP_400_BAD_REQUEST) 
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -297,48 +318,57 @@ class FriendsView(APIView):
     def get(self, request):
         pass
 
-#class FriendsRequestView(AsyncAPIView):
-class FriendsRequestView(APIView):
-#    authentication_classes = [CustomJWTAuthentication]
-#    permission_classes = [IsAuthenticated]
-#    authentication_classes = [AsyncCustomJWTAuthentication]
-#    permission_classes = [AsyncIsAuthenticated]
 
+
+async def FriendsRequestView(request):
     # Get waiting requests
-    async def get(self, request):
-        return Response({'message': 'Get method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    logger.debug(f"request.method: {request.method}")
 
+    if request.method == "GET":
+        return HttpResponseJD('Get method not implemented yet', 501)
+
+    elif request.method == "POST":
     # Send a friend request
-    async def post(self, request):
-        sender = request.user
-        receiver_username = request.data.get('target_user')
+        sender = await sync_to_async(lambda: request.user)()
+        body = request.body
 
+        logger.debug(f"sender: {sender}")
+        logger.debug(f"request.body: {request.body}")
+        try:
+            data = json.loads(body)
+            logger.debug(f"data: {data}")
+        except json.JSONDecodeError:
+            return HttpResponseBadRequestJD('Invalid JSON')
+
+        receiver_username = data.get('target_user')
+        logger.debug(f"request_username: {receiver_username}")
         if not receiver_username:
-            return Response({'error': 'Username needed'}, status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponseBadRequestJD('Username needed')
         try:
             receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'Target user does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            return HttpResponseNotFoundJD('Target user does not exist')
         if sender == receiver:
-            return Response({'error': 'Cannot be yourself'}, status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponseBadRequestJD('Cannot be yourself')
+        logger.debug(f"sender: {sender}")
+        logger.debug(f"receiver: {receiver}")
 
         try:
             result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
             if result:
-                return Response({'message': 'Friend request sent'}, status=status.HTTP_201_CREATED)
+                return HttpResponseJD('Friend request sent', 201)
             else:
-                return Response({'error': 'Friend request already exists'}, status=status.HTTP_409_CONFLICT)
+                return HttpResponseJD('Friend request already exists', 409)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
+            return HttpResponseJDexception(e)
+    elif request.method == "PATCH":
     # Accept a friend request
-    async def patch(self, request, request_id):
-        return Response({'message': 'Patch method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
-
+        return HttpResponseJD('Patch method not implemented yet', 501)
+    elif request.method == "DELETE":
     # Refuse or cancel a friend request
-    async def delete(self, request, request_id):
-        return Response({'message': 'Delete method not implemented yet'}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        return HttpResponseJD('Delete method not implemented yet', 501)
+    else: 
+        return HttpResponseJD('Method not allowed', 405)
 
 
 class UserFriendView(APIView):
@@ -351,4 +381,5 @@ class UserFriendView(APIView):
 
     # Delete Friend
     def delete(self, request, friend_id):
-        pass
+        pass 
+

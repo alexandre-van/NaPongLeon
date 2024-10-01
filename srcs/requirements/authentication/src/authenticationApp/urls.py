@@ -22,7 +22,7 @@ urlpatterns = [
 
     # Friends
     path('friends/', FriendsView.as_view(), name='friends'),
-    path('friends/requests/', FriendsRequestView.as_view(), name='friends_requests'),
+    path('friends/requests/', FriendsRequestView, name='friends_requests'),
 
 ]
 

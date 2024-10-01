@@ -155,14 +155,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/amery/Documents/ft_transcendence/srcs/requirements/frontend/data
+      device: /sgoinfre/avan/ft_transcendence/srcs/requirements/frontend/data
       o: bind
   postgres_data:
   secrets_vol:
     driver: local
     driver_opts:
       type: none
-      device: /home/amery/Documents/ft_transcendence/srcs/.secrets
+      device: /sgoinfre/avan/ft_transcendence/srcs/.secrets
       o: bind
   media_vol:
     #    driver: local
