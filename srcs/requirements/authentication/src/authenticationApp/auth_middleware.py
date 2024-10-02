@@ -5,12 +5,19 @@ from django.utils.functional import SimpleLazyObject
 
 from django.conf import settings
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class CustomJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         header = self.get_header(request)
+        logger.debug(f"request: {request}")
+        logger.debug(f"request.COOKIES: {request.COOKIES}")
 
         if header is None:
             raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE']) or None
+            logger.debug(f"raw_token: {raw_token}")
         else:
             raw_token = self.get_raw_token(header)
 
@@ -19,6 +26,7 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         validated_token = self.get_validated_token(raw_token)
         return self.get_user(validated_token), validated_token
+        
 
 class AutoRefreshTokenMiddleware:
     def __init__(self, get_response):

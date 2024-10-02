@@ -352,3 +352,16 @@ class UserFriendView(APIView):
     # Delete Friend
     def delete(self, request, friend_id):
         pass
+
+class VerifyTokenView(APIView):
+    authentication_classes = [CustomJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        #logger.debug(f"request.data: {request.data}")
+        user = request.user
+        logger.debug(f"user={user}")
+        logger.debug(f"username={user.username}")
+        return Response({'user': user.username}, status=status.HTTP_200_OK)
+        #token = request.token
+        #access_ authenticate(request.token.get('access_token'))
