@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
         symmetrical=False,
         related_name="friended_by"
     )
+    is_online = models.BooleanField(default=False)
 
     @property
     def avatar_url(self):
@@ -44,6 +45,14 @@ class CustomUser(AbstractUser):
             except CustomUser.DoesNotExist:
                 pass
         super().save(*args, **kwargs)
+
+    async def asave(self, *args, **kwargs):
+        from asgiref.sync import sync_to_async
+        await sync_to_async(super().save)(*args, **kwargs)
+
+    async def update_user_status(self, is_online):
+        self.is_online = is_online
+        await self.asave()
 
     def delete(self, *args, **kwargs):
         if self.avatar:

@@ -74,13 +74,14 @@ CACHES = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'authenticationApp.auth_middleware.JWTAuthMiddleware',
+#    'authenticationApp.auth_middleware.JWTAuthMiddleware',
     'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
 
@@ -137,6 +138,8 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

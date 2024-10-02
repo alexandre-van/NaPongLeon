@@ -20,11 +20,18 @@ from .models import CustomUser
 from .serializers import UserSerializer, FriendshipSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication
 from authenticationApp.services.AsyncJWTChecks import AsyncCustomJWTAuthentication, AsyncIsAuthenticated
+#from .async_views import AsyncLoginConsumer
 
 from .services.FriendRequestService import FriendRequestService
 
 from channels.layers import get_channel_layer
 from asgiref.sync import sync_to_async, async_to_sync
+
+
+from channels.db import database_sync_to_async
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+
 
 from PIL import Image
 import io
@@ -33,73 +40,6 @@ import json
 import logging
 
 logger = logging.getLogger(__name__)
-
-# Async APIView for async views
-
-class AsyncAPIView(APIView):
-    async def dispatch(self, request, *args, **kwargs):
-        try:
-            auth_tuple = await self.perform_authentication(request)
-            if auth_tuple is None:
-                raise AuthenticationFailed('Authentication failed')
-            request.user, request.auth = auth_tuple
-
-            if not await self.check_permissions(request):
-                return await sync_to_async(self.permission_denied)(request)
-
-            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
-            response = await handler(request, *args, **kwargs)
-
-            if isawaitable(response):
-                response = await response
-
-        except Exception as exc:
-            response = await sync_to_async(self.handle_exception)(exc)
-
-        return response
-
-    async def perform_authentication(self, request):
-        for authenticator in self.get_authenticators():
-            try:
-                user_auth_tuple = await sync_to_async(authenticator.authenticate)(request)
-            except Exception as exc:
-                await sync_to_async(self.authentication_failed)(request, exc)
-            if user_auth_tuple is not None:
-                return user_auth_tuple
-        return None
-
-#    @sync_to_async
-#    def perform_authentication(self, request):
-#        logger.debug('here')
-#        for authenticator in self.get_authenticators():
-#            try:
-#                user_auth_tuple = authenticator.authenticate(request)
-#            except Exception as exc:
-#                self.authentication_failed(request, exc)
-#            if user_auth_tuple is not None:
-#                return user_auth_tuple
-#        logger.debug('here end')
-#        return None
-
-    async def check_permissions(self, request):
-        for permission in self.get_permissions():
-            if not await permission.has_permission(request, self):
-                return False
-        return True
-
-    @sync_to_async
-    def authentication_failed(self, request, exc):
-        super().authentication_failed(request, exc)
-
-    @sync_to_async
-    def permission_denied(self, request):
-        super().permission_denied(request)
-
-    @sync_to_async
-    def handle_exception(self, exc):
-        return super().handle_exception(exc)
-
-
 
 class UserView(APIView):
     # These two methods are used to check the JWT when method is 'GET'
@@ -118,7 +58,7 @@ class UserView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response({'message': 'Registration success'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Get User info
@@ -128,17 +68,43 @@ class UserView(APIView):
             "user": serializer.data
         }, status=status.HTTP_200_OK)
 
+'''
+@async_to_sync
+async def Login_view(request):
+    scope = {
+        'type': 'http',
+        'method': request.method,
+        'path': request.path,
+        'headers': [[key.encode(), value.encode()] for key, value in request.headers.items()],
+        'query_string': request.META.get('QUERY_STRING', '').encode(),
+    }
+    consumer = AsyncLoginConsumer(scope)
+    response = await consumer.handle(request.body)
+    return response
+'''
 
+'''
+def Login_view(request):
+    async def _login_view(request):
+        asgi_request = AsgiHandler()(request)
+        consumer = AsyncLoginConsumer()
+        response = await consumer.handle(asgi_request['body'])
+        return response
+
+    return async_to_sync(_login_view)(request)
+'''
+
+'''
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class LoginView(APIView):
-    def post(self, request):
+    async def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
 
-        user = authenticate(username=username, password=password)
+        user = await sync_to_async(authenticate)(username=username, password=password)
 
         if user is not None:
-            refresh = RefreshToken.for_user(user)
+            refresh = await sync_to_async(RefreshToken.for_user)(user)
             response = Response({'message': 'Login successful'})
 
             # Short-term Access token
@@ -163,7 +129,7 @@ class LoginView(APIView):
             return response
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
+'''
 
 
 class WebSocketTokenView(APIView):
@@ -207,6 +173,7 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        request.user.is_online = False
         response = Response({"detail": "Logout successful"}, status=status.HTTP_200_OK)
         response.delete_cookie(
             'access_token',
@@ -220,6 +187,10 @@ class LogoutView(APIView):
             #secure=False,
             #samesite='Strict'
         )
+        response.delete_cookie(
+            'csrftoken',
+        )
+        
         return response
 
 
@@ -292,6 +263,7 @@ class UserAvatarView(APIView):
 
 
 
+'''
 class UserNicknameView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -305,6 +277,7 @@ class UserNicknameView(APIView):
                 'nickname': serializer.validated_data['nickname']
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+'''
 
 
 

@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.core.serializers.json import DjangoJSONEncoder
 
 def HttpResponseJD(message, status):
-    key = 'message' if status == 201 else 'error'
+    key = 'message' if status in [200, 201] else 'error'
     response_data = {key: message}
     return HttpResponse(
         json.dumps(response_data),
