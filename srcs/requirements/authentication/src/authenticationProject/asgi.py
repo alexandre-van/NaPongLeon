@@ -14,12 +14,15 @@ django_http_server = get_asgi_application()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
+from channels.sessions import SessionMiddlewareStack
 from authenticationApp.routing import websocket_urlpatterns
 from authenticationApp.middlewares.asgi_middleware import AsyncJWTAuthMiddleware, AsyncJWTAuthMiddlewareStack, CsrfAsgiMiddleware 
 
 application = ProtocolTypeRouter({
-    "http": CsrfAsgiMiddleware(
-        AsyncJWTAuthMiddleware(django_http_server)
+    "http": SessionMiddlewareStack(
+        CsrfAsgiMiddleware(
+            AsyncJWTAuthMiddleware(django_http_server)
+        )
     ),
     "websocket": AsyncJWTAuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
 })

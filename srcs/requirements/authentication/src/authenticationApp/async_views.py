@@ -108,6 +108,12 @@ async def Login_view(request):
         )
         response['X-CSRFToken'] = csrf_token
 
+        request.session['csrf_token'] = csrf_token
+        await database_sync_to_async(request.session.save)()
+
+        # Log pour le débogage
+        print(f"CSRF token stored in session during login: {csrf_token}")
+
         await user.update_user_status(True)
         return response
     else:
@@ -115,14 +121,15 @@ async def Login_view(request):
 
 
 
-class UserNicknameView(AsyncHttpConsumer):
-    async def handle(self, request):
-        if request.method == 'POST':
-            nickname = request.data.get('nickname')
-            serializer = UserSerializer(request.user, data={'nickname': request.data.get('nickname')}, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'nickname': serializer.validated_data['nickname']
-                }, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+#class UserNicknameView(AsyncHttpConsumer):
+async def UserNicknameView(request):
+#    async def handle(self, request):
+    if request.method == 'POST':
+        nickname = request.data.get('nickname')
+        serializer = UserSerializer(request.user, data={'nickname': request.data.get('nickname')}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'nickname': serializer.validated_data['nickname']
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 

@@ -74,6 +74,7 @@ CACHES = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
 #    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -84,6 +85,8 @@ MIDDLEWARE = [
 #    'authenticationApp.auth_middleware.JWTAuthMiddleware',
     'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

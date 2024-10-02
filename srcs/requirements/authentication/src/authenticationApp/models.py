@@ -54,6 +54,8 @@ class CustomUser(AbstractUser):
         self.is_online = is_online
         await self.asave()
 
+
+
     def delete(self, *args, **kwargs):
         if self.avatar:
             avatar_path = os.path.join(settings.MEDIA_ROOT, self.avatar.name)
