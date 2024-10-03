@@ -1,5 +1,5 @@
 from .utils import HttpResponseJD, HttpResponseBadRequestJD
-from channels.generic.http import AsyncHttpConsumer
+#from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from django.middleware.csrf import get_token
 from django.contrib.auth import authenticate
@@ -114,29 +114,44 @@ async def Login_view(request):
         return HttpResponseJD('Invalid credentials', 401)
 
 
+async def UserNicknameView(request):
+    logger.debug(f"request:{request}")
+    if (request.method != 'PATCH'):
+        return HttpRequestJD('Method not allowed', 405)
 
+    try:
+        data = json.loads(request.body)
+        nickname = data.get('nickname')
+    except json.JSONDecodeError:
+        return HttpResponseBadRequestJD('Invalid JSON')
+
+    user = request.user
+    logger.debug(f"user:{user}")
+    if user.is_authenticated:
+        await user.update_nickname(nickname)
+        return HttpResponseJD('Nickname updated', 204)
+    return HttpResponseBadRequestJD('Anonymous user')
+
+'''
 #async def UserNicknameView(request):
-class UserNicknameView(AsyncHttpConsumer):
-    def __init__(self, app):
-        self.get_app = app
-#    async def handle(self, body):
-    async def handle(self, scope, receive, send):
-        logger.debug(f"request.method={scope['method']}")
-        logger.debug(f"request={scope}")
-
-        if scope['method'] != 'PATCH':
+class UserNicknameConsumer(AsyncHttpConsumer):
+#class UserNicknameConsumer(AsyncConsumer):
+    async def handle(self, body):
+        logger.debug(f"request.method={self.scope['method']}")
+        logger.debug(f"request={self.scope}")
+        if self.scope['method'] != 'PATCH':
             return HttpResponseJD('Method not allowed', 405)
 
         try:
-            body = await self.receive_json(receive)
-            #data = json.loads(body.decode('utf-8'))
+            data = json.loads(body.decode('utf-8'))
             nickname = data.get('nickname')
             logger.debug(f"data={data}")
         except json.JSONDecodeError:
             return HttpResponseBadRequestJD('Invalid JSON')
 
-        user = scope.get('user', AnonymousUser())
+        user = self.scope.get('user', AnonymousUser())
         if not isinstance(user, AnonymousUser):
             await user.update_nickname(nickname)
             return HttpResponseJD('Nickname updated', 204)
         return HttpResponseBadRequestJD('Anonymous user')
+'''

@@ -11,6 +11,8 @@ from django.utils.decorators import sync_and_async_middleware
 from rest_framework_simplejwt.tokens import UntypedToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
+from django.core.handlers.asgi import ASGIHandler
+
 from jwt import decode as jwt_decode
 import hmac
 import json
@@ -30,28 +32,61 @@ def get_user(validated_token):
 def compare_salted_tokens(token1, token2):
     return hmac.compare_digest(token1, token2)
 
+class ASGIUserMiddleware:
+    '''
+    def __init__(self, inner):
+        self.inner = inner
+
+    async def __call__(self, scope, receive, send):
+        if 'user' in scope:
+            scope['_user'] = scope['user']
+
+        async def user_middleware(request):
+            if hasattr(scope, '_user'):
+                request.user = scope['_user']
+            return await self.inner(request)
+
+        return await user_middleware(scope['request'])
+    '''
+    def __init__(self, inner):
+        self.inner = ASGIHandler()
+
+    async def __call__(self, scope, receive, send):
+        if 'user' in scope:
+            scope['_user'] = scope['user']
+
+        async def user_send(response):
+            if response['type'] == 'http.response.start':
+                if '_user' in scope:
+                    response.setdefault('headers', []).append(
+                        (b'X-User', str(scope['_user']).encode())
+                    )
+            await send(response)
+
+        await self.inner(dict(scope, user=scope.get('_user', AnonymousUser())), receive, user_send)
+
 class AsyncJWTAuthMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
-        logger.debug('AsyncJWTAuthMiddleware')
         headers = dict(scope['headers'])
+        logger.debug(f"headers:{headers}")
         if b'authorization' in headers:
             try:
-                logger.debug('AsyncJWTAuthMiddleware try debut')
                 token_name, token_key = headers[b'authorization'].decode().split()
                 if token_name == 'Bearer':
                     validated_token = UntypedToken(token_key)
                     scope['user'] = await get_user(validated_token)
-                    logger.debug('AsyncJWTAuthMiddleware if Bearer')
             except (InvalidToken, TokenError) as e:
                 scope['user'] = AnonymousUser()
         else:
             scope['user'] = AnonymousUser()
 
-        logger.debug('AsyncJWTAuthMiddleware ending')
-        return await self.inner(scope, receive, send)
+        logger.debug(f"avant les views scope[user]: {scope['user']}")
+        response = await self.inner(scope, receive, send)
+        logger.debug('apres les views')
+        return response
 
 def AsyncJWTAuthMiddlewareStack(inner):
     return AsyncJWTAuthMiddleware(AuthMiddlewareStack(inner))
@@ -62,7 +97,6 @@ class CsrfAsgiMiddleware:
         self.get_response = get_response
 
     async def __call__(self, scope, receive, send):
-        logger.debug('CsrfAsgiMiddleware')
         if scope['type'] != 'http':
             return await self.get_response(scope, receive, send)
 
@@ -79,16 +113,12 @@ class CsrfAsgiMiddleware:
         })
 
 
-        logger.debug(f"CsrfAsgiMiddleware path={request.path}")
         # Exempt routes
         exempt_paths = ['/api/authentication/auth/login/', '/api/authentication/users/']
         if request.path in exempt_paths:
-            logger.debug('Exempt paths: calling next middleware')
             response = await self.get_response(scope, receive, send)
-            logger.debug('Received response from next middleware')
             return response
 
-        logger.debug(f"CsrfAsgiMiddleware apres exempt paths")
         # Check JWT (assuming you have a function to do this)
         #if not self.validate_jwt(request):
         #    return JsonResponse({'error': 'Invalid or missing JWT'}, status=401)
@@ -97,9 +127,6 @@ class CsrfAsgiMiddleware:
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
             csrf_cookie = request.COOKIES.get('csrftoken')
             csrf_header = self.get_csrf_header(normalized_headers)
-            logger.debug(f"csrf_cookie={csrf_cookie}")
-            logger.debug(f"csrf_header={csrf_header}")
-            logger.debug(f"All headers={request.META}")
             if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
                 return await self.send_error_response(send, 'CSRF token missing or invalid', 403)
         

@@ -16,17 +16,13 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 #from channels.sessions import SessionMiddlewareStack
 from authenticationApp.routing import websocket_urlpatterns
-from authenticationApp.middlewares.asgi_middleware import AsyncJWTAuthMiddleware, AsyncJWTAuthMiddlewareStack, CsrfAsgiMiddleware 
-from authenticationApp.async_views import UserNicknameView
+from authenticationApp.middlewares.asgi_middleware import ASGIUserMiddleware, AsyncJWTAuthMiddleware, AsyncJWTAuthMiddlewareStack, CsrfAsgiMiddleware 
 from django.urls import path, re_path
 
 application = ProtocolTypeRouter({
     "http": CsrfAsgiMiddleware(
         AsyncJWTAuthMiddleware(
-            URLRouter([
-                path("users/me/nickname/", UserNicknameView.as_asgi()),
-                re_path(r"", django_http_server),
-            ])
+            ASGIUserMiddleware(django_http_server)
         )
     ),
     "websocket": AsyncJWTAuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
