@@ -1,5 +1,5 @@
 """
-ASGI config for game_manager_project project.
+ASGI config for project project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,7 +11,7 @@ import os
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.core.asgi import get_asgi_application
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'game_manager_project.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django_http_server = get_asgi_application()
 
 application = ProtocolTypeRouter({
