@@ -3,9 +3,11 @@ from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from django.middleware.csrf import get_token
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
+from asgiref.sync import sync_to_async
 import json
 import logging
 
@@ -54,9 +56,6 @@ class AsyncLoginConsumer(AsyncHttpConsumer):
     def update_user_status(self, user, is_online):
         user.is_online = is_online
         user.save()
-
-    async def body_to_string(self, body):
-        return body.decode('utf-8')
 '''
 
 
@@ -78,10 +77,8 @@ async def Login_view(request):
 
     if user is not None:
         refresh = await database_sync_to_async(RefreshToken.for_user)(user)
-#        response = JsonResponse({'message': 'Login successful'}, status=200)
+
         response = HttpResponseJD('Login successful', 200)
-
-
         response.set_cookie(
             'access_token',
             str(refresh.access_token),
@@ -108,9 +105,6 @@ async def Login_view(request):
         )
         response['X-CSRFToken'] = csrf_token
 
-        request.session['csrf_token'] = csrf_token
-        await database_sync_to_async(request.session.save)()
-
         # Log pour le débogage
         print(f"CSRF token stored in session during login: {csrf_token}")
 
@@ -121,15 +115,28 @@ async def Login_view(request):
 
 
 
-#class UserNicknameView(AsyncHttpConsumer):
-async def UserNicknameView(request):
-#    async def handle(self, request):
-    if request.method == 'POST':
-        nickname = request.data.get('nickname')
-        serializer = UserSerializer(request.user, data={'nickname': request.data.get('nickname')}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'nickname': serializer.validated_data['nickname']
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+#async def UserNicknameView(request):
+class UserNicknameView(AsyncHttpConsumer):
+    def __init__(self, app):
+        self.get_app = app
+#    async def handle(self, body):
+    async def handle(self, scope, receive, send):
+        logger.debug(f"request.method={scope['method']}")
+        logger.debug(f"request={scope}")
+
+        if scope['method'] != 'PATCH':
+            return HttpResponseJD('Method not allowed', 405)
+
+        try:
+            body = await self.receive_json(receive)
+            #data = json.loads(body.decode('utf-8'))
+            nickname = data.get('nickname')
+            logger.debug(f"data={data}")
+        except json.JSONDecodeError:
+            return HttpResponseBadRequestJD('Invalid JSON')
+
+        user = scope.get('user', AnonymousUser())
+        if not isinstance(user, AnonymousUser):
+            await user.update_nickname(nickname)
+            return HttpResponseJD('Nickname updated', 204)
+        return HttpResponseBadRequestJD('Anonymous user')

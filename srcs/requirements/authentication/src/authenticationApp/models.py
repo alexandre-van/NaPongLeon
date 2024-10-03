@@ -54,6 +54,9 @@ class CustomUser(AbstractUser):
         self.is_online = is_online
         await self.asave()
 
+    async def update_nickname(self, nickname):
+        self.nickname = nickname
+        await self.asave()
 
 
     def delete(self, *args, **kwargs):

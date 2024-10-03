@@ -13,7 +13,7 @@ urlpatterns = [
 
     # User profile management
     path('users/me/avatar/', UserAvatarView.as_view(), name='user_avatar'),
-    path('users/me/nickname/', UserNicknameView, name='update_nickname'),
+    path('users/me/nickname/', UserNicknameView.as_asgi(), name='update_nickname'),
 
     # Authentication
     path('auth/login/', Login_view, name='login'),
