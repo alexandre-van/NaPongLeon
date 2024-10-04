@@ -74,7 +74,6 @@ CACHES = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-#    'django.contrib.sessions.middleware.SessionMiddleware',
 #    'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
 #    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

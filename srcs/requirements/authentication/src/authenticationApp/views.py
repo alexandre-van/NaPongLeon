@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .utils import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseNotFoundJD, HttpResponseJDexception
+from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseNotFoundJD, HttpResponseJDexception
 from .models import CustomUser
 from .serializers import UserSerializer, FriendshipSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication

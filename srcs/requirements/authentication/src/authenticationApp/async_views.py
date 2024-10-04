@@ -1,4 +1,4 @@
-from .utils import HttpResponseJD, HttpResponseBadRequestJD
+from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD
 #from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from django.middleware.csrf import get_token
@@ -12,55 +12,6 @@ import json
 import logging
 
 logger = logging.getLogger(__name__)
-
-'''
-from asgiref.sync import sync_to_async
-
-class AsyncLoginConsumer(AsyncHttpConsumer):
-    async def handle(self, body):
-        if self.scope['method'] != 'POST':
-            return HttpResponseBadRequestJD('Method not allowed')
-        data = json.loads(await self.body_to_string(body))
-        username = data.get('username')
-        password = data.get('password')
-        user = await sync_to_async(authenticate)(username=username, password=password)
-        if user is not None:
-            refresh = await sync_to_async(RefreshToken.for_user)(user)
-            response = HttpResponseJD('Login successful', 200)
-            response.set_cookie(
-                'access_token',
-                str(refresh.access_token),
-                httponly=True,
-                secure=False, # True for production
-                samesite='Strict',
-                max_age= 60 * 60
-            )
-            response.set_cookie(
-                'refresh_token',
-                str(refresh),
-                httponly=True,
-                secure=False,
-                samesite='Strict',
-                max_age= 24 * 60 * 60
-            )
-
-            csrf_token = await database_sync_to_async(get_token)(self.scope.get('session', {}))
-            response['X-CSRFToken'] = csrf_token
-
-            await self.update_user_status(user, True)
-            return response
-        else:
-            return HttpResponseJD('Invalid credentials', 401)
-
-    @database_sync_to_async
-    def update_user_status(self, user, is_online):
-        user.is_online = is_online
-        user.save()
-'''
-
-
-
-
 
 async def Login_view(request):
     if request.method != 'POST':
@@ -117,7 +68,7 @@ async def Login_view(request):
 async def UserNicknameView(request):
     logger.debug(f"request:{request}")
     logger.debug(f"request.user:{request.user}")
-    if (request.method != 'PATCH'):
+    if request.method != 'PATCH':
         return HttpResponseJD('Method not allowed', 405)
 
     try:
@@ -128,31 +79,11 @@ async def UserNicknameView(request):
 
     user = request.user
     logger.debug(f"user:{user}")
+    logger.debug(f"user.is_authenticated ={user.is_authenticated}")
     if user.is_authenticated:
         await user.update_nickname(nickname)
-        return HttpResponseJD('Nickname updated', 204)
+        data = {
+            'nickname': nickname
+        }
+        return HttpResponseJD('Nickname updated', 200, data)
     return HttpResponseBadRequestJD('Anonymous user')
-
-'''
-#async def UserNicknameView(request):
-class UserNicknameConsumer(AsyncHttpConsumer):
-#class UserNicknameConsumer(AsyncConsumer):
-    async def handle(self, body):
-        logger.debug(f"request.method={self.scope['method']}")
-        logger.debug(f"request={self.scope}")
-        if self.scope['method'] != 'PATCH':
-            return HttpResponseJD('Method not allowed', 405)
-
-        try:
-            data = json.loads(body.decode('utf-8'))
-            nickname = data.get('nickname')
-            logger.debug(f"data={data}")
-        except json.JSONDecodeError:
-            return HttpResponseBadRequestJD('Invalid JSON')
-
-        user = self.scope.get('user', AnonymousUser())
-        if not isinstance(user, AnonymousUser):
-            await user.update_nickname(nickname)
-            return HttpResponseJD('Nickname updated', 204)
-        return HttpResponseBadRequestJD('Anonymous user')
-'''

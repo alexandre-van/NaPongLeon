@@ -164,8 +164,12 @@ class CsrfAsgiMiddleware:
             csrf_header = self.get_csrf_header(normalized_headers)
             if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
                 return await self.send_error_response(send, 'CSRF token missing or invalid', 403)
+
+        async def server_send(response):
+            logger.debug(f"response={response}")
+            await send(response)
         
-        return await self.get_response(scope, receive, send)
+        return await self.get_response(scope, receive, server_send)
 
     def get_csrf_header(self, headers):
         return (headers.get('HTTP_X_CSRFTOKEN') or 

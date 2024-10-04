@@ -2,14 +2,23 @@ import json
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.serializers.json import DjangoJSONEncoder
 
-def HttpResponseJD(message, status):
+import logging
+logger = logging.getLogger(__name__)
+
+def HttpResponseJD(message, status, additionnal_data=None):
     key = 'message' if status in [200, 201] else 'error'
     response_data = {key: message}
-    return HttpResponse(
-        json.dumps(response_data),
+
+    if additionnal_data:
+        response_data.update(additionnal_data)
+
+    response = HttpResponse(
+        json.dumps(response_data, cls=DjangoJSONEncoder),
         status=status,
         content_type='application/json'
     )
+    logger.debug(f"HttpResponseJD = {response}")
+    return response
 
 def HttpResponseBadRequestJD(errorMessage):
     return HttpResponseBadRequest(

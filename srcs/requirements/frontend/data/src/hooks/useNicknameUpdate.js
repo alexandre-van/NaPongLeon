@@ -12,15 +12,16 @@ const useNicknameUpdate = () => {
       throw new Error('Nickname must be 30 characters or fewer');
     }*/
 
-    //const uploadResponse = await api.patch('/authentication/update-nickname/', { nickname });
-
-    const uploadResponse = await api.patch('/authentication/users/me/nickname/', { nickname });
-    if (uploadResponse.data && uploadResponse.data.nickname) {
-      updateUser({ nickname: uploadResponse.data.nickname });
+    const response = await api.patch('/authentication/users/me/nickname/', { nickname });
+    if (response.status !== 200) {
+      throw new Error("Could not update nickname");
+    }
+    if (response.data && response.data.nickname) {
+      updateUser({ nickname: response.data.nickname });
       updateNicknameVersion();
-    } /*else {
-//      throw new Error("Failed to update nickname");
-    }*/
+    } else {
+      throw new Error("Nickname not found in response");
+    }
   };
 
   return ({ updateNickname });
