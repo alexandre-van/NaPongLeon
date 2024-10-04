@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
 from .utils.decorators import auth_required
-from matchmaking.signals import matchmaking_instance
+from matchmaking.thread import matchmaking_instance
 from django.conf import settings
 from .utils.logger import logger
 

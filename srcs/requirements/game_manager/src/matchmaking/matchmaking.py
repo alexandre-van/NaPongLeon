@@ -1,26 +1,28 @@
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
-from .mutex import mutex
 import asyncio
 import threading
-
 
 class Matchmaking:
 	def __init__(self):
 		logger.debug("Matchmaking init...")
-		self.is_running = False
+		self._is_running = False
+		self._task = None
+		self.mutex = threading.Lock()
 
 	async def start_matchmaking_loop(self):
-		with mutex:  # Assurer l'accès exclusif à is_running
-			self.is_running = True
+		with self.mutex:
+			self._is_running = True
 
+		self._task = asyncio.current_task()
 		try:
 			while True:
-				with mutex:  # Vérifier l'état d'exécution à chaque itération
-					if not self.is_running:
+				with self.mutex:
+					if not self._is_running:
 						break
 				logger.debug("Matchmaking loop is running...")
 				await asyncio.sleep(1)
+			logger.debug("Matchmaking stopped.")
 		except asyncio.CancelledError:
 			logger.debug("Matchmaking loop has been cancelled.")
 		finally:
@@ -28,5 +30,7 @@ class Matchmaking:
 
 	def stop_matchmaking(self):
 		logger.debug("Matchmaking stopping...")
-		with mutex:  # Protéger l'accès à is_running
-			self.is_running = False
+		with self.mutex:
+			self._is_running = False
+			if self._task:
+				self._task.cancel()

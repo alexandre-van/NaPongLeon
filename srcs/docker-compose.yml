@@ -63,7 +63,7 @@ services:
     build: ./requirements/pong
     container_name: pong
     volumes:
-      - ./requirements/pong:/app
+      - ./requirements/pong/src:/app
     restart: on-failure
     depends_on:
       - nginx
