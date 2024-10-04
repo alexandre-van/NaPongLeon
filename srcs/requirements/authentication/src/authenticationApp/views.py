@@ -67,70 +67,6 @@ class UserView(APIView):
             "user": serializer.data
         }, status=status.HTTP_200_OK)
 
-'''
-@async_to_sync
-async def Login_view(request):
-    scope = {
-        'type': 'http',
-        'method': request.method,
-        'path': request.path,
-        'headers': [[key.encode(), value.encode()] for key, value in request.headers.items()],
-        'query_string': request.META.get('QUERY_STRING', '').encode(),
-    }
-    consumer = AsyncLoginConsumer(scope)
-    response = await consumer.handle(request.body)
-    return response
-'''
-
-'''
-def Login_view(request):
-    async def _login_view(request):
-        asgi_request = AsgiHandler()(request)
-        consumer = AsyncLoginConsumer()
-        response = await consumer.handle(asgi_request['body'])
-        return response
-
-    return async_to_sync(_login_view)(request)
-'''
-
-'''
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class LoginView(APIView):
-    async def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        user = await sync_to_async(authenticate)(username=username, password=password)
-
-        if user is not None:
-            refresh = await sync_to_async(RefreshToken.for_user)(user)
-            response = Response({'message': 'Login successful'})
-
-            # Short-term Access token
-            response.set_cookie(
-                'access_token',
-                str(refresh.access_token),
-                httponly=True,
-                secure=False, # True for production
-                samesite='Strict',
-                max_age=60 * 60 # 60 mins * 60 sec
-            )
-
-            # Long-term Refresh token
-            response.set_cookie(
-                'refresh_token',
-                str(refresh),
-                httponly=True,
-                secure=False,
-                samesite='Strict',
-                max_age=24 * 60 * 60 # 1 day
-            )
-            return response
-        else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-'''
-
-
 class WebSocketTokenView(APIView):
     authentication_classes = [CustomJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -139,8 +75,6 @@ class WebSocketTokenView(APIView):
         # Short access_token for user
         token = AccessToken.for_user(request.user)
         return Response({'token': str(token)})
-
-
 
 class TokenRefreshView(APIView):
     def post(self, request):
@@ -164,35 +98,6 @@ class TokenRefreshView(APIView):
             return response
         except TokenError:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-
-class LogoutView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        request.user.is_online = False
-        response = Response({"detail": "Logout successful"}, status=status.HTTP_200_OK)
-        response.delete_cookie(
-            'access_token',
-            #httponly=True,
-            #secure=False,
-            #samesite='Strict'
-        )
-        response.delete_cookie(
-            'refresh_token',
-            #httponly=True,
-            #secure=False,
-            #samesite='Strict'
-        )
-        response.delete_cookie(
-            'csrftoken',
-        )
-        
-        return response
-
-
 
 class UserAvatarView(APIView):
     authentication_classes = [CustomJWTAuthentication]
@@ -260,23 +165,6 @@ class UserAvatarView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
-'''
-class UserNicknameView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request):
-        nickname = request.data.get('nickname')
-        serializer = UserSerializer(request.user, data={'nickname': request.data.get('nickname')}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'nickname': serializer.validated_data['nickname']
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-'''
 
 
 

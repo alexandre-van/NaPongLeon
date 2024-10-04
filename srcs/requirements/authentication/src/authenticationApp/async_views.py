@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-async def Login_view(request):
+async def LoginView(request):
     if request.method != 'POST':
         return HttpResponseBadRequestJD('Method not allowed')
 
@@ -64,6 +64,24 @@ async def Login_view(request):
     else:
         return HttpResponseJD('Invalid credentials', 401)
 
+async def LogoutView(request):
+    if request.method != 'POST':
+        return HttpResponseJD('Method not allowed', 405)
+    user = request.user
+    if user.is_authenticated:
+        await user.update_user_status(False)
+        response = HttpResponseJD('Logout successuful', 200)
+        response.delete_cookie(
+            'access_token',
+        )
+        response.delete_cookie(
+            'refresh_token',
+        )
+        response.delete_cookie(
+            'csrftoken',
+        )
+        return response
+    return HttpResponseBadRequestJD('Anonymous user')
 
 async def UserNicknameView(request):
     logger.debug(f"request:{request}")
@@ -87,3 +105,4 @@ async def UserNicknameView(request):
         }
         return HttpResponseJD('Nickname updated', 200, data)
     return HttpResponseBadRequestJD('Anonymous user')
+

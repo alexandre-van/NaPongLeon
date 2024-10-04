@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import UserView, UserAvatarView#, UserNicknameView, LoginView, LogoutView, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView, FriendsView, FriendsRequestView
-from .async_views import Login_view, UserNicknameView
+from .views import UserView, UserAvatarView#, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView, FriendsView, FriendsRequestView
+from .async_views import LoginView, LogoutView, UserNicknameView
 
 # for development
 from django.conf import settings
@@ -16,7 +16,8 @@ urlpatterns = [
     path('users/me/nickname/', UserNicknameView, name='update_nickname'),
 
     # Authentication
-    path('auth/login/', Login_view, name='login'),
+    path('auth/login/', LoginView, name='login'),
+    path('auth/logout/', LogoutView, name='logout'),
 ]
 
 if settings.DEBUG:
@@ -24,7 +25,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 '''
-    path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
