@@ -1,4 +1,4 @@
-from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD
+from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseJDexception
 #from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
 from django.middleware.csrf import get_token
@@ -8,6 +8,13 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from asgiref.sync import sync_to_async
+
+# Image loading
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from PIL import Image
+import io
+
 import json
 import logging
 
@@ -106,3 +113,60 @@ async def UserNicknameView(request):
         return HttpResponseJD('Nickname updated', 200, data)
     return HttpResponseBadRequestJD('Anonymous user')
 
+async def UserAvatarView(request):
+    if request.method == 'GET':
+        user = request.user
+        if user.avatar:
+            logger.debug(f"Avatar_url: {user.avatar.url}")
+            return HttpResponseJD('Avatar found', 200, user.avatar.url)
+        else:
+            logger.debug("No avatar found")
+            return HttpResponseJD('No avatar found', 404)
+    elif request.method == 'POST':
+        if 'avatar' not in request.FILES:
+            return HttpResponseBadRequestJD('No file uploaded')
+
+        file = request.FILES['avatar']
+        allowed_types = ['image/jpeg', 'image/png']
+        if file.content_type not in allowed_types:
+            return HttpResponseBadRequestJD('Invalid file type. Only JPEG and PNG are allowed.')
+
+        if file.size > 1024 * 1024:
+            return HttpResponseBadRequestJD('File too large. Maximum size is 1MB')
+        
+        try:
+            img = Image.open(file)
+
+            # Resize 500x500
+            img.thumbnail((500, 500))
+
+            # For transparent imgs
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG')
+            buffer.seek(0)
+
+            user = request.user
+            filename = f"avatar_{user.id}.jpg"
+            filepath = f"users/{user.id}/avatar/{filename}"
+
+            logger.debug(f"filepath: {filepath}")
+            # Check if file already exists, if true, deletes it and saves the new one
+            if user.avatar:
+                await sync_to_async(default_storage.delete)(user.avatar.name)
+
+            new_path = await sync_to_async(default_storage.save)(filepath, ContentFile(buffer.read()))
+            await user.update_avatar_url(new_path)
+
+            return HttpResponseJD('Avatar uploaded successfully', 200)
+            
+        except IOError:
+            return HttpResponseBadRequestJD('Unable to process the image')
+
+        except Exception as e:
+            return HttpResponseJDexception(e)
+    else:
+        return HttpResponseJD('Method not allowed', 405)
+            

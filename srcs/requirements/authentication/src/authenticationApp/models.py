@@ -57,6 +57,10 @@ class CustomUser(AbstractUser):
     async def update_nickname(self, nickname):
         self.nickname = nickname
         await self.asave()
+    
+    async def update_avatar_url(self, avatar_url):
+        self.avatar_url = avatar_url
+        await self.asave()
 
 
     def delete(self, *args, **kwargs):
