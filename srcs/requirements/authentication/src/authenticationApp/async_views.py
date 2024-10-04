@@ -116,8 +116,9 @@ async def Login_view(request):
 
 async def UserNicknameView(request):
     logger.debug(f"request:{request}")
+    logger.debug(f"request.user:{request.user}")
     if (request.method != 'PATCH'):
-        return HttpRequestJD('Method not allowed', 405)
+        return HttpResponseJD('Method not allowed', 405)
 
     try:
         data = json.loads(request.body)

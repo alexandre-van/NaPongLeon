@@ -1,5 +1,4 @@
 #from django.shortcuts import render
-from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
