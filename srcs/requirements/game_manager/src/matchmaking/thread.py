@@ -4,7 +4,6 @@ import asyncio
 import threading
 
 matchmaking_thread = None
-matchmaking_instance = None
 
 class AsyncLoopThread(threading.Thread):
 	def __init__(self, loop):
@@ -24,11 +23,11 @@ class AsyncLoopThread(threading.Thread):
 			self.join()
 
 def start_matchmaking():
-	global matchmaking_thread, matchmaking_instance
+	global matchmaking_thread
 	if matchmaking_thread is None:
 		logger.debug("Starting matchmaking service...")
 	
-		matchmaking_instance = Matchmaking()
+		matchmaking_instance = Matchmaking.matchmaking_instance
 		loop = asyncio.new_event_loop()
 		loop.create_task(matchmaking_instance.start_matchmaking_loop())
 
@@ -36,14 +35,15 @@ def start_matchmaking():
 		matchmaking_thread.start()
 
 def stop_matchmaking():
-	global matchmaking_thread, matchmaking_instance
+	global matchmaking_thread
 	if matchmaking_thread:
 		logger.debug("Stopping matchmaking service...")
+		matchmaking_instance = Matchmaking.matchmaking_instance
 		
 		if matchmaking_instance:
 			matchmaking_instance.stop_matchmaking()
 			
-		matchmaking_thread.stop()  # Stop le thread
+		matchmaking_thread.stop()
 		matchmaking_thread = None
 		matchmaking_instance = None
 

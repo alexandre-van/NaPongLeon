@@ -7,3 +7,4 @@ django-redis==5.2.0
 channels_redis==4.2.0
 djangorestframework
 requests
+httpx

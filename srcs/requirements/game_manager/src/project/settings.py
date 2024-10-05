@@ -172,33 +172,34 @@ CACHES = {
 # Log
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',  # Utilisation du format simple pour console
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'django_debug.log'),  # Nom et emplacement du fichier log
-            'formatter': 'verbose',  # Utilisation du format 'verbose' pour fichier
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'DEBUG',
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'formatters': {
+		'verbose': {
+			'format': '{levelname} {asctime} {module} {message}',
+			'style': '{',
+		},
+		'simple': {
+			'format': '{levelname} {message}',
+			'style': '{',
+		},
+	},
+	'handlers': {
+		'console': {
+			'level': 'DEBUG',
+			'class': 'logging.StreamHandler',
+			'formatter': 'simple',
+		},
+		'file': {
+			'level': 'DEBUG',
+			'class': 'logging.FileHandler',
+			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+			'formatter': 'verbose',
+			'mode': 'w',
+		},
+	},
+	'root': {
+		'handlers': ['console', 'file'],
+		'level': 'DEBUG',
+	},
 }

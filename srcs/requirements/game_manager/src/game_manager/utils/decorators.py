@@ -1,33 +1,38 @@
-import requests
-from rest_framework.response import Response
-from rest_framework import status
-from django.test import Client
-import json
-from pprint import pformat
+import httpx
+from django.http import JsonResponse
 from .logger import logger
 
 def auth_required(view_func):
-	def wrapper(request, *args, **kwargs):
+	async def wrapper(request, *args, **kwargs):
+		logger.debug("Auth1")
 		cookies = dict(request.COOKIES)
 		access_token = cookies.get('access_token')
 		refresh_token = cookies.get('refresh_token')
 		if not access_token:
 			logger.warning("Missing access token in cookies")
-			return Response({"error": "Missing access token"}, status=status.HTTP_401_UNAUTHORIZED)
+			return JsonResponse({"error": "Missing access token"}, status=401)
+
 		token = {
 			'access_token': access_token,
 			'refresh_token': refresh_token
 		}
+
 		auth_url = "http://authentication:8000/api/authentication/verify_token/"
+
 		try:
-			response = requests.post(auth_url, cookies=token)
-			username = response.json().get('user')
+			async with httpx.AsyncClient() as client:
+				logger.debug("Auth2")
+				response = await client.post(auth_url, cookies=token)
+				logger.debug("Auth3")
+
 			if response and response.status_code == 200:
-				return view_func(request, *args, **kwargs)
+				username = response.json().get('user')
+				kwargs['username'] = username
+				return await view_func(request, *args, **kwargs)
 			else:
-				return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
-		except requests.exceptions.RequestException as e:
+				return JsonResponse({"error": "Invalid token"}, status=401)
+		except httpx.RequestError as e:
 			logger.error(f"Authentication service error: {str(e)}")
-			return Response({"error": "Authentication service unavailable"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+			return JsonResponse({"error": "Authentication service unavailable"}, status=503)
 
 	return wrapper
