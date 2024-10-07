@@ -25,7 +25,8 @@ async function padels_init(data) {
         model2.receiveShadow = false;
         scene.add(model2);
         pad2 = model2;
-
+        window.pad1 = pad1;
+        window.pad2 = pad2;
     } catch (error) {
         console.error("Error: ", error);
     }
