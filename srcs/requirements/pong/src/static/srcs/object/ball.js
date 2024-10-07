@@ -12,6 +12,7 @@ function ball_init(ball_data) {
 	ball.position.set(ball_data.pos.x, ball_data.pos.y, ball_data.pos.z);
 	ball.castShadow = false;
 	scene.add(ball);
+	window.ball = ball;
 }
 
 function updateBallPosition(position) {
