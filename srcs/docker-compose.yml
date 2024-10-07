@@ -140,6 +140,8 @@ services:
       - postgres
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
+
+  
     
 networks:
   backend:
