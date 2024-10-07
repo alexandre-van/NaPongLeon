@@ -35,25 +35,64 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sessions',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
     'authenticationApp',
+    'channels',
 ]
+
+ASGI_APPLICATION = "authenticationProject.asgi.application"
+WSGI_APPLICATION = 'authenticationProject.wsgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        }
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+#    'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'authenticationApp.middlewares.request.DjangoUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#    'authenticationApp.auth_middleware.JWTAuthMiddleware',
+    'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'authenticationApp.auth_middleware.CustomJWTAuthentication',
+    ],
+}
 
 ROOT_URLCONF = 'authenticationProject.urls'
 
@@ -73,8 +112,37 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'authenticationProject.wsgi.application'
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -97,6 +165,10 @@ DATABASES = {
     }
 }
 
+SIMPLE_JWT = {
+    'AUTH_COOKIE': 'access_token',
+}
+
 AUTH_USER_MODEL = 'authenticationApp.CustomUser'
 
 # Password validation
@@ -116,10 +188,15 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+# Middleware to deactivate CSRF check of Django
+class CsrfExemptMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+    def __call__(self, request):
+        if getattr(request, 'csrf_exempt', False):
+            setattr(request, '_dont_enforce_csrf_checks', True)
+        return self.get_response(request)
 
 LANGUAGE_CODE = 'en-us'
 
@@ -133,9 +210,47 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static_files/'
+STATIC_ROOT = '/app/static_files'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/app/media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'authenticationApp': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+

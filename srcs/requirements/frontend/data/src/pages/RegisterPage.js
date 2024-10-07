@@ -1,46 +1,44 @@
 import { useState } from 'react';
-import SpecialLayout from '../layouts/SpecialLayout.js';
+import { Link , useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
-import SelectFaction from '../components/SelectFaction.js';
-import RegisterFailure from '../components/RegisterFailure.js';
+import { useUser } from '../contexts/UserContext.js';
 
-import { API_BASE_URL } from '../config.js';
+export function RegisterPage() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const { register } = useUser();
+  const navigate = useNavigate();
 
-export default function RegisterPage({ navigate }) {
-  const [registrationStatus, setRegistrationStatus] = useState(null);
 
   const handleRegister = async (userData) => {
+    setLoading(true);
+    setError(false);
     try {
-      const response = await fetch(`/api/authentication/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      const responseBody = await response.text();
-      console.log('Response body:', responseBody);
-
-      if (response.ok) {
-        setRegistrationStatus('success');
-      } else {
-        setRegistrationStatus('failure');
-      }
+      await register(userData);
+      navigate('/register-success');
     } catch (error) {
-      console.error('Error while sign up:', error);
-      setRegistrationStatus('failure');
+      setError(true);
+      console.log('Error during registering:', error.response);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <SpecialLayout navigate={navigate}>
-      {registrationStatus === 'success' ? (
-        <SelectFaction navigate={navigate} />
-      ) : registrationStatus === 'failure' ? (
-        <RegisterFailure onRegister={handleRegister} />
-      ) : (
-        <RegisterForm onRegister={handleRegister} /> 
-      )}
-    </SpecialLayout>
+    <>
+      {loading && <p>Registering...</p>}
+      {error && <p>An user with this name already exists</p>}
+      <RegisterForm onRegister={handleRegister} />
+    </>
   );
 }
+
+export function RegisterSuccessPage() {
+  return (
+    <>
+      <p>You are now registered and you may now log in</p>
+      <Link to="/login">Login Page</Link>
+    </>
+  );
+}
+

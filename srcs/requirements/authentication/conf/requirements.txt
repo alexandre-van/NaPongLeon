@@ -1,6 +1,39 @@
+# Django Framework
 Django==4.2.7
-gunicorn==20.1.0
+
+# WSGI production server (reverse proxy like nginx)
+# gunicorn==20.1.0
+
+#ASGI server
+daphne==4.1.2
+
+Twisted[tls,http2]
+
+# Library to connect to PostgreSQL, binary to fully run without compilation on host machine
 psycopg2-binary==2.9.9
+
+# Library to manage env variables, can read from .env files
 django-environ==0.11.2
-whitenoise==6.5.0
+
+# Library to serve static files from Gunicorn for example without needing Nginx
+# whitenoise==6.5.0
+
+# API Rest framework
 djangorestframework
+
+# JWT authentication
+djangorestframework-simplejwt
+
+# Image management
+Pillow==9.1.0
+
+# Web sockets
+channels==4.1.0
+
+django-redis==5.2.0
+
+# Redis-backed ASGI channel layer implementation
+channels_redis==4.2.0
+
+# For Cross Origin Resource Sharing
+django-cors-headers==4.4.0
