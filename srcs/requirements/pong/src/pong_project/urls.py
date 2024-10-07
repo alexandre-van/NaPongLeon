@@ -21,6 +21,5 @@ from pong_game.views import index
 
 urlpatterns = [
     path('/admin/', admin.site.urls),
-    #path('api/pong/', index, name="index"),
     path('api/pong/', index, name="index"),
 ]
