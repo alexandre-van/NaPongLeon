@@ -1,44 +1,38 @@
-import { setPad1Dir, setPad2Dir, getPad1Dir, getPad2Dir } from './pad.js';
+import { sendMove } from '../main.js';
 
-const keyUp1 = 'z';
-const keyDown1 = 's';
-const keyUp2 = 'i';
-const keyDown2 = 'k';
+let keyUp, keyDown = null;
+let up, down, stop_up, stop_down = null;
+
+function init_keyboard(key_data, input_data) {
+	keyUp = key_data.up;
+	keyDown = key_data.down;
+	console.log(input_data);
+	up = input_data.up;
+	down = input_data.down;
+	stop_up = input_data.stop_up;
+	stop_down = input_data.stop_down;
+}
 
 document.addEventListener('keydown', (event) => {
 	switch(event.key) {
-		case keyUp1:
-			setPad1Dir(1);
+		case keyUp:
+			sendMove(up);
 			break;
-		case keyDown1:
-			setPad1Dir(-1);
-			break;
-		case keyUp2:
-			setPad2Dir(1);
-			break;
-		case keyDown2:
-			setPad2Dir(-1);
+		case keyDown:
+			sendMove(down);
 			break;
 	}
 });
 
 document.addEventListener('keyup', (event) => {
 	switch(event.key) {
-		case keyUp1:
-			if (getPad1Dir() === 1)
-				setPad1Dir(0);
+		case keyUp:
+			sendMove(stop_up);
 			break;
-		case keyDown1:
-			if (getPad1Dir() === -1)
-				setPad1Dir(0);
-			break;
-		case keyUp2:
-			if (getPad2Dir() === 1)
-				setPad2Dir(0);
-			break;
-		case keyDown2:
-			if (getPad2Dir() === -1)
-				setPad2Dir(0);
+		case keyDown:
+			sendMove(stop_down);
 			break;
 	}
 });
+
+export { init_keyboard }

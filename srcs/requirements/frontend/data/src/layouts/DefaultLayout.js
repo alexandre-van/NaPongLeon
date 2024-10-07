@@ -1,13 +1,14 @@
-import Navigation from '../components/Navigation'
+import { Outlet } from 'react-router-dom';
+import Navigation from '../components/Navigation';
 
-export default function DefaultLayout({ children, navigate }) {
+export default function DefaultLayout() {
     return (
         <div className="layout">
             <header>
-                <Navigation navigate={navigate} />
+                <Navigation />
             </header>
             <main>
-                {children}
+                <Outlet />
             </main>
         </div>
     );

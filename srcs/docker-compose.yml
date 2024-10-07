@@ -1,12 +1,26 @@
 version: '3'
 
 services:
+  init_media:
+    image: alpine:latest
+    user: root
+    volumes:
+      - ./volumes/static:/source
+      - media_vol:/media
+      - static_vol:/static_files
+    command: sh -c "chown -R 101:101 /media && chmod -R 755 /media && chmod 1755 /media && chown -R 101:101 /static_files && chmod -R 755 /static_files && chmod 1755 /static_files && cp -r /source/* /static_files/"
+
   nginx:
-    image: nginx:latest
+    build: ./nginx
+      #    image: nginx:latest
     container_name: nginx
+    depends_on:
+      - init_media
     restart: on-failure
     volumes:
-      - ./.conf/nginx:/etc/nginx/conf.d
+      #  - nginx_data:/etc/nginx/conf.d
+      - media_vol:/media
+      - static_vol:/static_files
     networks:
       - backend
       - frontend
@@ -33,12 +47,15 @@ services:
     volumes:
       - ./requirements/authentication/src:/app
       - secrets_vol:/run/secrets:ro
+      - media_vol:/app/media
+      - static_vol:/app/static_files
     restart: on-failure
     env_file:
       - .env/.env.web
     depends_on:
-      - nginx
       - postgres
+        #        condition: service_healthy
+      - redis
     networks:
       - backend
 
@@ -46,11 +63,11 @@ services:
     build: ./requirements/pong
     container_name: pong
     volumes:
-      - ./requirements/pong:/app
+      - ./requirements/pong/src:/app
     restart: on-failure
     depends_on:
       - nginx
-      - postgres
+      - redis
     networks:
       - backend
     
@@ -66,15 +83,26 @@ services:
     networks:
       - backend
     
-  matchmaking:
-    build: ./requirements/matchmaking
-    container_name: matchmaking
+  game_manager:
+    build: ./requirements/game_manager
+    container_name: game_manager
     volumes:
-      - ./requirements/matchmaking:/app
+      - ./requirements/game_manager/src:/app
+      - secrets_vol:/run/secrets:ro
     restart: on-failure
+    env_file:
+      - .env/.env.web
     depends_on:
       - nginx
-      - postgres
+    networks:
+      - backend
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: on-failure
+    volumes:
+      - redis_data:/data
     networks:
       - backend
 
@@ -87,6 +115,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - secrets_vol:/run/secrets:ro
+      - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
     command: # pour les logs
@@ -95,6 +124,22 @@ services:
       - "log_statement=all"
       - "-c"
       - "log_connections=on"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: on-failure
+    networks:
+      - backend
+    depends_on:
+      - postgres
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
     
 networks:
   backend:
@@ -103,21 +148,35 @@ networks:
     driver: bridge
 
 volumes:
+  #  nginx_data:
+  #  driver: local
+  #  driver_opts:
+  #    type: none
+  #    device: /sgoinfre/avan/ft_transcendence/srcs/nginx
+  #    o: bind
   frontend_data:
     driver: local
     driver_opts:
       type: none
-      device: ./requirements/frontend/data
+      device: ./srcs/requirements/frontend/data
       o: bind
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./requirements/postgres/data
-      o: bind
   secrets_vol:
     driver: local
     driver_opts:
       type: none
-      device: ./.secrets
+      device: ./srcs/.secrets
       o: bind
+  media_vol:
+    #    driver: local
+      #    driver_opts:
+      #      type: none
+        #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/media
+        #      o: bind
+  static_vol:
+    #    driver: local
+    #    driver_opts:
+    #      type: none
+    #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/static
+    #      o: bind
+  redis_data:

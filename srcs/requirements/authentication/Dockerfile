@@ -1,10 +1,7 @@
-FROM python:3.9
+FROM python:3.9-alpine
 
 WORKDIR /app
 
-COPY ./conf/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
-#COPY src .
-
-CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000"]
+COPY ./conf/requirements.txt conf/
+RUN pip install --no-cache-dir -r conf/requirements.txt
+CMD [ "./start_authentication.sh"]
