@@ -70,7 +70,19 @@ services:
       - redis
     networks:
       - backend
-    
+
+  alt_game:
+    build: ./requirements/alt_game
+    container_name: alt_game
+    volumes:
+      - ./requirements/alt_game/src:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+      - redis
+    networks:
+      - backend
+
   tournament:
     build: ./requirements/tournament
     container_name: tournament
@@ -158,14 +170,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/amery/Documents/ft_transcendence/srcs/requirements/frontend/data
+      device: /home/sboetti/Documents/CURSUS/projetavan/ft_transcendence/srcs/requirements/frontend/data
       o: bind
   postgres_data:
   secrets_vol:
     driver: local
     driver_opts:
       type: none
-      device: /home/amery/Documents/ft_transcendence/srcs/.secrets
+      device: /home/sboetti/Documents/CURSUS/projetavan/ft_transcendence/srcs/.secrets
       o: bind
   media_vol:
     #    driver: local
