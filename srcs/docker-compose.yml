@@ -170,14 +170,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/sboetti/Documents/CURSUS/projetavan/ft_transcendence/srcs/requirements/frontend/data
+      device: ./requirements/frontend/data
       o: bind
   postgres_data:
   secrets_vol:
     driver: local
     driver_opts:
       type: none
-      device: /home/sboetti/Documents/CURSUS/projetavan/ft_transcendence/srcs/.secrets
+      device: ./.secrets
       o: bind
   media_vol:
     #    driver: local
