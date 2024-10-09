@@ -133,6 +133,7 @@ async def UserAvatarView(request):
             return HttpResponseBadRequestJD('File too large. Maximum size is 1MB')
         
         try:
+            from .utils.image_process import process_image
             img_content = file.read()
             buffer = await sync_to_async(process_image)(img_content)
 
@@ -161,20 +162,54 @@ async def UserAvatarView(request):
             return HttpResponseJDexception(e)
     else:
         return HttpResponseJD('Method not allowed', 405)
-    
-def process_image(img_content):
-    from PIL import Image
-    import io
 
-    img = Image.open(io.BytesIO(img_content))
+async def FriendsRequestView(request):
+    # Get waiting requests
+    logger.debug(f"request.method: {request.method}")
 
-    # Resize 500x500
-    img.thumbnail((500, 500))
+    if request.method == "GET":
+        return HttpResponseJD('Get method not implemented yet', 501)
 
-    # For transparent imgs
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    buffer = io.BytesIO()
-    img.save(buffer, format='JPEG')
-    buffer.seek(0)
-    return buffer
+    elif request.method == "POST":
+    # Send a friend request
+        sender = await sync_to_async(lambda: request.user)()
+        body = request.body
+
+        logger.debug(f"sender: {sender}")
+        logger.debug(f"request.body: {request.body}")
+        try:
+            data = json.loads(body)
+            logger.debug(f"data: {data}")
+        except json.JSONDecodeError:
+            return HttpResponseBadRequestJD('Invalid JSON')
+
+        receiver_username = data.get('target_user')
+        logger.debug(f"request_username: {receiver_username}")
+        if not receiver_username:
+            return HttpResponseBadRequestJD('Username needed')
+        try:
+            receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
+        except CustomUser.DoesNotExist:
+            return HttpResponseNotFoundJD('Target user does not exist')
+        if sender == receiver:
+            return HttpResponseBadRequestJD('Cannot be yourself')
+        logger.debug(f"sender: {sender}")
+        logger.debug(f"receiver: {receiver}")
+
+        try:
+            result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
+            if result:
+                return HttpResponseJD('Friend request sent', 201)
+            else:
+                return HttpResponseJD('Friend request already exists', 409)
+        except Exception as e:
+            return HttpResponseJDexception(e)
+    elif request.method == "PATCH":
+    # Accept a friend request
+        return HttpResponseJD('Patch method not implemented yet', 501)
+    elif request.method == "DELETE":
+    # Refuse or cancel a friend request
+        return HttpResponseJD('Delete method not implemented yet', 501)
+    else: 
+        return HttpResponseJD('Method not allowed', 405)
+
