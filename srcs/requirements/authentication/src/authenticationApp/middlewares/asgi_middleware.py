@@ -104,10 +104,12 @@ class AsyncJWTAuthMiddleware:
                 logger.debug(f"COOKIES:{request.COOKIES}")
                 access_token = request.COOKIES.get('access_token')
                 logger.debug(f"access_token:{access_token}")
-
-                user, validated_token = await sync_to_async(self.auth.authenticate)(request)
-                if validated_token:
-                    scope['user'] = user
+                if access_token:
+                    user, validated_token = await sync_to_async(self.auth.authenticate)(request)
+                    if validated_token:
+                        scope['user'] = user
+                else:
+                    scope['user'] = AnonymousUser()
                 
 
 #                if token_name == 'access_token':

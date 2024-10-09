@@ -144,7 +144,7 @@ class UserAvatarView(APIView):
 
             user = request.user
             filename = f"avatar_{user.id}.jpg"
-            filepath = f"users/{user.id} /avatar/{filename}"
+            filepath = f"users/{user.id}/avatar/{filename}"
 
             # Check if file already exists, if true, deletes it and saves the new one
             if user.avatar:
