@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY conf/requirements.txt .
 
+# install django to create the project
+RUN pip install --no-cache-dir -r requirements.txt
 RUN apk add --no-cache bash
 
-CMD ["tail -f /dev/null"]
+CMD ["/bin/bash"]
