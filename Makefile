@@ -10,7 +10,7 @@ stop:
 
 fclean:
 	@echo "Removing volumes and built containers"
-	docker system prune -af
+	docker system prune -af && docker volume rm $$(docker volume ls)
 
 remove_db:
 	@echo "Removing volumes content"
