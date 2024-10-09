@@ -4,7 +4,7 @@ import scene from '../scene.js';
 
 async function createTable() {
 	try {
-		const model = await loadModelGLT('table.glb').scene;
+		const model = (await loadModelGLT('table.glb')).scene;
 		const texture = await loadTexture ('wood.jpg')
 		model.position.set(0, 0, -27.5);
 		model.traverse(function (child) {

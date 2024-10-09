@@ -1,9 +1,7 @@
-import DefaultLayout from "../layouts/DefaultLayout";
-
-export default function NewsPage({ navigate }) {
-    return (
-        <DefaultLayout navigate={navigate}>
-            <p>News Page</p>
-        </DefaultLayout>
-    );
+export default function NewsPage() {
+  return (
+    <div>
+      <p>NEWS PAGE</p>
+    </div>
+  );
 }

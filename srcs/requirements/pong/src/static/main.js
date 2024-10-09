@@ -4,8 +4,11 @@ import './srcs/scene.js';
 import './srcs/object/camera.js';
 
 let game_id = null;
+const host = window.location.hostname;
+const port = window.location.port;
+const gameId = window.gameInfo.gameId;
 
-const socket = new WebSocket("ws://localhost:8080/ws/pong/");
+const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/`);
 
 socket.onopen = function() {
 	console.log("WebSocket connection established.");

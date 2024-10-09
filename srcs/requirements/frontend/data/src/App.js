@@ -1,43 +1,76 @@
-import { useState } from 'react';
-import HomePage from './pages/HomePage.js'
-import AboutPage from './pages/AboutPage.js'
-import './assets/App.css';
-import NewsPage from './pages/NewsPage.js';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+
+import { useUser, UserProvider } from './contexts/UserContext.js';
+import { WebSocketProvider } from './contexts/WebSocketContext.js';
+
+import ConnectedLayout from './layouts/ConnectedLayout.js';
+import DefaultLayout from './layouts/DefaultLayout.js';
+import SpecialLayout from './layouts/SpecialLayout.js';
+
+import HomePage from './pages/HomePage.js';
+import Formations from './pages/Formations.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
+import LogoutPage from './pages/LogoutPage.js';
+import NewsPage from './pages/NewsPage.js';
+import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
+import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home');
 
-  const navigate = (page) => {
-    setCurrentPage(page);
-  };
+import ProtectedRoute from './components/ProtectedRoute.js';
+//import './assets/App.css';
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <HomePage navigate={navigate} />;
-      case 'about':
-        return <AboutPage navigate={navigate} />;
-      case 'game-modes':
-        return <GameModePage navigate={navigate} />;
-      case 'leaderboard':
-        return <Leaderboard navigate={navigate} />;
-      case 'login':
-        return <LoginPage navigate={navigate} />;
-      case 'news':
-        return <NewsPage navigate={navigate} />;
-      default:
-        return <HomePage navigate={navigate} />;
-    }
-  };
+function AppContent() {
+  const { user, isAuthenticated, loading, /*checkAuth*/ } = useUser();
+  const location = useLocation();
+
+  /*useEffect(() => {
+    checkAuth();
+  }, [location.pathname], checkAuth());*/
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="App">
-      {renderPage()}
-    </div>
+      <Routes>
+        <Route element={isAuthenticated ? <ConnectedLayout /> : <DefaultLayout />} >
+          <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
+          <Route path="news" element={<NewsPage />} />
+          <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="game-modes" element={<GameModePage />} />
+          <Route path="logout" element={<Navigate to="/logout-success" replace />} />
+          <Route path="*" element={<HomePage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />} >
+          <Route element={<ConnectedLayout />} >
+            <Route path="formations" element={<Formations />} />
+            <Route path="user-personalization" element={<UserPersonalizationPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<SpecialLayout />} >
+          <Route path="login" element={<LoginPage />} />
+          <Route path="logout-success" element={<LogoutPage /> } />
+          <Route path="register" element={<RegisterPage />} />
+          <Route path="register-success" element={<RegisterSuccessPage />} />
+        </Route>
+      </Routes>
   );
 }
 
+function App() {
+  return (
+    <Router>
+      <UserProvider>
+        <WebSocketProvider>
+          <AppContent />
+        </WebSocketProvider>
+      </UserProvider>
+    </Router>
+  );
+}
 export default App;
