@@ -75,17 +75,17 @@ class Matchmaking:
 					break
 
 	def notify_players(self, queue_selected):
-		result = {
-			"game_id": str(uuid.uuid4()),
-			"players": [p['username'] for p in queue_selected]
-		}
-		logger.debug(f'New group : {result}')
+		logger.debug(f'New group !')
+		players = [p['username'] for p in queue_selected]
 		for player_request in queue_selected:
 			username = player_request['username']
 			if username in self._futures:
 				future = self._futures[username]
 				if not future.done():
-					future.set_result(result)
+					future.set_result({
+						"game_id": str(uuid.uuid4()),
+						"players": players
+					})
 				del self._futures[username]
 
 	async def matchmaking_loop(self):

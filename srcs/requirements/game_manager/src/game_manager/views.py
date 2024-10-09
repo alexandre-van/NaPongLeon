@@ -5,6 +5,7 @@ from .utils.decorators import auth_required
 from matchmaking.matchmaking import Matchmaking
 from .utils.logger import logger
 from rest_framework import status
+from .models import GameInstance
 import asyncio
 
 @auth_required
