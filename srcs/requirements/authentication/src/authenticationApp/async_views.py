@@ -1,26 +1,18 @@
 from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseJDexception
-#from channels.generic.http import AsyncHttpConsumer
 from channels.db import database_sync_to_async
-from django.middleware.csrf import get_token
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import JsonResponse
+#from rest_framework import status
 from asgiref.sync import sync_to_async
-
-# Image loading
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-from PIL import Image
-import io
 
 import json
 import logging
-
 logger = logging.getLogger(__name__)
 
 async def LoginView(request):
+    from django.contrib.auth import authenticate
+    from django.middleware.csrf import get_token
+    from rest_framework_simplejwt.tokens import RefreshToken
+
     if request.method != 'POST':
         return HttpResponseBadRequestJD('Method not allowed')
 
@@ -114,11 +106,17 @@ async def UserNicknameView(request):
     return HttpResponseBadRequestJD('Anonymous user')
 
 async def UserAvatarView(request):
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+
+    user = request.user
     if request.method == 'GET':
-        user = request.user
         if user.avatar:
             logger.debug(f"Avatar_url: {user.avatar.url}")
-            return HttpResponseJD('Avatar found', 200, user.avatar.url)
+            data = {
+                'avatar_url': user.avatar.url
+            }
+            return HttpResponseJD('Avatar found', 200, data)
         else:
             logger.debug("No avatar found")
             return HttpResponseJD('No avatar found', 404)
@@ -135,30 +133,24 @@ async def UserAvatarView(request):
             return HttpResponseBadRequestJD('File too large. Maximum size is 1MB')
         
         try:
-            img = Image.open(file)
+            img_content = file.read()
+            buffer = await sync_to_async(process_image)(img_content)
 
-            # Resize 500x500
-            img.thumbnail((500, 500))
-
-            # For transparent imgs
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-
-            buffer = io.BytesIO()
-            img.save(buffer, format='JPEG')
-            buffer.seek(0)
-
-            user = request.user
+            logger.debug(f"\n\nuser.id=[{user.id}]\n\n")
             filename = f"avatar_{user.id}.jpg"
             filepath = f"users/{user.id}/avatar/{filename}"
 
-            logger.debug(f"filepath: {filepath}")
+            logger.debug(f"filepath: {filepath}\n")
+            logger.debug(f"user.avatar = {user.avatar}\n")
             # Check if file already exists, if true, deletes it and saves the new one
             if user.avatar:
                 await sync_to_async(default_storage.delete)(user.avatar.name)
 
-            new_path = await sync_to_async(default_storage.save)(filepath, ContentFile(buffer.read()))
+            logger.debug("else debut default_storage.save")
+            new_path = await sync_to_async(default_storage.save)(filepath, ContentFile(buffer.getvalue()))
+            logger.debug("else fin default_storage.save")
             await user.update_avatar_url(new_path)
+            logger.debug("fin avant response")
 
             return HttpResponseJD('Avatar uploaded successfully', 200)
             
@@ -169,4 +161,20 @@ async def UserAvatarView(request):
             return HttpResponseJDexception(e)
     else:
         return HttpResponseJD('Method not allowed', 405)
-            
+    
+def process_image(img_content):
+    from PIL import Image
+    import io
+
+    img = Image.open(io.BytesIO(img_content))
+
+    # Resize 500x500
+    img.thumbnail((500, 500))
+
+    # For transparent imgs
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    buffer = io.BytesIO()
+    img.save(buffer, format='JPEG')
+    buffer.seek(0)
+    return buffer

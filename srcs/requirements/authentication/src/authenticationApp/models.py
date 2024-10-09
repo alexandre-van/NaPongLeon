@@ -59,7 +59,7 @@ class CustomUser(AbstractUser):
         await self.asave()
     
     async def update_avatar_url(self, avatar_url):
-        self.avatar_url = avatar_url
+        self.avatar = avatar_url
         await self.asave()
 
 
