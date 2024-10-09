@@ -4,14 +4,23 @@ import scene from '../scene.js';
 
 let ball = null;
 
+function create_ball_data(model, data) {
+	return {
+		model: model,
+		position: model.position,
+		data: data
+	}
+}
+
 function ball_init(ball_data) {
 	const geometry = new THREE.SphereGeometry(ball_data.rad, 32, 32);
 	const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-	ball = new THREE.Mesh(geometry, material);
+	const model = new THREE.Mesh(geometry, material);
 
-	ball.position.set(ball_data.pos.x, ball_data.pos.y, ball_data.pos.z);
-	ball.castShadow = false;
-	scene.add(ball);
+	model.position.set(ball_data.pos.x, ball_data.pos.y, ball_data.pos.z);
+	model.castShadow = false;
+	scene.add(model);
+	ball = create_ball_data(model, ball_data);
 	window.ball = ball;
 }
 
