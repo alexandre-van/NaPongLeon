@@ -178,7 +178,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/amery/Documents/ft_transcendence/srcs/.secrets
+      device: ./.secrets
       o: bind
   media_vol:
     #    driver: local
