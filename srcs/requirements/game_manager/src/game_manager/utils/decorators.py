@@ -1,10 +1,10 @@
 import httpx
+from django.conf import settings
 from django.http import JsonResponse
 from .logger import logger
 
 def auth_required(view_func):
 	async def wrapper(request, *args, **kwargs):
-		logger.debug("Auth1")
 		cookies = dict(request.COOKIES)
 		access_token = cookies.get('access_token')
 		refresh_token = cookies.get('refresh_token')
@@ -21,9 +21,7 @@ def auth_required(view_func):
 
 		try:
 			async with httpx.AsyncClient() as client:
-				logger.debug("Auth2")
 				response = await client.post(auth_url, cookies=token)
-				logger.debug("Auth3")
 
 			if response and response.status_code == 200:
 				username = response.json().get('user')

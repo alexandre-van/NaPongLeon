@@ -13,9 +13,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 # Config
-from .config import GAME_MODES
+from .config import GAME_MODES, AUTH_SERVICE_URL
 
 GAME_MODES = GAME_MODES
+AUTH_SERVICE_URL = AUTH_SERVICE_URL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
