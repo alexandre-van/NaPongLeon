@@ -188,6 +188,8 @@ async def FriendsRequestView(request):
         if not receiver_username:
             return HttpResponseBadRequestJD('Username needed')
         try:
+            from .models import CustomUser
+
             receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
         except CustomUser.DoesNotExist:
             return HttpResponseNotFoundJD('Target user does not exist')
@@ -197,6 +199,8 @@ async def FriendsRequestView(request):
         logger.debug(f"receiver: {receiver}")
 
         try:
+            from .services.FriendRequestService import FriendRequestService
+
             result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
             if result:
                 return HttpResponseJD('Friend request sent', 201)
@@ -213,3 +217,20 @@ async def FriendsRequestView(request):
     else: 
         return HttpResponseJD('Method not allowed', 405)
 
+
+async def NotificationsView(request):
+    logger.debug(f"request.method: {request.method}")
+    if request.method != "GET":
+        return HttpResponseJD('Method not allowed', 405)
+
+    from .models import Notification
+
+    user = request.user
+    notifications = await Notification.get_all_notifications(user)
+
+    for notification in notifications:
+        notification['created_at'] = notification['created_at'].isoformat()
+
+    logger.debug(f"notifications={notifications}")
+    response = HttpResponseJD('Notifications', 200, notifications)
+    return response

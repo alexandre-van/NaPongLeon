@@ -15,13 +15,11 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseNotFoundJD, HttpResponseJDexception
-from .models import CustomUser
 from .serializers import UserSerializer, FriendshipSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication
 from authenticationApp.services.AsyncJWTChecks import AsyncCustomJWTAuthentication, AsyncIsAuthenticated
 #from .async_views import AsyncLoginConsumer
 
-from .services.FriendRequestService import FriendRequestService
 
 from channels.layers import get_channel_layer
 from asgiref.sync import sync_to_async, async_to_sync
@@ -98,73 +96,6 @@ class TokenRefreshView(APIView):
             return response
         except TokenError:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-class UserAvatarView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    # Get avatar_url
-    def get(self, request):
-        user = request.user
-        if user.avatar:
-            logger.debug(f"Avatar_url: {user.avatar.url}")
-            return Response({'avatar_url': user.avatar_url}, status=status.HTTP_200_OK)
-        else:
-            logger.debug("No avatar found")
-            return Response({'error': 'No avatar found'}, status=status.HTTP_404_NOT_FOUND)
-
-    # Update avatar_url
-    def post(self, request):
-        if 'avatar' not in request.FILES:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-        file = request.FILES['avatar']
-
-        allowed_types = ['image/jpeg', 'image/png']
-        if file.content_type not in allowed_types:
-            return Response({'error': 'Invalid file type. Only JPEG and PNG are allowed'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if file.size > 5 * 1024 * 1024:
-#            logger.warning(f"File too large: {file.size}")
-            return Response({'error': 'File too large. Maximum size is 5MB'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            img = Image.open(file)
-
-            # Resize 500x500
-            img.thumbnail((500, 500))
-
-            # For transparent imgs
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-
-            buffer = io.BytesIO()
-            img.save(buffer, format='JPEG')
-            buffer.seek(0)
-
-            user = request.user
-            filename = f"avatar_{user.id}.jpg"
-            filepath = f"users/{user.id}/avatar/{filename}"
-
-            # Check if file already exists, if true, deletes it and saves the new one
-            if user.avatar:
-                default_storage.delete(user.avatar.name)
-
-            new_path = default_storage.save(filepath, ContentFile(buffer.read()))
-
-            user.avatar = new_path
-            user.save()
-
-            avatar_url = request.build_absolute_uri(user.avatar.url)
-            return Response({
-                'message': 'Avatar uploaded successfully'}, status=status.HTTP_200_OK)
-
-        except IOError:
-            return Response({'error': 'Unable to process the image'}, status=status.HTTP_400_BAD_REQUEST) 
-
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 

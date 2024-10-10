@@ -6,7 +6,7 @@ const AddFriendButton = () => {
   const [targetUsername, setTargetUsername] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const { sendFriendRequest } = useUser();
-  const { socket } = useWebSocket();
+//  const { socket } = useWebSocket();
 
   const showInputAddButton = () => {
     return (
@@ -30,9 +30,9 @@ const AddFriendButton = () => {
     }*/
 
     try {
-      if (socket) {
+ //     if (socket) {
         await sendFriendRequest(targetUsername);
-      }
+  //    }
     } catch (error) {
       console.error(error.message);
     }

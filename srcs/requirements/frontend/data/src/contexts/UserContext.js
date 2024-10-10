@@ -54,8 +54,9 @@ export function UserProvider({ children }) {
   };
 
   const sendFriendRequest = async (target_username) => {
+    console.log('sendFriendRequest, target_user:', target_username);
     const response = await api.post('/authentication/friends/requests/', {
-      target_user: target_username
+      'target_user': target_username,
     });
     if (response.data && response.data.message !== "Friend request sent") {
       throw new Error('Could not send friend request');

@@ -13,16 +13,10 @@ async def send_notification(receiver_id, notification):
 class FriendRequestService:
     @staticmethod
     async def create_and_send_friend_request(sender, receiver):
-        friendship = await sender.send_friend_request(receiver)
+        notification = await sender.create_friendship(receiver)
 
-        if friendship:
-            notification = await Notification.objects.acreate(
-                user=receiver,
-                content=f"{sender.username} sent you a friend request",
-                notification_type="friend_request_received"
-            )
+        if notification:
             await send_notification(receiver.id, notification)
             return True
         # Friendship already exists
         return False
-        

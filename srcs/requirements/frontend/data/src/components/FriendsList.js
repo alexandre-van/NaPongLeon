@@ -2,11 +2,43 @@ import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext.js';
 import AddFriendButton from './AddFriendButton.js';
 import { useUser } from '../contexts/UserContext.js';
+import api from '../services/api.js';
 
 const FriendsList = () => {
   const { friends, socket } = useWebSocket();
   const { user } = useUser();
   const [notifications, setNotifications] = useState([]);
+
+
+  const checkNotifications = useCallback(async () => {
+    try {
+      console.log('checkNotifications');
+      const response = await api.get('/authentication/notifications/');
+      console.log(response);
+      setNotifications(response.data.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkNotifications();
+  }, [checkNotifications]);
+
+  const handleAcceptFriendRequest = async () => {
+    try {
+      console.log('handleAcceptFriendRequest');
+      const response = await api.patch('/authentication/friends/requests/');
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /*
+
+
+
 
   useEffect(() => {
     if (socket) {
@@ -61,6 +93,7 @@ const FriendsList = () => {
       );
     }
   }, [socket, handleMessage]);
+  */
 
   return (
     <div>
@@ -70,12 +103,12 @@ const FriendsList = () => {
         <p>No friends yet.</p>
       ) : (
         <ul>
-          {friends.map((friend) => {
+          {friends.map((friend) => (
             <li key={friend.id}>
               {friend.username}
               {friend.status === 'online' && <span> (Online)</span>}
             </li>
-          })}
+          ))}
         </ul>
       )}
       <h4>Notifications</h4>
@@ -83,21 +116,25 @@ const FriendsList = () => {
         <p>No notifications yet</p>
       ) : (
         <ul>
-          {notifications.map((notification, index) => {
-            <li key={index}>
-              {notification.content}
-              {notification.notification_type === 'friend_request_received' && (
-                <button>
-                  Accept Friendship
-                </button>
+          {notifications.map((notification) => (
+            <li key={notification.id}>
+              {notification.notification_type === 'friend_request' && (
+                <>
+                  Friend request from user ID: {notification.sender__username}
+                  <button onClick={handleAcceptFriendRequest}>
+                    Accept Friendship
+                  </button>
+                </>
               )}
             </li>
-          })}
+          ))}
         </ul>
-      )
-      }
+      )}
     </div>
   );
 };
 
 export default FriendsList;
+/*
+
+              */

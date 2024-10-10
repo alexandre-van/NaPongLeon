@@ -9,8 +9,11 @@ def HttpResponseJD(message, status, additionnal_data=None):
     key = 'message' if status in [200, 201] else 'error'
     response_data = {key: message}
 
-    if additionnal_data:
-        response_data.update(additionnal_data)
+    if additionnal_data is not None:
+        if isinstance(additionnal_data, dict):
+            response_data.update(additionnal_data)
+        else:
+            response_data['data'] = additionnal_data
 
     response = HttpResponse(
         json.dumps(response_data, cls=DjangoJSONEncoder),

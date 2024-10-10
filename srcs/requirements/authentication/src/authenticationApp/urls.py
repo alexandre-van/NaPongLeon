@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import UserView#, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView, FriendsView, FriendsRequestView
-from .async_views import LoginView, LogoutView, UserNicknameView, UserAvatarView
+from .async_views import LoginView, LogoutView, UserNicknameView, UserAvatarView, FriendsRequestView, NotificationsView
 
 # for development
 from django.conf import settings
@@ -18,6 +18,10 @@ urlpatterns = [
     # Authentication
     path('auth/login/', LoginView, name='login'),
     path('auth/logout/', LogoutView, name='logout'),
+
+    # Friends
+    path('friends/requests/', FriendsRequestView, name='friends_requests'),
+    path('notifications/', NotificationsView, name='notifications'),
 ]
 
 if settings.DEBUG:

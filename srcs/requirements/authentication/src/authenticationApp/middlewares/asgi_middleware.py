@@ -71,7 +71,6 @@ class ASGIUserMiddleware:
 
     async def __call__(self, scope, receive, send):
         if 'user' in scope:
-            logger.debug(f"ASGIUserMiddleware: path={scope['path']}, user={scope['user']}")
             # Add user to scope['headers'] so it survives ASGI to WSGI transition
             scope.setdefault('headers', []).append(
                 (b'asgi-user', str(scope['user']).encode())
@@ -90,20 +89,16 @@ class AsyncJWTAuthMiddleware:
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope['headers'])
-        logger.debug(f"headers:{headers}")
         if b'cookie' in headers:
             try:
                 cookies = parse_cookies(headers.get(b'cookie', b'').decode())
-                #token_name, token_key = headers[b'cookie'].decode().split()
                 request = type('MockRequest', (), {
                     'COOKIES': cookies,
                     'META': normalize_headers(scope['headers']),
                     'method': scope.get('method', ''),
                     'path': scope.get('path', '')
                 })
-                logger.debug(f"COOKIES:{request.COOKIES}")
                 access_token = request.COOKIES.get('access_token')
-                logger.debug(f"access_token:{access_token}")
                 if access_token:
                     user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                     if validated_token:
@@ -120,9 +115,7 @@ class AsyncJWTAuthMiddleware:
         else:
             scope['user'] = AnonymousUser()
 
-        logger.debug(f"avant les views scope[user]: {scope['user']}")
         response = await self.inner(scope, receive, send)
-        logger.debug('apres les views')
         return response
 
 def AsyncJWTAuthMiddlewareStack(inner):
@@ -168,7 +161,6 @@ class CsrfAsgiMiddleware:
                 return await self.send_error_response(send, 'CSRF token missing or invalid', 403)
 
         async def server_send(response):
-            logger.debug(f"response={response}")
             await send(response)
         
         return await self.get_response(scope, receive, server_send)
