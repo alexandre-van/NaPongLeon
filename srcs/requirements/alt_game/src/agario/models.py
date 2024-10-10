@@ -1,3 +1,2 @@
-from django.db import models
+# Ce fichier peut rester vide pour le moment
 
-# Create your models here.
