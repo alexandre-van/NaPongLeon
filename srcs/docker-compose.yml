@@ -141,6 +141,17 @@ services:
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
 
+  ia:
+    build: ./requirements/ia
+    container_name: ia
+    volumes:
+      - ./requirements/ia/src:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - backend
+
   
     
 networks:
