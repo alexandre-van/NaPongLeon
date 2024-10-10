@@ -10,6 +10,7 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY ./src /app
 
 ENV PYTHONPATH=/app
+ENV DJANGO_SETTINGS_MODULE=alt_game.settings
 
 # Créer le répertoire pour les fichiers statiques collectés
 RUN mkdir -p /app/staticfiles
@@ -18,10 +19,13 @@ RUN mkdir -p /app/staticfiles
 COPY ./src/agario/static /app/agario/static
 
 # Collecter les fichiers statiques avec plus de verbosité
-RUN python manage.py collectstatic --noinput -v 2
+RUN pip install whitenoise
+
+RUN python /app/manage.py collectstatic --noinput -v 2
+RUN ls -R /app/staticfiles
 
 # Exposer le port pour Django
 EXPOSE 8000
 
-# Lancer le serveur Django
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "alt_game.asgi:application"]
+# Lancer le serveur Django avec whitenoise
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "--root-path=/app", "alt_game.asgi:application"]

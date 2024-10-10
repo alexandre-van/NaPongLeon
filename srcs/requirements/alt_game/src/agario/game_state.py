@@ -1,4 +1,5 @@
 import random
+import uuid
 
 class GameState:
     def __init__(self):
@@ -6,14 +7,16 @@ class GameState:
         self.food = []
         self.next_player_id = 1
 
+    def generate_player_id(self):
+        return str(uuid.uuid4())
+
     def add_player(self, name):
-        player_id = self.next_player_id
-        self.next_player_id += 1
+        player_id = self.generate_player_id()
         self.players[player_id] = {
             'id': player_id,
             'name': name,
-            'x': random.randint(0, 800),
-            'y': random.randint(0, 600),
+            'x': random.randint(0, 1200),
+            'y': random.randint(0, 800),
             'size': 10,
             'color': f'#{random.randint(0, 0xFFFFFF):06x}'
         }
@@ -37,7 +40,7 @@ class GameState:
 
     def get_state(self):
         return {
-            'players': list(self.players.values()),
+            'players': self.players,
             'food': self.food
         }
 
