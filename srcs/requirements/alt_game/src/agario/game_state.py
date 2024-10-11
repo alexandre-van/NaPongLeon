@@ -15,8 +15,8 @@ class GameState:
         self.players[player_id] = {
             'id': player_id,
             'name': name,
-            'x': random.randint(0, 1200),
-            'y': random.randint(0, 800),
+            'x': random.randint(0, 1000),
+            'y': random.randint(0, 600),
             'size': 10,
             'color': f'#{random.randint(0, 0xFFFFFF):06x}'
         }
@@ -33,7 +33,7 @@ class GameState:
 
     def add_food(self):
         self.food.append({
-            'x': random.randint(0, 800),
+            'x': random.randint(0, 600),
             'y': random.randint(0, 600),
             'value': 1
         })

@@ -56,7 +56,11 @@ function drawGame() {
         ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
         ctx.fill();
         ctx.fillStyle = 'black';
-        ctx.fillText(p.name, p.x, p.y);
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let displayName = p.name.length > 8 ? p.name.substring(0, 8) + '.' : p.name;
+        ctx.fillText(displayName, p.x, p.y);
     });
 }
 
