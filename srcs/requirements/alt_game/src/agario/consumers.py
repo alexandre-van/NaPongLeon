@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .game_state import game_state
 from asgiref.sync import async_to_sync
+import asyncio
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -12,6 +13,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "yourPlayerId": self.player_id,
             **game_state.get_state()
         }))
+        asyncio.create_task(self.generate_food())
 
     async def disconnect(self, close_code):
         game_state.remove_player(self.player_id)
@@ -22,6 +24,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         if data['type'] == 'move':
             game_state.update_player(self.player_id, data['x'], data['y'])
+            if game_state.check_food_collision(self.player_id):
+                game_state.add_food()  # Ajouter une nouvelle nourriture si une a été mangée
         await self.send_game_state_to_group()
 
     async def send_game_state(self):
@@ -38,3 +42,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_state_update(self, event):
         await self.send(text_data=json.dumps(event["game_state"]))
+
+    async def generate_food(self):
+        while True:
+            await asyncio.sleep(5)  # Génère de la nourriture toutes les 5 secondes
+            game_state.add_food()
+            await self.send_game_state_to_group()

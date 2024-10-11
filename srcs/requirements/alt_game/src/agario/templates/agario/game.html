@@ -6,13 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hagarr.io</title>
     <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
         canvas {
-            border: 1px solid black;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="1000" height="600"></canvas>
+    <div id="gameContainer"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof THREE === 'undefined') {
+                console.error('Three.js is not loaded');
+            } else {
+                console.log('Three.js is loaded successfully');
+            }
+        });
+    </script>
     <script src="{% static 'game.js' %}"></script>
 </body>
 </html>

@@ -17,6 +17,7 @@ RUN mkdir -p /app/staticfiles
 
 # Copier explicitement les fichiers statiques
 COPY ./src/agario/static /app/agario/static
+COPY ./src/agario/static/fonts/helvetiker_regular.typeface.json /app/staticfiles/fonts/
 
 # Collecter les fichiers statiques avec plus de verbosité
 RUN pip install whitenoise
