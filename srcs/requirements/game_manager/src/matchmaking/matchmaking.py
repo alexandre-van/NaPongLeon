@@ -60,8 +60,10 @@ class Matchmaking:
 					
 					break
 
-	async def game_notify(game_id, admin_id, game_mode, players):
-		game_service_url = settings.GAME_MODES.get(game_mode).get('service')
+	async def game_notify(self, game_id, admin_id, game_mode, players):
+		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url')
+		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
+		logger.debug(f"send: {send}")
 		try:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(game_service_url, json={
@@ -85,8 +87,8 @@ class Matchmaking:
 		admin_id = str(uuid.uuid4())
 		players = [p['username'] for p in queue_selected]
 		game = await self.create_game_instance(game_id, admin_id, game_mode, players)
-		if await self.game_notify(game_id, game_mode, players) == 0:
-			game.abort_game()
+		if await self.game_notify(game_id, admin_id, game_mode, players) == 0:
+			await self.abord_game_instance(game)
 			result = None
 		for player_request in queue_selected:
 			username = player_request['username']
@@ -103,6 +105,10 @@ class Matchmaking:
 	@sync_to_async
 	def create_game_instance(self, game_id, admin_id, game_mode, players):
 		return GameInstance.create_game(game_id, admin_id, game_mode, players)
+	
+	@sync_to_async
+	def abord_game_instance(self, game):
+		game.abort_game()
 
 	async def matchmaking_loop(self):
 		logger.debug("matchmaking loop started")

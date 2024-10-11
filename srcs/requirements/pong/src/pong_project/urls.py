@@ -21,5 +21,5 @@ from pong_game.views import index
 
 urlpatterns = [
     path('/admin/', admin.site.urls),
-    path('api/pong/', include('pong.urls')),
+    path('api/pong/', include('pong_game.urls')),
 ]
