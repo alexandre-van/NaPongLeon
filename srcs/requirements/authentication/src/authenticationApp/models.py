@@ -1,3 +1,4 @@
+from channels.db import database_sync_to_async
 from django.contrib.auth.models import AbstractUser
 from django.db.models import UniqueConstraint, Q
 from django.db import models
@@ -96,19 +97,25 @@ class CustomUser(AbstractUser):
                 return None
         return None
 
-    async def accept_friend_request(self, from_user):
-        if (to_user != self):
-            friendship = await Friendship.objects.filter(
+    @database_sync_to_async
+    def accept_friend_request(self, from_user):
+        logger.debug("CustomUser: accept_friend_request debut")
+        if (from_user != self):
+            friendship = Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,
                 status=FriendshipStatus.PENDING
             ).first()
+            logger.debug(f"CustomUser: accept_friend_request avant friendship: friendship={friendship}")
             if friendship:
+                logger.debug(f"dans le if de friendship\n")
                 friendship.status = FriendshipStatus.ACCEPTED
                 friendship.asave()
+            logger.debug("CustomUser: accept_friend_request apres friendship")
+        logger.debug("CustomUser: accept_friend_request ")
 
     def reject_friend_request(self, from_user):
-        if (to_user != self):
+        if (from_user != self):
             Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,

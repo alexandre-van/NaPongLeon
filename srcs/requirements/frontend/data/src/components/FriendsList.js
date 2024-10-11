@@ -25,10 +25,13 @@ const FriendsList = () => {
     checkNotifications();
   }, [checkNotifications]);
 
-  const handleAcceptFriendRequest = async () => {
+  const handleAcceptFriendRequest = async (notificationId) => {
     try {
       console.log('handleAcceptFriendRequest');
-      const response = await api.patch('/authentication/friends/requests/');
+      const data = {
+        notificationId: notificationId,
+      };
+      const response = await api.patch('/authentication/friends/requests/', data);
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -121,7 +124,7 @@ const FriendsList = () => {
               {notification.notification_type === 'friend_request' && (
                 <>
                   Friend request from user ID: {notification.sender__username}
-                  <button onClick={handleAcceptFriendRequest}>
+                  <button onClick={() => handleAcceptFriendRequest(notification.id)}>
                     Accept Friendship
                   </button>
                 </>
@@ -135,6 +138,3 @@ const FriendsList = () => {
 };
 
 export default FriendsList;
-/*
-
-              */

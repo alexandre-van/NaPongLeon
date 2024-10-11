@@ -175,16 +175,12 @@ async def FriendsRequestView(request):
         sender = await sync_to_async(lambda: request.user)()
         body = request.body
 
-        logger.debug(f"sender: {sender}")
-        logger.debug(f"request.body: {request.body}")
         try:
             data = json.loads(body)
-            logger.debug(f"data: {data}")
         except json.JSONDecodeError:
             return HttpResponseBadRequestJD('Invalid JSON')
 
         receiver_username = data.get('target_user')
-        logger.debug(f"request_username: {receiver_username}")
         if not receiver_username:
             return HttpResponseBadRequestJD('Username needed')
         try:
@@ -195,8 +191,6 @@ async def FriendsRequestView(request):
             return HttpResponseNotFoundJD('Target user does not exist')
         if sender == receiver:
             return HttpResponseBadRequestJD('Cannot be yourself')
-        logger.debug(f"sender: {sender}")
-        logger.debug(f"receiver: {receiver}")
 
         try:
             from .services.FriendRequestService import FriendRequestService
@@ -210,6 +204,30 @@ async def FriendsRequestView(request):
             return HttpResponseJDexception(e)
     elif request.method == "PATCH":
     # Accept a friend request
+        user = await sync_to_async(lambda: request.user)()
+        body = request.body
+        logger.debug(f"PATCH => body={body}")
+        try:
+            data = json.loads(body)
+            logger.debug(f"data={data}")
+        except json.JSONDecodeError:
+            return HttpResponseBadRequestJD('Invalid JSON')
+        
+        notification_id = data.get('notificationId')
+        logger.debug(f"notification_id avec data.get={notification_id}")
+        logger.debug(f"user={user}")
+        if not notification_id:
+            return HttpResponseBadRequestJD('Notification id needed')
+
+        try:
+            from .services.FriendRequestService import FriendRequestService
+
+            result = await FriendRequestService.accept_friend_request(user, notification_id)
+
+
+        except Exception as e:
+            return HttpResponseJDexception(e)
+
         return HttpResponseJD('Patch method not implemented yet', 501)
     elif request.method == "DELETE":
     # Refuse or cancel a friend request
@@ -225,7 +243,7 @@ async def NotificationsView(request):
 
     from .models import Notification
 
-    user = request.user
+    user = await sync_to_async(lambda: request.user)()
     notifications = await Notification.get_all_notifications(user)
 
     for notification in notifications:
