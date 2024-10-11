@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserView#, UserNicknameView, WebSocketTokenView, TokenRefreshView, UserAvatarView, FriendsView, FriendsRequestView
+from .views import VerifyTokenView, UserView
 from .async_views import LoginView, LogoutView, UserNicknameView, UserAvatarView, FriendsRequestView, NotificationsView
 
 # for development
@@ -22,6 +22,8 @@ urlpatterns = [
     # Friends
     path('friends/requests/', FriendsRequestView, name='friends_requests'),
     path('notifications/', NotificationsView, name='notifications'),
+
+    path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
 ]
 
 if settings.DEBUG:

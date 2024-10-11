@@ -6,11 +6,12 @@ start:
 
 stop:
 	@echo "Shutting down Docker containers"
-	docker-compose -f $(DC_FILE) down
+	docker-compose -f $(DC_FILE) stop --timeout=20
 
 fclean:
 	@echo "Removing volumes and built containers"
-	docker volume rm $$(docker volume ls -q) && docker system prune -af
+	docker system prune -af
+	docker volume ls -q | grep -v local | xargs -r docker volume rm
 
 remove_db:
 	@echo "Removing volumes content"

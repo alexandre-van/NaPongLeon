@@ -7,4 +7,6 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r conf/requirements.txt
 RUN pip install numpy
 
-CMD [ "./conf/start_pong.sh"]
+ENV DJANGO_SETTINGS_MODULE=pong_project.settings
+
+CMD [ "./start_pong.sh"]

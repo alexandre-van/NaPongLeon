@@ -63,11 +63,10 @@ services:
     build: ./requirements/pong
     container_name: pong
     volumes:
-      - ./requirements/pong:/app
+      - ./requirements/pong/src:/app
     restart: on-failure
     depends_on:
       - nginx
-      - postgres
       - redis
     networks:
       - backend
@@ -84,16 +83,19 @@ services:
     networks:
       - backend
     
-  #matchmaking:
-  #  build: ./requirements/matchmaking
-  #  container_name: matchmaking
-  #  volumes:
-  #    - ./requirements/matchmaking:/app
-  #  restart: on-failure
-  #  depends_on:
-  #    - nginx
-  #  networks:
-  #    - backend
+  game_manager:
+    build: ./requirements/game_manager
+    container_name: game_manager
+    volumes:
+      - ./requirements/game_manager/src:/app
+      - secrets_vol:/run/secrets:ro
+    restart: on-failure
+    env_file:
+      - .env/.env.web
+    depends_on:
+      - nginx
+    networks:
+      - backend
 
   redis:
     image: redis:7.4
@@ -113,6 +115,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - secrets_vol:/run/secrets:ro
+      - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
     command: # pour les logs
@@ -155,14 +158,14 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /sgoinfre/avan/ft_transcendence/srcs/requirements/frontend/data
+      device: ./requirements/frontend/data
       o: bind
   postgres_data:
   secrets_vol:
     driver: local
     driver_opts:
       type: none
-      device: /sgoinfre/avan/ft_transcendence/srcs/.secrets
+      device: ./.secrets
       o: bind
   media_vol:
     #    driver: local

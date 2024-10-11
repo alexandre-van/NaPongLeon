@@ -54,6 +54,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'pong_project.urls'
@@ -160,16 +161,34 @@ CACHES = {
 # Log
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-        }
-    },
-    'root': {
-        'handlers': [],
-        'level': 'DEBUG',
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'formatters': {
+		'verbose': {
+			'format': '{levelname} {asctime} {module} {message}',
+			'style': '{',
+		},
+		'simple': {
+			'format': '{levelname} {message}',
+			'style': '{',
+		},
+	},
+	'handlers': {
+		'console': {
+			'level': 'DEBUG',
+			'class': 'logging.StreamHandler',
+			'formatter': 'simple',
+		},
+		'file': {
+			'level': 'DEBUG',
+			'class': 'logging.FileHandler',
+			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+			'formatter': 'verbose',
+			'mode': 'w',
+		},
+	},
+	'root': {
+		'handlers': ['console', 'file'],
+		'level': 'DEBUG',
+	},
 }
