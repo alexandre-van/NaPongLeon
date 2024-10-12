@@ -9,7 +9,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const scene = new THREE.Scene();
     const mapWidth = 2000;
     const mapHeight = 2000;
-    const camera = new THREE.OrthographicCamera(0, mapWidth, mapHeight, 0, 0.1, 1000);
+    const aspect = window.innerWidth / window.innerHeight;
+    const frustumSize = 1000;
+    const camera = new THREE.OrthographicCamera(
+        frustumSize * aspect / -2, frustumSize * aspect / 2,
+        frustumSize / 2, frustumSize / -2,
+        0.1, 1000
+    );
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
@@ -36,12 +42,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         food = gameState.food;
         if (gameState.yourPlayerId && !myPlayerId) {
             myPlayerId = gameState.yourPlayerId;
-            if (players[myPlayerId]) {
-                camera.position.set(players[myPlayerId].x, players[myPlayerId].y, 100);
-                camera.lookAt(players[myPlayerId].x, players[myPlayerId].y, 0);
-            }
         }
         updateSceneObjects();
+        updateCameraPosition();
     }
 
     function updateSceneObjects() {
@@ -128,10 +131,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
 
+    function updateCameraPosition() {
+        if (myPlayerId && players[myPlayerId]) {
+            const player = players[myPlayerId];
+            camera.position.set(player.x, player.y, 100);
+            camera.updateProjectionMatrix();
+        }
+    }
+
     function updateGame() {
         if (myPlayerId && players[myPlayerId]) {
             let dx = 0, dy = 0;
-            const speed = Math.max(1, 10 - players[myPlayerId].size / 10); // Vitesse diminue avec la taille
+            const speed = Math.max(1, 10 - players[myPlayerId].size / 10);
             if (keys.w) dy += speed;
             if (keys.s) dy -= speed;
             if (keys.a) dx -= speed;
@@ -147,9 +158,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     'y': newY
                 }));
 
-                // Mise à jour de la position de la caméra
-                camera.position.set(newX, newY, 100);
-                camera.lookAt(newX, newY, 0);
+                updateCameraPosition();
             }
         }
     }
