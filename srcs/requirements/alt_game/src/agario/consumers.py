@@ -45,6 +45,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def generate_food(self):
         while True:
-            await asyncio.sleep(5)  # Génère de la nourriture toutes les 5 secondes
+            await asyncio.sleep(20)  # Génère de la nourriture toutes les 20 secondes
             game_state.add_food()
             await self.send_game_state_to_group()
