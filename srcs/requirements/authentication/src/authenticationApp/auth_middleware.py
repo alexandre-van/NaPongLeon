@@ -93,6 +93,7 @@ class AutoRefreshTokenMiddleware:
                     response.delete_cookie('refresh_token')
                     return response
 
+        logger.debug("AutoRefreshTokenMiddleware fin")
         # If valid access_token or no token at all
         return self.get_response(request)
 

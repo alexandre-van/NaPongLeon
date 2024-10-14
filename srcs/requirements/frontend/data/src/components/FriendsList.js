@@ -5,10 +5,21 @@ import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const FriendsList = () => {
-  const { friends, socket } = useWebSocket();
+//  const { friends, socket } = useWebSocket();
   const { user } = useUser();
   const [notifications, setNotifications] = useState([]);
+  const [friends, setFriends] = useState([]);
 
+  const checkFriends = useCallback(async () => {
+    try {
+      console.log('checkFriends');
+      const response = await api.get('/authentication/friends/');
+      console.log(response);
+      setFriends(response.data.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   const checkNotifications = useCallback(async () => {
     try {
@@ -25,6 +36,10 @@ const FriendsList = () => {
     checkNotifications();
   }, [checkNotifications]);
 
+  useEffect(() => {
+    checkFriends();
+  }, [checkFriends]);
+
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
       console.log('handleAcceptFriendRequest');
@@ -32,6 +47,48 @@ const FriendsList = () => {
         notificationId: notificationId,
       };
       const response = await api.patch('/authentication/friends/requests/', data);
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRejectFriendRequest = async (notificationId) => {
+    try {
+      console.log('handleRejectFriendRequest');
+      const response = await api.delete('/authentication/friends/requests/', {
+        data: {
+          id: notificationId,
+        }
+      });
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteFriend = async (friendId) => {
+    try {
+      console.log('handleDeleteFriend');
+      const response = await api.delete('/authentication/friends/', {
+        data: {
+          friendId: friendId,
+        }
+      });
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      console.log('handleDeleteNotification');
+      const response = await api.delete('/authentication/notifications/', {
+        data: {
+          id: notificationId,
+        }
+      });
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -110,6 +167,9 @@ const FriendsList = () => {
             <li key={friend.id}>
               {friend.username}
               {friend.status === 'online' && <span> (Online)</span>}
+              <button onClick={() => handleDeleteFriend(friend.id)}>
+                Remove friend
+              </button>
             </li>
           ))}
         </ul>
@@ -125,7 +185,18 @@ const FriendsList = () => {
                 <>
                   Friend request from user ID: {notification.sender__username}
                   <button onClick={() => handleAcceptFriendRequest(notification.id)}>
-                    Accept Friendship
+                    Accept
+                  </button>
+                  <button onClick={() => handleRejectFriendRequest(notification.id)}>
+                    Reject
+                  </button>
+                </>
+              )}
+              {notification.notification_type === 'friend_request_accepted' && (
+                <>
+                  {notification.sender__username} has accepted your friend request
+                  <button onClick={() => handleDeleteNotification(notification.id)}>
+                    Delete notification
                   </button>
                 </>
               )}

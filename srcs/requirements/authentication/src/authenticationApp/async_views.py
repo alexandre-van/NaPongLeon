@@ -167,19 +167,49 @@ async def FriendsRequestView(request):
     # Get waiting requests
     logger.debug(f"request.method: {request.method}")
 
+    user = await sync_to_async(lambda: request.user)()
+
+    
+    if request.method == "DELETE":
+    # Refuse a friend request
+        body = request.body
+        data = json.loads(body)
+        logger.debug(f"data={data}")
+        notification_id = data.get('id')
+        logger.debug(f"notification_id={notification_id}")
+        if not notification_id:
+             return HttpResponseBadRequestJD('Notification id needed')
+
+        try:
+            from .services.FriendRequestService import FriendRequestService
+
+            logger.debug(f"notification_id={notification_id}")
+            result = await FriendRequestService.reject_friend_request(user, notification_id)
+            if result:
+                logger.debug(f"result true")
+                return HttpResponseJD('Friend request rejected', 200)
+            else:
+                logger.debug(f"result false")
+                return HttpResponseJD('Friend request not found', 404)
+        except Exception as e:
+            return HttpResponseJDexception(e)
+
+
+
+    body = request.body
+    try:
+        logger.debug(f"body={body}")
+        data = json.loads(body)
+        logger.debug(f"data={data}")
+    except json.JSONDecodeError:
+        return HttpResponseBadRequestJD('Invalid JSON')
+
     if request.method == "GET":
         return HttpResponseJD('Get method not implemented yet', 501)
 
+
     elif request.method == "POST":
     # Send a friend request
-        sender = await sync_to_async(lambda: request.user)()
-        body = request.body
-
-        try:
-            data = json.loads(body)
-        except json.JSONDecodeError:
-            return HttpResponseBadRequestJD('Invalid JSON')
-
         receiver_username = data.get('target_user')
         if not receiver_username:
             return HttpResponseBadRequestJD('Username needed')
@@ -188,34 +218,25 @@ async def FriendsRequestView(request):
 
             receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
         except CustomUser.DoesNotExist:
-            return HttpResponseNotFoundJD('Target user does not exist')
-        if sender == receiver:
+            return HttpResponseJD('Target user does not exist', 404)
+        if user == receiver:
             return HttpResponseBadRequestJD('Cannot be yourself')
 
         try:
             from .services.FriendRequestService import FriendRequestService
 
-            result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
+            result = await FriendRequestService.create_and_send_friend_request(user, receiver)
             if result:
                 return HttpResponseJD('Friend request sent', 201)
             else:
                 return HttpResponseJD('Friend request already exists', 409)
         except Exception as e:
             return HttpResponseJDexception(e)
+
+
     elif request.method == "PATCH":
     # Accept a friend request
-        user = await sync_to_async(lambda: request.user)()
-        body = request.body
-        logger.debug(f"PATCH => body={body}")
-        try:
-            data = json.loads(body)
-            logger.debug(f"data={data}")
-        except json.JSONDecodeError:
-            return HttpResponseBadRequestJD('Invalid JSON')
-        
         notification_id = data.get('notificationId')
-        logger.debug(f"notification_id avec data.get={notification_id}")
-        logger.debug(f"user={user}")
         if not notification_id:
             return HttpResponseBadRequestJD('Notification id needed')
 
@@ -223,32 +244,115 @@ async def FriendsRequestView(request):
             from .services.FriendRequestService import FriendRequestService
 
             result = await FriendRequestService.accept_friend_request(user, notification_id)
+            if result:
+                return HttpResponseJD('Friend request accepted', 200)
+            else:
+                return HttpResponseJD('Friend request not found', 404)
+        except Exception as e:
+            return HttpResponseJDexception(e)
 
+
+    else: 
+        return HttpResponseJD('Method not allowed', 405)
+
+    '''
+    elif request.method == "DELETE":
+    # Refuse a friend request
+        notification_id = data.get('notificationId')
+        if not notification_id:
+             return HttpResponseBadRequestJD('Notification id needed')
+
+        try:
+            from .services.FriendRequestService import FriendRequestService
+
+            logger.debug(f"notification_id={notification_id}")
+            result = await FriendRequestService.reject_friend_request(user, notification_id)
+            if result:
+                logger.debug(f"result true")
+                return HttpResponseJD('Friend request rejected', 200)
+            else:
+                logger.debug(f"result false")
+                return HttpResponseJD('Friend request not found', 404)
+        except Exception as e:
+            return HttpResponseJDexception(e)
+        return HttpResponseJD('Delete method not implemented yet', 501)
+    '''
+
+async def FriendsView(request):
+    logger.debug('FriendsView\n')
+    user = await sync_to_async(lambda: request.user)()
+    if request.method == 'GET':
+        friends = await user.aget_friends()
+
+        if friends:
+            return HttpResponseJD('Friends', 200, friends)
+        return HttpResponseJD('Friends not found', 404)
+
+
+    elif request.method == 'DELETE':
+        from .models import CustomUser
+
+        body = request.body
+        friend_id = json.loads(body).get('friendId')
+
+        if not friend_id:
+            return HttpResponseBadRequestJD('Friend id needed')
+
+        try:
+            friend = await sync_to_async(CustomUser.objects.get)(id=friend_id)
+            if friend is None:
+                return HttpResponseJD('No user found', 404)
+
+            result = await user.remove_friend_from_list(friend)
+            if result:
+                return HttpResponseJD('Removed friend successfully', 200)
+            return HttpResponseJD('Friend to remove not found', 404)
 
         except Exception as e:
             return HttpResponseJDexception(e)
 
-        return HttpResponseJD('Patch method not implemented yet', 501)
-    elif request.method == "DELETE":
-    # Refuse or cancel a friend request
-        return HttpResponseJD('Delete method not implemented yet', 501)
-    else: 
+
+
+    else:
         return HttpResponseJD('Method not allowed', 405)
+
 
 
 async def NotificationsView(request):
-    logger.debug(f"request.method: {request.method}")
-    if request.method != "GET":
-        return HttpResponseJD('Method not allowed', 405)
-
     from .models import Notification
 
+    logger.debug(f"request.method: {request.method}")
     user = await sync_to_async(lambda: request.user)()
-    notifications = await Notification.get_all_notifications(user)
+    if request.method == "GET":
+        notifications = await Notification.get_all_received_notifications(user)
 
-    for notification in notifications:
-        notification['created_at'] = notification['created_at'].isoformat()
+        for notification in notifications:
+            notification['created_at'] = notification['created_at'].isoformat()
 
-    logger.debug(f"notifications={notifications}")
-    response = HttpResponseJD('Notifications', 200, notifications)
-    return response
+        logger.debug(f"notifications={notifications}")
+        response = HttpResponseJD('Notifications', 200, notifications)
+        return response
+
+
+    # Delete specific notification
+    elif request.method == "DELETE":
+        body = request.body
+        notification_id = json.loads(body).get('id')
+
+        if not notification_id:
+            return HttpResponseBadRequestJD('Notification id needed')
+
+        try:
+#            result = await database_sync_to_async(Notification.objects.get(id=notification_id).delete)()
+            result = await Notification.delete_notification(notification_id)
+            if result:
+                return HttpResponseJD('Notification deleted', 200)
+            else:
+                return HttpResponseJD('Notification not found', 404)
+
+        except Exception as e:
+            return HttpResponseJDexception(e)
+
+
+    else:
+        return HttpResponseJD('Method not allowed', 405)

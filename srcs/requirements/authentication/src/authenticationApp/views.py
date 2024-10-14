@@ -60,7 +60,9 @@ class UserView(APIView):
 
     # Get User info
     def get(self, request):
+        logger.debug('ici\n')
         serializer = UserSerializer(request.user)
+        logger.debug('fin dici\n')
         return Response({
             "user": serializer.data
         }, status=status.HTTP_200_OK)
@@ -96,84 +98,6 @@ class TokenRefreshView(APIView):
             return response
         except TokenError:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-
-# Friends related views
-
-class FriendsView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    # Get All Friends
-    def get(self, request):
-        pass
-
-
-
-async def FriendsRequestView(request):
-    # Get waiting requests
-    logger.debug(f"request.method: {request.method}")
-
-    if request.method == "GET":
-        return HttpResponseJD('Get method not implemented yet', 501)
-
-    elif request.method == "POST":
-    # Send a friend request
-        sender = await sync_to_async(lambda: request.user)()
-        body = request.body
-
-        logger.debug(f"sender: {sender}")
-        logger.debug(f"request.body: {request.body}")
-        try:
-            data = json.loads(body)
-            logger.debug(f"data: {data}")
-        except json.JSONDecodeError:
-            return HttpResponseBadRequestJD('Invalid JSON')
-
-        receiver_username = data.get('target_user')
-        logger.debug(f"request_username: {receiver_username}")
-        if not receiver_username:
-            return HttpResponseBadRequestJD('Username needed')
-        try:
-            receiver = await sync_to_async(CustomUser.objects.get)(username=receiver_username)
-        except CustomUser.DoesNotExist:
-            return HttpResponseNotFoundJD('Target user does not exist')
-        if sender == receiver:
-            return HttpResponseBadRequestJD('Cannot be yourself')
-        logger.debug(f"sender: {sender}")
-        logger.debug(f"receiver: {receiver}")
-
-        try:
-            result = await FriendRequestService.create_and_send_friend_request(sender, receiver)
-            if result:
-                return HttpResponseJD('Friend request sent', 201)
-            else:
-                return HttpResponseJD('Friend request already exists', 409)
-        except Exception as e:
-            return HttpResponseJDexception(e)
-    elif request.method == "PATCH":
-    # Accept a friend request
-        return HttpResponseJD('Patch method not implemented yet', 501)
-    elif request.method == "DELETE":
-    # Refuse or cancel a friend request
-        return HttpResponseJD('Delete method not implemented yet', 501)
-    else: 
-        return HttpResponseJD('Method not allowed', 405)
-
-
-class UserFriendView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    # Get Friend list
-    def get(self, request):
-        pass
-
-    # Delete Friend
-    def delete(self, request, friend_id):
-        pass 
-
 
 class VerifyTokenView(APIView):
     authentication_classes = [CustomJWTAuthentication]

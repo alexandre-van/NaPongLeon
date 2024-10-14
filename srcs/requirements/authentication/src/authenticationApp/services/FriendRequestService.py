@@ -13,18 +13,20 @@ async def send_notification(receiver_id, notification):
         notification.to_group_send_format()
     )
 
+@database_sync_to_async
+def get_notification_and_sender(notification_id):
+    notification = Notification.objects.filter(id=notification_id).select_related('sender').first()
+    if notification:
+        return notification, notification.sender
+    return None
+
+
 class FriendRequestService:
     @staticmethod
     async def create_and_send_friend_request(sender, receiver):
-        friendship = await sender.create_friendship(receiver)
+        notification = await sender.create_friendship(receiver)
 
-        if friendship:
-            notification = await Notification.objects.acreate(
-                recipient=receiver,
-                sender=sender,
-                content=f"{sender.username} sent you a friend request",
-                notification_type="friend_request_received"
-            )
+        if notification:
             await send_notification(receiver.id, notification)
             return True
         # Friendship already exists
@@ -32,20 +34,19 @@ class FriendRequestService:
 
     @staticmethod
     async def accept_friend_request(user, notification_id):
-        logger.debug("accept_friend_request debut")
-
-        @database_sync_to_async
-        def get_notification_and_sender(notification_id):
-            notification = Notification.objects.filter(id=notification_id).select_related('sender').first()
-            if notification:
-                return notification.sender
-            return None
-
-        from_user = await get_notification_and_sender(notification_id)
-        logger.debug(f"from_user={from_user}")
+        notification, from_user = await get_notification_and_sender(notification_id)
         if from_user:
-            result = await user.accept_friend_request(from_user)
-            logger.debug("accept_friend_request fin")
-            return result
+            notification = await user.accept_friend_request(from_user, notification)
+            if notification:
+                #await send_notification(from_user.id, notification)
+                return True
+        return False
 
-        logger.debug("accept_friend_request fin sans notification")
+    @staticmethod
+    async def reject_friend_request(user, notification_id):
+        notification, from_user = await get_notification_and_sender(notification_id)
+        if from_user:
+            result = await user.reject_friend_request(from_user, notification)
+            if notification:
+                return True
+        return False
