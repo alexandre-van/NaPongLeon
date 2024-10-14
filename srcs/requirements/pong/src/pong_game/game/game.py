@@ -1,16 +1,20 @@
 from .player import Player
 from .ball import Ball
+from ..utils.logger import logger
 
 class Game:
-	def __init__(self, player_1, player_2):
+	def __init__(self, players):
 		from .timer import Timer
 		import random
 
-		side1, side2 = ('left', 'right') if random.randint(1, 2) == 1 else ('right', 'left')
-		self.players = { 
-			'p1': Player(player_1, side1),
-			'p2': Player(player_2, side2)
-		}
+		sides = ['left', 'right']
+		random.shuffle(sides)  # Mélange aléatoire des côtés
+		self.players = {}
+		# Assigner les côtés aux joueurs dynamiquement
+		for i, (username, player_consumer) in enumerate(players.items()):
+			side = sides[i % len(sides)]  # Assigner gauche/droite de manière cyclique
+			self.players['p' + str(i + 1)] = Player(player_consumer, side)
+			logger.debug(f"{username} is the {side} player !")
 		self.ball = Ball()
 		self.timer = Timer()
 		self.timer.settup(None)

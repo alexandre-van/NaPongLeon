@@ -3,39 +3,43 @@ import json
 import asyncio
 from .game_manager import game_manager
 from channels.generic.websocket import AsyncWebsocketConsumer
-
+from ..utils.decorators import auth_required
 
 class GameConsumer(AsyncWebsocketConsumer):
-	async def connect(self):
-		await self.accept()
-		player_1 = self
-		player_1.ready = False
-		game_id, player_2 = game_manager.add_player(self)
-		player_1.game_id = None
-		if game_id:
-			player_1.game_id = game_id
-			player_2.game_id = game_id
-			logger.debug(f'Player connected to game {game_id}')
-			await self.channel_layer.group_add(game_id, player_1.channel_name)
-			await self.channel_layer.group_add(game_id, player_2.channel_name)
-			game_room = game_manager.get_game_room(game_id)
-			await self.channel_layer.group_send(game_id, {
-				'type': "send_state",
-				'state': {	
-					'type': "export_data",
-					'game_id': game_id,
-					'data': game_room.export_data()
-				}
-			})
-			logger.debug(f'Export data')
-		else:
-			await player_1.send(text_data=json.dumps({'type': 'waiting_room'}))
+	@auth_required
+	async def connect(self, username=None):
+		path = self.scope['path']
+		segments = path.split('/')
+		self.game_id = None
+		if len(segments) >= 4:
+			self.game_id = segments[3]
+		self.username = username
+		logger.debug(f'{self.username} tries to connect to the game: {self.game_id}')
+		if game_manager.get_room(self.game_id) is not None:
+			await self.accept()
+			self.ready = False
+			self.room = game_manager.add_player(self.username, self, self.game_id)
+			if self.room is not None:
+				logger.debug(f"{username} is in waiting room !")
+			if self.room['game_instance']:
+				for player in self.room['players']:
+					await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
+				await self.channel_layer.group_send(self.game_id, {
+					'type': "send_state",
+					'state': {	
+						'type': "export_data",
+						'data': self.room['game_instance'].export_data()
+					}
+				})
+				logger.debug(f'Export data')
+			else:
+				await self.send(text_data=json.dumps({'type': 'waiting_room'}))
 
 	async def disconnect(self, close_code):
 		player_1 = self
 		game_id = player_1.game_id
 		if game_id:
-			game_room = game_manager.get_game_room(game_id)
+			game_room = self.room['game_instance']
 			if game_room:
 				player_2 = game_room.getopponent(player_1)
 				await self.channel_layer.group_discard(game_id, self.channel_name)
@@ -45,7 +49,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 						'reason': 'player_2_disconnected'
 					}))
 					await player_2.close()
-				game_manager.remove_game_roon(game_id)
+				game_manager.remove_room(game_id)
 		else:
 			game_manager.remove_player(player_1)
 
@@ -54,7 +58,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		data = json.loads(text_data)
 		game_id = self.game_id
 		data_type = data['type']
-		game_room = game_manager.get_game_room(game_id)
+		game_room = self.room['game_instance']
 		if game_room:
 			if data_type == 'move':
 				game_room.input_players(self, data['input'])
@@ -76,7 +80,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def game_loop(self, game_id):
 		while True:
-			game = game_manager.get_game_room(game_id)
+			game = self.room['game_instance']
 			if game:
 				game_state = game.update()
 				await self.channel_layer.group_send(

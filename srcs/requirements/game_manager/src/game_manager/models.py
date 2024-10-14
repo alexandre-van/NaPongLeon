@@ -86,7 +86,6 @@ class GameInstance(models.Model):
         # Initialiser les équipes en fonction du mode de jeu
         for i in range(settings.GAME_MODES.get(game_mode).get('teams')):
             new_game.teams[i + 1] = []
-        
         new_game.save()
         return new_game
 

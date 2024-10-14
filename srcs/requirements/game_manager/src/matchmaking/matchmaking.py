@@ -72,7 +72,7 @@ class Matchmaking:
 					'gameMode': game_mode,
 					'playersList': players
 				})
-			if response and response.status_code == 200 :
+			if response and response.status_code == 201 :
 				return 1
 			else:
 				logger.debug(f'Error api request Game, response: {response}')

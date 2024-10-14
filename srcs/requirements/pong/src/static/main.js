@@ -12,6 +12,12 @@ const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/`);
 
 socket.onopen = function() {
 	console.log("WebSocket connection established.");
+	const cookies = document.cookie;
+
+	socket.send(JSON.stringify({
+		type: 'auth',
+		cookies: cookies
+	}));
 };
 
 socket.onmessage = function(event) {
