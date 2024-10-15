@@ -6,20 +6,13 @@ import api from '../services/api.js';
 
 const FriendsList = () => {
 //  const { friends, socket } = useWebSocket();
-  const { user } = useUser();
+  const { user, friends, checkFriends } = useUser();
   const [notifications, setNotifications] = useState([]);
-  const [friends, setFriends] = useState([]);
 
-  const checkFriends = useCallback(async () => {
-    try {
-      console.log('checkFriends');
-      const response = await api.get('/authentication/friends/');
-      console.log(response);
-      setFriends(response.data.data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
+  
+  useEffect(() => {
+    checkFriends()
+  }, [checkFriends]);
 
   const checkNotifications = useCallback(async () => {
     try {
@@ -35,10 +28,6 @@ const FriendsList = () => {
   useEffect(() => {
     checkNotifications();
   }, [checkNotifications]);
-
-  useEffect(() => {
-    checkFriends();
-  }, [checkFriends]);
 
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
@@ -115,7 +104,7 @@ const FriendsList = () => {
           case 'error':
             console.error(data.message);
             break;
-          default:
+          default:Friend request from user ID: avan￼Accept￼Reject
             console.log(data.message);
             break;
         }
@@ -142,7 +131,7 @@ const FriendsList = () => {
     }
     console.log(`notifications.length = ${notifications.length}`);
 
-    
+    Friend request from user ID: avan￼Accept￼Reject
   });
 
   useEffect(() => {

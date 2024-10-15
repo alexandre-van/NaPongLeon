@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import VerifyTokenView, UserView
+from .views import VerifyTokenView, UserView, WebSocketTokenView
 from .async_views import LoginView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView
 
 # for development
@@ -27,6 +27,8 @@ urlpatterns = [
     path('notifications/', NotificationsView, name='notifications'),
 
     path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
+
+    path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
 ]
 
 if settings.DEBUG:
@@ -34,17 +36,10 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 '''
-    path('users/me/avatar/', UserAvatarView.as_view(), name='user_avatar'),
 
-    path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # Friends
-    path('friends/', FriendsView.as_view(), name='friends'),
-    path('friends/requests/', FriendsRequestView, name='friends_requests'),
 
-    path('auth/login/', AsyncLoginConsumer.as_asgi(), name='login'),
-    path('users/me/nickname/', UserNicknameView.as_asgi(), name='update_nickname'),
     '''
 
 

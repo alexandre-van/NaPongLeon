@@ -89,7 +89,7 @@ async def UserNicknameView(request):
         return HttpResponseJD('Method not allowed', 405)
 
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body)Friend request from user ID: avan￼Accept￼Reject
         nickname = data.get('nickname')
     except json.JSONDecodeError:
         return HttpResponseBadRequestJD('Invalid JSON')
@@ -124,7 +124,7 @@ async def UserAvatarView(request):
         if 'avatar' not in request.FILES:
             return HttpResponseBadRequestJD('No file uploaded')
 
-        file = request.FILES['avatar']
+        file = request.FILES['avatar']Friend request from user ID: avan￼Accept￼Reject
         allowed_types = ['image/jpeg', 'image/png']
         if file.content_type not in allowed_types:
             return HttpResponseBadRequestJD('Invalid file type. Only JPEG and PNG are allowed.')
@@ -226,7 +226,7 @@ async def FriendsRequestView(request):
              return HttpResponseBadRequestJD('Notification id needed')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
+            from .services.FriendRequestServiceFriend request from user ID: avan￼Accept￼Reject import FriendRequestService
 
             result = await FriendRequestService.reject_friend_request(user, notification_id)
             if result:
@@ -315,6 +315,13 @@ async def NotificationsView(request):
         except Exception as e:
             return HttpResponseJDexception(e)
 
-
     else:
         return HttpResponseJD('Method not allowed', 405)
+
+async def WebSocketTokenView(request):
+    if request.method == "GET":
+        logger.debug(f"\n\n\n WEBSOCKETTOKENVIEW request.user={request.user}")
+        token = AccessToken.for_user(request.user)
+        #return Response({'token': str(token)})
+        return HttpResponseJD('Token ', 200)
+    return HttpResponseJD('Method not allowed', 405)

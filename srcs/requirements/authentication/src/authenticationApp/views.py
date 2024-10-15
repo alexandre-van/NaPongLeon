@@ -60,19 +60,18 @@ class UserView(APIView):
 
     # Get User info
     def get(self, request):
-        logger.debug('ici\n')
         serializer = UserSerializer(request.user)
-        logger.debug('fin dici\n')
         return Response({
             "user": serializer.data
         }, status=status.HTTP_200_OK)
 
 class WebSocketTokenView(APIView):
-    authentication_classes = [CustomJWTAuthentication]
-    permission_classes = [IsAuthenticated]
+#    authentication_classes = [CustomJWTAuthentication]
+#    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         # Short access_token for user
+        logger.debug(f"\n\n\n WEBSOCKETTOKENVIEW request.user={request.user}")
         token = AccessToken.for_user(request.user)
         return Response({'token': str(token)})
 

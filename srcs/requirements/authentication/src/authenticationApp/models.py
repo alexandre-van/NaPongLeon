@@ -5,6 +5,7 @@ from django.db import models
 from asgiref.sync import sync_to_async
 #from django.contrib.staticfiles.storage import staticfiles_storage
 from django.templatetags.static import static
+from django.core.cache import cache
 import os
 
 import logging
@@ -36,6 +37,29 @@ class CustomUser(AbstractUser):
             return self.avatar.url
         else:
             return static('images/default_avatar.png')
+
+    @property
+    def friends(self):
+        cache_key = f'user_friends_{self.id}'
+        friends = cache.get(cache_key)
+        logger.debug(f"friends 1 ={friends}")
+
+        if friends is None:
+            friends_as_from = self.friendships_sent.filter(status=FriendshipStatus.ACCEPTED).values_list('to_user', flat=True)
+            friends_as_to = self.friendships_received.filter(status=FriendshipStatus.ACCEPTED).values_list('from_user', flat=True)
+            friend_ids = list(set(friends_as_from) | set(friends_as_to))
+            friends = list(CustomUser.objects.filter(id__in=friend_ids).values(
+                'id',
+                'username',
+                'nickname',
+                'is_online',
+                'avatar'
+            ))
+
+            # Mettre en cache pour 5 minutes (300 secondes)
+            cache.set(cache_key, friends, 300)
+        logger.debug(f"friends 2 ={friends}")
+        return friends
 
     def save(self, *args, **kwargs):
         if self.pk:
