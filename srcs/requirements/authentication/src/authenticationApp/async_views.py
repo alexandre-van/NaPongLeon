@@ -163,50 +163,19 @@ async def UserAvatarView(request):
     else:
         return HttpResponseJD('Method not allowed', 405)
 
+
+
 async def FriendsRequestView(request):
-    # Get waiting requests
-    logger.debug(f"request.method: {request.method}")
-
     user = await sync_to_async(lambda: request.user)()
-
-    
-    if request.method == "DELETE":
-    # Refuse a friend request
-        body = request.body
-        data = json.loads(body)
-        logger.debug(f"data={data}")
-        notification_id = data.get('id')
-        logger.debug(f"notification_id={notification_id}")
-        if not notification_id:
-             return HttpResponseBadRequestJD('Notification id needed')
-
-        try:
-            from .services.FriendRequestService import FriendRequestService
-
-            logger.debug(f"notification_id={notification_id}")
-            result = await FriendRequestService.reject_friend_request(user, notification_id)
-            if result:
-                logger.debug(f"result true")
-                return HttpResponseJD('Friend request rejected', 200)
-            else:
-                logger.debug(f"result false")
-                return HttpResponseJD('Friend request not found', 404)
-        except Exception as e:
-            return HttpResponseJDexception(e)
-
-
-
     body = request.body
     try:
-        logger.debug(f"body={body}")
         data = json.loads(body)
-        logger.debug(f"data={data}")
     except json.JSONDecodeError:
         return HttpResponseBadRequestJD('Invalid JSON')
-
+    
     if request.method == "GET":
+    # Get waiting requests
         return HttpResponseJD('Get method not implemented yet', 501)
-
 
     elif request.method == "POST":
     # Send a friend request
@@ -233,7 +202,6 @@ async def FriendsRequestView(request):
         except Exception as e:
             return HttpResponseJDexception(e)
 
-
     elif request.method == "PATCH":
     # Accept a friend request
         notification_id = data.get('notificationId')
@@ -251,45 +219,41 @@ async def FriendsRequestView(request):
         except Exception as e:
             return HttpResponseJDexception(e)
 
-
-    else: 
-        return HttpResponseJD('Method not allowed', 405)
-
-    '''
     elif request.method == "DELETE":
     # Refuse a friend request
-        notification_id = data.get('notificationId')
+        notification_id = data.get('id')
         if not notification_id:
              return HttpResponseBadRequestJD('Notification id needed')
 
         try:
             from .services.FriendRequestService import FriendRequestService
 
-            logger.debug(f"notification_id={notification_id}")
             result = await FriendRequestService.reject_friend_request(user, notification_id)
             if result:
-                logger.debug(f"result true")
                 return HttpResponseJD('Friend request rejected', 200)
             else:
-                logger.debug(f"result false")
                 return HttpResponseJD('Friend request not found', 404)
         except Exception as e:
             return HttpResponseJDexception(e)
-        return HttpResponseJD('Delete method not implemented yet', 501)
-    '''
+
+    else: 
+        return HttpResponseJD('Method not allowed', 405)
+
+
 
 async def FriendsView(request):
-    logger.debug('FriendsView\n')
     user = await sync_to_async(lambda: request.user)()
+
     if request.method == 'GET':
+        # Get all friends
         friends = await user.aget_friends()
 
         if friends:
             return HttpResponseJD('Friends', 200, friends)
         return HttpResponseJD('Friends not found', 404)
 
-
     elif request.method == 'DELETE':
+        # Delete a friend from the list
         from .models import CustomUser
 
         body = request.body
@@ -310,8 +274,6 @@ async def FriendsView(request):
 
         except Exception as e:
             return HttpResponseJDexception(e)
-
-
 
     else:
         return HttpResponseJD('Method not allowed', 405)

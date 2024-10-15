@@ -21,6 +21,7 @@ class FriendshipStatus(models.TextChoices):
 class CustomUser(AbstractUser):
     avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True)
     nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    AI = models.BooleanField(default=False)
     friends = models.ManyToManyField(
         'self',
         through='Friendship',
