@@ -8,6 +8,7 @@ const port = window.location.port;
 const gameId = window.gameInfo.gameId;
 
 const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/`);
+//const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
 socket.onopen = function() {
 	console.log("WebSocket connection established.");

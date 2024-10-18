@@ -16,10 +16,13 @@ for mode in game_mode_config.sections():
 	service_name = game_mode_config[mode]['service']
 	players = game_mode_config[mode]['players']
 	teams = game_mode_config[mode]['teams']
-	if service_name in service_config['GAME_SERVICES']:
-		service_url = service_config['GAME_SERVICES'][service_name]
+	if service_name in service_config['GAME_SERVICES_URL'] \
+		and service_name in service_config['GAME_SERVICES_WS']:
+		service_url = service_config['GAME_SERVICES_URL'][service_name]
+		service_ws = service_config['GAME_SERVICES_WS'][service_name]
 		GAME_MODES[mode] = {
 			'service_url': service_url,
+			'service_ws': service_ws,
 			'players': int(players),
 			'teams': int(teams)
 		}

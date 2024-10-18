@@ -15,10 +15,10 @@ def auth_required(func):
 				cookies_dict[key_value[0]] = key_value[1]
 		access_token = cookies_dict.get('access_token')
 		refresh_token = cookies_dict.get('refresh_token')
-		if not access_token:
-			logger.error("Access token missing.")
-			await self.close()
-			return
+		#if not access_token:
+		#	logger.error("Access token missing.")
+		#	await self.close()
+		#	return
 		token = {
 			'access_token': access_token,
 			'refresh_token': refresh_token

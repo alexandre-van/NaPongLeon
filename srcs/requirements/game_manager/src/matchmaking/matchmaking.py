@@ -3,6 +3,7 @@ from django.conf import settings
 from game_manager.models import GameInstance
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
+from admin_manager.admin_manager import AdminManager
 from asgiref.sync import sync_to_async
 import uuid
 import asyncio
@@ -99,6 +100,7 @@ class Matchmaking:
 				del self._futures[username]
 		if result:
 			logger.debug(f'Game {game_id} created with players: {players}')
+			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
 		else :
 			logger.debug(f'Game {game_id} aborted')
 

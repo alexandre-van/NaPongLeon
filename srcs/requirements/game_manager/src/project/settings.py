@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 	'django.contrib.staticfiles',
 	'game_manager',
 	'matchmaking',
+	'admin_manager',
 	'rest_framework',
 	'channels',
 ]
@@ -197,6 +198,13 @@ LOGGING = {
 			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
 			'formatter': 'verbose',
 			'mode': 'w',
+		},
+	},
+	'loggers': {
+		'logger': {  # Utilisez le nom correct ici
+			'handlers': ['console', 'file'],
+			'level': 'CRITICAL',  # Ou un autre niveau selon vos besoins
+			'propagate': False,
 		},
 	},
 	'root': {

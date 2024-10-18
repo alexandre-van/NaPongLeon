@@ -8,3 +8,4 @@ channels_redis==4.2.0
 djangorestframework
 requests
 httpx
+websockets

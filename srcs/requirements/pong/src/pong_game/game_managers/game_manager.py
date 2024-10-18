@@ -19,7 +19,10 @@ class game_manager:
 		self.games_room[game_id] = {
 			'status': 'waiting',
 			'game_mode': game_mode,
-			'admin_id': admin_id,
+			'admin': {
+				'id': admin_id,
+				'consumer': None
+			},
 			'expected_players': players_list,
 			'players': {},
 			'spectator': {},
@@ -27,7 +30,7 @@ class game_manager:
 		}
 		return self.games_room[game_id]
 
-	def add_player(self, username, consumer, game_id):
+	def add_user(self, username, consumer, game_id):
 		if game_id not in self.games_room:
 			return None
 		room = self.games_room[game_id]
@@ -36,14 +39,39 @@ class game_manager:
 			users = room['spectator']
 		users[username] = consumer
 		game_mode = room['game_mode']
-		if len(room['players']) is game_modes[game_mode]['players'] \
-			and room['status'] is 'waiting':
+		if room['status'] is 'waiting'\
+			and len(room['players']) is game_modes[game_mode]['players'] \
+			and room['admin']['consumer']:
+			logger.debug('player start the game')
 			room['status'] = 'running'
 			new_game = Game(room['players'])
 			room['game_instance'] = new_game
 		return room
 
-	def remove_player(self, username, game_id):
+	def add_admin(self, admin_id, consumer, game_id):
+		if game_id not in self.games_room:
+			return None
+		room = self.games_room[game_id]
+		users = room['players']
+		room_admin_id = room['admin']['id']
+		if admin_id != room['admin']['id']:
+			logger.debug('wrong admin_id')
+			logger.debug(f'admin_id : {room_admin_id}')
+			return None
+		room['admin']['consumer'] = consumer
+		game_mode = room['game_mode']
+		if room['status'] is 'waiting'\
+			and len(room['players']) is game_modes[game_mode]['players'] \
+			and room['admin']['consumer']:
+			logger.debug('admin start the game')
+			room['status'] = 'running'
+			new_game = Game(room['players'])
+			room['game_instance'] = new_game
+		else:
+			logger.debug('admin dont start game')
+		return room
+
+	def remove_user(self, username, game_id):
 		if game_id not in self.games_room:
 			return
 		room = self.games_room[game_id]
