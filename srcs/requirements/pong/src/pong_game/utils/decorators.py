@@ -27,13 +27,11 @@ def auth_required(func):
 		try:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(auth_url, cookies=token)
-
+			kwargs['username'] = None
 			if response and response.status_code == 200:
 				username = response.json().get('user')
 				kwargs['username'] = username
-				return await func(self, *args, **kwargs)
-			else:
-				return
+			return await func(self, *args, **kwargs)
 		except httpx.RequestError as e:
 			logger.error(f"Authentication service error: {str(e)}")
 			return

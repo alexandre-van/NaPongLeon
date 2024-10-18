@@ -161,34 +161,51 @@ CACHES = {
 # Log
 
 LOGGING = {
-	'version': 1,
-	'disable_existing_loggers': False,
-	'formatters': {
-		'verbose': {
-			'format': '{levelname} {asctime} {module} {message}',
-			'style': '{',
-		},
-		'simple': {
-			'format': '{levelname} {message}',
-			'style': '{',
-		},
-	},
-	'handlers': {
-		'console': {
-			'level': 'DEBUG',
-			'class': 'logging.StreamHandler',
-			'formatter': 'simple',
-		},
-		'file': {
-			'level': 'DEBUG',
-			'class': 'logging.FileHandler',
-			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
-			'formatter': 'verbose',
-			'mode': 'w',
-		},
-	},
-	'root': {
-		'handlers': ['console', 'file'],
-		'level': 'DEBUG',
-	},
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+            'formatter': 'verbose',
+            'mode': 'w',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # Change this to 'INFO' to reduce verbosity
+            'propagate': True,
+        },
+        'daphne': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Change to 'ERROR' or 'CRITICAL' if needed
+            'propagate': False,
+        },
+        'http_protocol': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Suppress detailed HTTP request logs
+            'propagate': False,
+        },
+    },
 }

@@ -3,7 +3,6 @@ import { startGame, updateGame } from './srcs/animate.js';
 import './srcs/scene.js';
 import './srcs/object/camera.js';
 
-let game_id = null;
 const host = window.location.hostname;
 const port = window.location.port;
 const gameId = window.gameInfo.gameId;
@@ -27,8 +26,7 @@ socket.onmessage = function(event) {
 			console.log("Waiting for an opponent to join...");
 			break;
 		case "export_data":
-			game_id = data.game_id
-			console.log("Game created! \nGame ID :", game_id);
+			console.log("Game created! \nGame ID :", gameId);
 			init(data.data, socket);
 			break;
 		case "game_start":

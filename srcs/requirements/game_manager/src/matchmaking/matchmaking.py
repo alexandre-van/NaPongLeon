@@ -116,7 +116,7 @@ class Matchmaking:
 			with self._is_running_mutex:
 				if not self._is_running:
 					break
-			logger.debug("Matchmaking loop is running...")
+			#logger.debug("Matchmaking loop is running...")
 			await self.matchmaking_logic()
 			await asyncio.sleep(1)
 
