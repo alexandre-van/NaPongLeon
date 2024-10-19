@@ -9,6 +9,7 @@ import { createMap } from './object/map.js';
 import { createMap2 } from './object/map2.js';
 import { createCoins } from './object/coin.js';
 import { createStatue } from './object/statue.js';
+import { renderer, camera, scene } from './renderer.js';
 
 async function init_map1()
 {
@@ -35,6 +36,8 @@ async function init(data, ws){
 	await createPlateau(data.arena);
 	//await init_map1();
 	await init_map2();
+	renderer.render(scene, camera);
+	console.log("ready");
 	ws.send(JSON.stringify({type: 'ready'}));
 }
 

@@ -201,14 +201,21 @@ LOGGING = {
 		},
 	},
 	'loggers': {
-		'logger': {  # Utilisez le nom correct ici
-			'handlers': ['console', 'file'],
-			'level': 'CRITICAL',  # Ou un autre niveau selon vos besoins
-			'propagate': False,
-		},
-	},
-	'root': {
-		'handlers': ['console', 'file'],
-		'level': 'DEBUG',
+		'__name__': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+        },
+		'gane_manager': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+        },
+		'matchmaking': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+        },
+		'admin_manager': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+        },
 	},
 }

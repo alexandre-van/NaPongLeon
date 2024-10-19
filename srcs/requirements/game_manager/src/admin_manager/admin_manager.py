@@ -53,7 +53,7 @@ class AdminManager:
 		# Rejoindre tous les threads pour s'assurer qu'ils se terminent proprement
 		for thread in self.threads:
 			thread.join()  # Attendre que chaque thread se termine
-		print("Tous les threads sont terminés, fermeture du programme.")
+		logger.debug("Tous les threads sont terminés, fermeture du programme.")
 
 if AdminManager.admin_manager_instance is None:
 	AdminManager.admin_manager_instance = AdminManager()

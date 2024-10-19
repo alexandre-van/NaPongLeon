@@ -11,8 +11,10 @@ const PlayButton = () => {
                 window.gameInfo = {};
             }
             window.gameInfo.gameId = gameId;
+			const host = window.location.hostname;
+			const port = window.location.port;
 			// URL du script que vous souhaitez charger
-			const scriptUrl = 'http://localhost:8080/api/pong/static/pong/main.js'; // Mettez ici votre URL de script
+			const scriptUrl = `http://${host}:${port}/api/pong/static/pong/main.js`; // Mettez ici votre URL de script
 
 			// Créer et ajouter le script
 			const script = document.createElement('script');

@@ -67,7 +67,7 @@ const WebSocketContext = createContext(null);
 const getWindowURLinfo = () => {
   const host = window.location.hostname;
   const port = window.location.port;
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const protocol = window.location.protocol === 'http:' ? 'ws' : 'ws';
 
   return { host, port, protocol };
 };

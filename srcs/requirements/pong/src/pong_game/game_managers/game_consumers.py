@@ -56,29 +56,26 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if not self.room:
 			return
 		self.is_closed = True
-		if self.username not in self.room['spectator']:
-			#await self.channel_layer.group_send(self.game_id, {
-			#	'type': "send_state",
-			#	'state': {
-			#		'type': 'game_end',
-			#		'reason': 'player_2_disconnected'
-			#	}
-			#})
+		if self.username in self.room['players'] \
+			or self.admin_id == self.room['admin']['id']:
 			await self.channel_layer.group_discard(self.game_id, self.channel_name)
 			for player in self.room['players']:
 				try:
+					self.room['players'][player].is_closed = True
 					await self.room['players'][player].close()
 				except Exception as e:
-					print(f"Error closing player connection: {e}")
+					logger.error(f"Error closing player connection: {e}")
 			for spectator in self.room['spectator']:
 				try:
+					self.room['spectator'][spectator].is_closed = True
 					await self.room['spectator'][spectator].close()
 				except Exception as e:
-					print(f"Error closing spectator connection: {e}")
+					logger.error(f"Error closing spectator connection: {e}")
 			try:
+				self.room['admin']['consumer'].is_closed = True
 				await self.room['admin']['consumer'].close()
 			except Exception as e:
-				print(f"Error closing admin connection: {e}")
+				logger.error(f"Error closing admin connection: {e}")
 
 			game_manager.remove_room(self.game_id)
 		else:
