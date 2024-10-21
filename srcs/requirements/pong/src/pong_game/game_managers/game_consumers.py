@@ -7,7 +7,7 @@ from ..utils.decorators import auth_required
 
 class GameConsumer(AsyncWebsocketConsumer):
 	@auth_required
-	async def connect(self, username=None):
+	async def connect(self, username=None): # à eclaircire
 		path = self.scope['path']
 		segments = path.split('/')
 		self.room = None
@@ -36,7 +36,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 				if self.room is not None:
 					logger.debug(f"{username} is in waiting room !")
 			if self.room and self.room['game_instance']:
-				await self.channel_layer.group_add(self.game_id, self.room['admin']['consumer'].channel_name)
+				admin = self.room['admin']
+				await self.channel_layer.group_add(admin['id'], admin['consumer'].channel_name)
 				for player in self.room['players']:
 					await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
 				for player in self.room['spectator']:
@@ -46,6 +47,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 					'state': {
 						'type': "export_data",
 						'data': self.room['game_instance'].export_data()
+					}
+				})
+				await self.channel_layer.group_send(admin['id'], {
+					'type': "send_state",
+					'state': {
+						'type': "export_status",
+						'status': 'loading',
+						'teams': self.room['game_instance'].export_teams()
 					}
 				})
 				logger.debug(f'Export data')
@@ -95,10 +104,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 		game_room = self.room['game_instance']
 		if game_room:
 			if data_type == 'move':
-				game_room.input_players(self, data['input'])
+				game_room.input_players(self.username, data['input'])
 			elif data_type == 'ready':
 				player_1.ready = True
-				player_2 = game_room.getopponent(player_1)
+				player_2 = game_room.getopponent(self.username)
 				if not game_room.started and player_2.ready:
 					game_room.started = True
 					await self.channel_layer.group_send( game_id, {

@@ -7,6 +7,8 @@ const PlayButton = () => {
 			//const response = await api.get('/pong/');
 			const response = await api.get('/game_manager/matchmaking/game_mode=PONG_CLASSIC');
 			const gameId = response.data['data']['game_id'];
+			if (!gameId)
+				throw new Error('Game ID is missing from the response.');
             if (!window.gameInfo) {
                 window.gameInfo = {};
             }

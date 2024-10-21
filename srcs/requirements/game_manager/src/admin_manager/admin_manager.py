@@ -1,10 +1,12 @@
 import threading
 import websockets
 import asyncio
+from game_manager.models import GameInstance, Player
 from django.db import transaction
 from django.conf import settings
 from game_manager.utils.logger import logger
 from asgiref.sync import sync_to_async
+import json
 
 class AdminManager:
 	admin_manager_instance = None
@@ -25,18 +27,34 @@ class AdminManager:
 		async with websockets.connect(ws_url) as websocket:
 			self.connections[game_id] = websocket
 			# Écouter en boucle les événements en temps réel
-			while True:
-				#message = await websocket.recv()
-				pass
-			#	await self.handle_message(game_id, message)
-	
+			try:
+				async for message in websocket:
+					message_dict = json.loads(message)
+					await self.handle_message(game_id, message_dict)
+			except websockets.exceptions.ConnectionClosedOK:
+				logger.debug("WebSocket connection closed normally (1000 OK).")
+			except websockets.exceptions.ConnectionClosedError as e:
+				logger.error(f"WebSocket closed with error: {e}")
+			except json.JSONDecodeError as e:
+				logger.error(f"Failed to decode message: {e}")
+
 	@sync_to_async
 	def handle_message(self, game_id, message):
-		# Gérer les messages reçus, exemple : mise à jour de la base de données
-		#with transaction.atomic():
-		#	logger.debug(f"Game {game_id}: Received message: {message}")
-		#	# Logique de mise à jour du score, statut de joueur, etc.
-			pass
+		logger.debug(f"Game {game_id}: Received message: {message}")
+		type = message.get("type")
+		if type == "export_status":
+			status = message.get("status")
+			teams = message.get("teams")
+			with transaction.atomic():
+				game_instance = GameInstance.get_game(game_id)
+				if game_instance:
+					game_instance.update_status(status)
+					team_number = 1
+					for team in teams:
+						for player in teams[team]:
+							game_instance.add_player_to_team(player, team_number)
+						team_number += 1
+			
 
 	def start_connections(self, game_id, admin_id, game_mode):
 		# Extraire les informations de la partie

@@ -13,7 +13,7 @@ class Game:
 		# Assigner les côtés aux joueurs dynamiquement
 		for i, (username, player_consumer) in enumerate(players.items()):
 			side = sides[i % len(sides)]  # Assigner gauche/droite de manière cyclique
-			self.players['p' + str(i + 1)] = Player(player_consumer, side)
+			self.players[username] = Player(player_consumer, side)
 			logger.debug(f"{username} is the {side} player !")
 		self.ball = Ball()
 		self.timer = Timer()
@@ -21,16 +21,15 @@ class Game:
 		self.started = False
 		self.wait = 3
 
-	def input_players(self, player, input):
-		pn = 'p1' if player == self.players['p1'].player_consumer else 'p2'
-		self.players[pn].move_padel(input)
+	def input_players(self, username, input):
+		self.players[username].move_padel(input)
 
 	def update(self):
 		scoring_side = self.ball.is_scored()
 		if scoring_side != None:
 			return self.scored(scoring_side)
-		self.players['p1'].padel.update_padel_position(self.ball)
-		self.players['p2'].padel.update_padel_position(self.ball)
+		for username in self.players:
+			self.players[username].padel.update_padel_position(self.ball)
 		if (self.timer.waiting(self.wait)):
 			self.wait = 0
 			self.ball.update_ball_position(self.get_player_in_side)
@@ -53,17 +52,34 @@ class Game:
 			'key': key_data,
 			'arena': arena_data,
 			'padel': padel_data,
-			'ball': ball_data
+			'ball': ball_data,
+			'teams': self.export_teams()
+		}
+	
+	def export_teams(self):
+		left = []
+		right = []
+		for player in self.players:
+			if self.players[player].side == 'left':
+				left.append(player)
+			elif self.players[player].side == 'right':
+				right.append(player)
+		return {
+			'1': list(left),
+			'2': list(right)
 		}
 
-	def getopponent(self, player):
-		return self.players['p1'].player_consumer \
-			if player == self.players['p1'].player_consumer \
-			else self.players['p2'].player_consumer
+	def getopponent(self, self_username):
+		for username in self.players:
+			if username != self_username:
+				return self.players[username].player_consumer
+		return None
 	
 	def get_player_in_side(self, side):
-		return self.players['p1'] if self.players['p1'].side == side \
-			else self.players['p2']
+		for username in self.players:
+			if self.players[username].side == side:
+				return self.players[username]
+		return None
 	
 	def scored(self, scoring_side):
 		self.ball.reset_position()

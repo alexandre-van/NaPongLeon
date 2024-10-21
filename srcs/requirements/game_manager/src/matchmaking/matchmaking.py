@@ -1,6 +1,6 @@
 # matchmaking.py
 from django.conf import settings
-from game_manager.models import GameInstance
+from game_manager.models import GameInstance, Player
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
 from admin_manager.admin_manager import AdminManager
@@ -23,20 +23,46 @@ class Matchmaking:
 		self._queue = {}
 		self._queue_mutex = threading.Lock()
 		self._futures = {}
+		self._futures_mutex = threading.Lock()
 		self.GAME_MODES = copy.deepcopy(settings.GAME_MODES)
+
+	async def get_player_request(self, username):
+		with self._queue_mutex:
+			for game_mode in list(self._queue.keys()):
+				for player_request in self._queue[game_mode][:]:
+					if player_request['username'] == username:
+						return player_request
+		return None
+
+	async def remove_player_request(self, username):
+		player_request = self.get_player_request(username)
+		if player_request is None:
+			return
+		with self._queue_mutex:
+			with self._futures_mutex:
+				self._queue[player_request['game_mode']].remove(player_request)
+				if self._futures[username]:
+					del self._futures[username]
+
 
 	async def add_player_request(self, username, game_mode):
 		logger.debug("Add player request")
 		future = asyncio.Future()
-		self._futures[username] = future
-		
+		status = await self.get_player_status(username)
+		if (status != 'inactive'):
+			logger.debug(f"Player {username} cannot join the matchmaking queue because their current status is '{status}'. Status must be 'inactive' to join.")
+			future.set_result({'game_id': None})
+			return future
+		await self.update_player_status(username, 'in_queue')
+		with self._futures_mutex:
+				self._futures[username] = future
 		with self._queue_mutex:
 			if game_mode not in self._queue:
 				self._queue[game_mode] = []
 			self._queue[game_mode].append({
 				'username': username,
+				'game_mode': game_mode,
 				'time': Timer(),
-				'future': future
 			})
 		return future
 
@@ -88,16 +114,22 @@ class Matchmaking:
 		admin_id = str(uuid.uuid4())
 		players = [p['username'] for p in queue_selected]
 		game = await self.create_game_instance(game_id, admin_id, game_mode, players)
+		for username in players:
+			logger.debug(f'{username} create_game_instance')
+			await self.update_player_status(username, 'pending')
+			await self.update_game_history(username, game_id)
 		if await self.game_notify(game_id, admin_id, game_mode, players) == 0:
 			await self.abord_game_instance(game)
+			await self.update_player_status(username, 'inactive')
 			result = None
-		for player_request in queue_selected:
-			username = player_request['username']
-			if username in self._futures:
-				future = self._futures[username]
-				if not future.done():
-					future.set_result({'game_id': result})
-				del self._futures[username]
+		with self._futures_mutex:
+			for player_request in queue_selected:
+				username = player_request['username']
+				if username in self._futures:
+					future = self._futures[username]
+					if not future.done():
+						future.set_result({'game_id': result})
+					del self._futures[username]
 		if result:
 			logger.debug(f'Game {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
@@ -108,6 +140,21 @@ class Matchmaking:
 	def create_game_instance(self, game_id, admin_id, game_mode, players):
 		return GameInstance.create_game(game_id, admin_id, game_mode, players)
 	
+	@sync_to_async
+	def get_player_status(self, username):
+		player = Player.get_or_create_player(username)
+		return player.status
+
+	@sync_to_async
+	def update_player_status(self, username, status):
+		player = Player.get_or_create_player(username)
+		player.update_status(status)
+
+	@sync_to_async
+	def update_game_history(self, username, game_id):
+		player = Player.get_or_create_player(username)
+		player.add_game_to_history(game_id)
+
 	@sync_to_async
 	def abord_game_instance(self, game):
 		game.abort_game()
