@@ -151,6 +151,7 @@ services:
       - nginx
     networks:
       - backend
+    #command: ["python", "IAapp/run_ia.py"]  # Ajout de la commande pour exécuter le script
 
   
     

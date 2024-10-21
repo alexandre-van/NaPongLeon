@@ -1,9 +1,9 @@
 # run_ia.py
-from ia import IA
+from .ia import IA
 import websocket
 
 def run_ia():
-    host = 'localhost'  # Ou l'adresse IP de votre serveur
+    host = 'pong'  # Ou l'adresse IP de votre serveur
     port = '8000'       # Changez le port si nécessaire
     websocket_url = f"ws://{host}:{port}/ws/pong/"
     
@@ -16,6 +16,3 @@ def run_ia():
                                 on_close=ia.on_close)
     
     ws.run_forever()
-
-if __name__ == "__main__":
-    run_ia()

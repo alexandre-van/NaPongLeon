@@ -20,9 +20,9 @@ class IA:
         elif data['type'] == 'game_start':
             print("Le jeu a commencé!")
             # Commencez votre logique de jeu ici
-        elif data['type'] == 'gu':
+       # elif data['type'] == 'gu':
             # Mettez à jour l'état du jeu
-            print("État du jeu mis à jour:", data)
+           #print("État du jeu mis à jour:", data)
         elif data['type'] == 'scored':
             print(data['msg'])
         elif data['type'] == 'game_end':
