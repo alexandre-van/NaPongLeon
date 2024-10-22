@@ -122,6 +122,11 @@ class Matchmaking:
 			await self.abord_game_instance(game)
 			await self.update_player_status(username, 'inactive')
 			result = None
+		if result:
+			logger.debug(f'Game {game_id} created with players: {players}')
+			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
+		else:
+			logger.debug(f'Game {game_id} aborted')
 		with self._futures_mutex:
 			for player_request in queue_selected:
 				username = player_request['username']
@@ -130,11 +135,6 @@ class Matchmaking:
 					if not future.done():
 						future.set_result({'game_id': result})
 					del self._futures[username]
-		if result:
-			logger.debug(f'Game {game_id} created with players: {players}')
-			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
-		else :
-			logger.debug(f'Game {game_id} aborted')
 
 	@sync_to_async
 	def create_game_instance(self, game_id, admin_id, game_mode, players):

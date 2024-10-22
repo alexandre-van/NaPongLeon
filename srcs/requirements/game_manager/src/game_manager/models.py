@@ -47,9 +47,9 @@ class Player(models.Model):
 		else:
 			raise ValueError(f"Invalid status: {new_status}")
 
-
 class GameInstance(models.Model):
 	STATUS_CHOICES = [
+		#('admin_pending', ''),
 		('waiting', 'Waiting for players to join'),
 		('loading', 'Players are loading game assets and configurations'),
 		('in_progress', 'Game currently in progress'),

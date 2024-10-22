@@ -37,7 +37,7 @@ class game_manager:
 		if game_id not in self.games_room:
 			return None
 		room = self.games_room[game_id]
-		if not room['admin']['consumer']
+		if not room['admin']['consumer']:
 			return None
 		users = room['players']
 		log_user = 'Player'
@@ -59,7 +59,6 @@ class game_manager:
 		if game_id not in self.games_room:
 			return None
 		room = self.games_room[game_id]
-		users = room['players']
 		room_admin_id = room['admin']['id']
 		if admin_id != room['admin']['id']:
 			logger.debug('wrong admin_id')

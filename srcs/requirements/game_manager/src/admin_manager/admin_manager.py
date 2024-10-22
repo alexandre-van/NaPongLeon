@@ -25,12 +25,13 @@ class AdminManager:
 	async def _handle_websocket(self, game_id, ws_url):
 		logger.debug(f'thread in game : {game_id} is running...')
 		users = {
-			'players' = [],
-			'spectator' = []
+			'players': [],
+			'spectator': []
 		}
 		async with websockets.connect(ws_url) as websocket:
-			self.connections[game_id] = websocket
-			# Écouter en boucle les événements en temps réel
+			logger.debug(f"Websocket connected : {ws_url}")
+			#self.admin_connected(game_id)
+			self.connections[game_id] = websockets
 			try:
 				async for message in websocket:
 					message_dict = json.loads(message)
@@ -42,6 +43,14 @@ class AdminManager:
 			except json.JSONDecodeError as e:
 				logger.error(f"Failed to decode message: {e}")
 
+	#@sync_to_async
+	#def admin_connected(self, game_id):
+	#	game_instance = GameInstance.get_game(game_id)
+	#	if not game_instance:
+	#		return
+	#	with transaction.atomic():
+	#		game_instance.update_status('waiting')
+
 	@sync_to_async
 	def handle_message(self, game_id, message, users):
 		logger.debug(f"Game {game_id}: Received message: {message}")
@@ -51,21 +60,21 @@ class AdminManager:
 			if status == 'loading':
 				for username in users['players']:
 					with transaction.atomic():
-						player = get_or_create_player(username)
+						player = Player.get_or_create_player(username)
 						player.update_status('loading_game')
-			if status == 'in_process':
+			if status == 'in_progress':
 				for username in users['players']:
 					with transaction.atomic():
-						player = get_or_create_player(username)
+						player = Player.get_or_create_player(username)
 						player.update_status('in_game')
 			if status == 'aborted' or status == 'finished':
 				for username in users['players']:
 					with transaction.atomic():
-						player = get_or_create_player(username)
+						player = Player.get_or_create_player(username)
 						player.update_status('inactive')
 				for username in users['spectator']:
 					with transaction.atomic():
-						spectator = get_or_create_player(username)
+						spectator = Player.get_or_create_player(username)
 						spectator.update_status('inactive')
 			game_instance = GameInstance.get_game(game_id)
 			if not game_instance:
