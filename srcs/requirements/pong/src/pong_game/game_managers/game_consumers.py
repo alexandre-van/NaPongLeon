@@ -6,8 +6,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from ..utils.decorators import auth_required
 
 class GameConsumer(AsyncWebsocketConsumer):
+	# CONNECT
 	@auth_required
-	async def connect(self, username=None): # à eclaircire
+	async def connect(self, username=None):
 		path = self.scope['path']
 		segments = path.split('/')
 		self.room = None
@@ -22,46 +23,78 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.debug(f'admin_id = {self.admin_id}')
 			self.username = 'admin'
 		if not self.username and not self.admin_id:
+			logger.warning(f'An unauthorized connection has been received')
 			return
 		logger.debug(f'{self.username} tries to connect to the game: {self.game_id}')
 		if game_manager.get_room(self.game_id) is not None:
-			await self.accept()
-			self.ready = False
-			if self.admin_id:
-				self.room = game_manager.add_admin(self.admin_id, self, self.game_id)
-				if self.room is not None:
-					logger.debug(f"admin is in waiting room !")
-			else:
-				self.room = game_manager.add_user(self.username, self, self.game_id)
-				if self.room is not None:
-					logger.debug(f"{username} is in waiting room !")
-			if self.room and self.room['game_instance']:
-				admin = self.room['admin']
-				await self.channel_layer.group_add(admin['id'], admin['consumer'].channel_name)
-				for player in self.room['players']:
-					await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
-				for player in self.room['spectator']:
-					await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
-				await self.channel_layer.group_send(self.game_id, {
-					'type': "send_state",
-					'state': {
-						'type': "export_data",
-						'data': self.room['game_instance'].export_data()
-					}
-				})
-				await self.channel_layer.group_send(admin['id'], {
-					'type': "send_state",
-					'state': {
-						'type': "export_status",
-						'status': 'loading',
-						'teams': self.room['game_instance'].export_teams()
-					}
-				})
-				logger.debug(f'Export data')
-			else:
-				await self.send(text_data=json.dumps({'type': 'waiting_room'}))
+			self.new_users()
+		else:
+			logger.debug(f'{self.game_id} does not exist')
+			await self.send(text_data=json.dumps({
+				'error': '404',
+				'message': f'{self.game_id} does not exist'
+			}))
 
-	async def disconnect(self, close_code):
+	async def new_users(self):
+		self.ready = False
+		if self.admin_id:
+			self.room = game_manager.add_admin(self.admin_id, self, self.game_id)
+			if self.room is None:
+				return
+			await self.accept()
+			logger.debug(f"Admin is connected !")
+		else:
+			self.room = game_manager.add_user(self.username, self, self.game_id)
+			if self.room is None:
+				return
+			self.send_user_connection()
+			await self.accept()
+		if self.room and self.room['status'] == 'startup' and self.room['game_instance'] \
+			and self.username in self.room['players']:
+			self.startup()
+		elif self.room and self.room['status'] != 'waiting' and self.room['game_instance']:
+			self.add_user()
+		else:
+			await self.send_message({
+				'type': 'waiting_room',
+			})
+
+	async def startup(self):
+		self.room.update_status('loading')
+		admin = self.room['admin']
+		await self.channel_layer.group_add(admin['id'], admin['consumer'].channel_name)
+		for player in self.room['players']:
+			await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
+		for spectator in self.room['spectator']:
+			await self.channel_layer.group_add(self.game_id, self.room['spectator'][spectator].channel_name)
+		await self.send_export_data(self.game_id, self.room['game_instance'].export_data())
+		logger.debug(f'Export data')
+		await self.send_game_status(admin['id'], self.game_id, 'loading')
+
+	async def add_user(self):
+		admin = self.room['admin']
+		await self.send_message({
+			'type': "export_data",
+			'data': self.room['game_instance'].export_data()
+		})
+
+	async def send_user_connection(self):
+		type_name = None
+		if self.username in self.room['players']:
+			type_name = 'player_connection'
+		elif self.username in self.room['spectator']:
+			type_name = 'spectator_connection'
+		else
+			return
+		groups = [admin_id, self.game_id]
+		await self.send_to_multiple_groups(groups, {
+				'type': type_name
+				'username': self.username
+		})
+
+	# DISCONNECT
+
+	async def disconnect(self, close_code): # a clean
 		if not self.room:
 			return
 		self.is_closed = True
@@ -91,35 +124,43 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if self.username in self.room['spectator']:
 				game_manager.remove_user(self.username, self.game_id)
 
+	# RECEIVE
 
 	async def receive(self, text_data):
 		if not self.room:
 			return
 		if self.username not in self.room['players']:
 			return
-		player_1 = self
 		data = json.loads(text_data)
 		game_id = self.game_id
 		data_type = data['type']
 		game_room = self.room['game_instance']
 		if game_room:
-			if data_type == 'move':
+			if data_type == 'move' and self.username in self.room['players']:
 				game_room.input_players(self.username, data['input'])
 			elif data_type == 'ready':
-				player_1.ready = True
-				player_2 = game_room.getopponent(self.username)
-				if not game_room.started and player_2.ready:
-					game_room.started = True
-					await self.channel_layer.group_send( game_id, {
-							'type': 'send_state',
-							'state': {
-								'type': 'game_start'
-							}
-					})
-					asyncio.create_task(player_1.game_loop(game_id))
-					asyncio.create_task(player_2.game_loop(game_id))
-					logger.debug(f'Game start')
+				if self.username in self.room['players']
+	
+	async def game_start()
+		self.ready = True
+		for player in self.room['players']
+			if self.room['players'][player].ready == False
+				return
+		if self.room['status'] == 'loading':
+			self.room.update_status('running')
+			await self.send_game_status(admin_id, None, 'in_process')
+			await self.channel_layer.group_send( game_id, {
+				'type': 'send_state',
+				'state': {
+					'type': 'game_start'
+				}
+			})
+			asyncio.create_task(self.game_loop(game_id))
+			logger.debug(f'Game start')
 
+
+
+	# GAME LOOP
 
 	async def game_loop(self, game_id):
 		if not self.room:
@@ -138,6 +179,47 @@ class GameConsumer(AsyncWebsocketConsumer):
 				await asyncio.sleep(0.025)
 			else:
 				break
+
+	# UTILS
+
+	async def send_export_data(self, game_id, data):
+		await self.channel_layer.group_send(game_id, {
+				'type': "send_state",
+				'state': {
+					'type': "export_data",
+					'data': data
+				}
+			})
+
+	async def send_game_status(self, admin_id, game_id, status):
+		groups = []
+		if admin_id:
+			groups.append(admin_id)
+		if game_id:
+			groups.append(game_id)
+		await self.send_to_multiple_groups(groups, {
+				'type': 'export_status'
+				'status': status
+		})
+
+	async def send_to_multiple_groups(self, groups, message):
+ 		channel_layer = get_channel_layer()
+		for group in groups:
+			await channel_layer.group_send(
+				group, {
+					'type': 'send_state',
+					'message': message
+				}
+			)
+
+	async def send_message(self, message):
+		try:
+			if self.is_closed is False:
+				await self.send(text_data=json.dumps(message))
+		except Exception as e:
+			logger.warning(f"{self.username}: Failed to send message: {e}")
+
+	# STATE EVENT
 
 	async def send_state(self, event):
 		try:

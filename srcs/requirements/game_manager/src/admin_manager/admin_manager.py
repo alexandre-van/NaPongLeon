@@ -24,13 +24,17 @@ class AdminManager:
 	
 	async def _handle_websocket(self, game_id, ws_url):
 		logger.debug(f'thread in game : {game_id} is running...')
+		users = {
+			'players' = [],
+			'spectator' = []
+		}
 		async with websockets.connect(ws_url) as websocket:
 			self.connections[game_id] = websocket
 			# Écouter en boucle les événements en temps réel
 			try:
 				async for message in websocket:
 					message_dict = json.loads(message)
-					await self.handle_message(game_id, message_dict)
+					await self.handle_message(game_id, message_dict, users)
 			except websockets.exceptions.ConnectionClosedOK:
 				logger.debug("WebSocket connection closed normally (1000 OK).")
 			except websockets.exceptions.ConnectionClosedError as e:
@@ -39,21 +43,82 @@ class AdminManager:
 				logger.error(f"Failed to decode message: {e}")
 
 	@sync_to_async
-	def handle_message(self, game_id, message):
+	def handle_message(self, game_id, message, users):
 		logger.debug(f"Game {game_id}: Received message: {message}")
 		type = message.get("type")
 		if type == "export_status":
 			status = message.get("status")
+			if status == 'loading':
+				for username in users['players']:
+					with transaction.atomic():
+						player = get_or_create_player(username)
+						player.update_status('loading_game')
+			if status == 'in_process':
+				for username in users['players']:
+					with transaction.atomic():
+						player = get_or_create_player(username)
+						player.update_status('in_game')
+			if status == 'aborted' or status == 'finished':
+				for username in users['players']:
+					with transaction.atomic():
+						player = get_or_create_player(username)
+						player.update_status('inactive')
+				for username in users['spectator']:
+					with transaction.atomic():
+						spectator = get_or_create_player(username)
+						spectator.update_status('inactive')
+			game_instance = GameInstance.get_game(game_id)
+			if not game_instance:
+				return
+			with transaction.atomic():
+				game_instance.update_status(status)
+		elif type == "export_teams":
+			game_instance = GameInstance.get_game(game_id)
+			if not game_instance:
+				return
 			teams = message.get("teams")
 			with transaction.atomic():
-				game_instance = GameInstance.get_game(game_id)
-				if game_instance:
-					game_instance.update_status(status)
-					team_number = 1
-					for team in teams:
-						for player in teams[team]:
-							game_instance.add_player_to_team(player, team_number)
-						team_number += 1
+				game_instance.update_status(status)
+				for team in teams:
+					for player in teams[team]:
+						game_instance.add_player_to_team(player, team)
+		elif type == "update_score":
+			game_instance = GameInstance.get_game(game_id)
+			if not game_instance:
+				return
+			team_name = message.get("team_name")
+			score = message.get("score")
+			with transaction.atomic():
+				game_instance.update_score(team_name, score)
+		elif type == "player_connection":
+			username = message.get("username")
+			users['players'].append(username)
+			with transaction.atomic():
+				player = Player.get_or_create_player(username)
+				if player:
+					player.update_status('waiting_for_players')
+		elif type == "spectator_connection":
+			username = message.get("username")
+			users['spectator'].append(username)
+			with transaction.atomic():
+				player = Player.get_or_create_player(username)
+				if player:
+					player.update_status('spectate')
+		elif type == "player_disconnection":
+			username = message.get("username")
+			users['players'].remove(username)
+			with transaction.atomic():
+				player = Player.get_or_create_player(username)
+				if player:
+					player.update_status('inactive')
+		elif type == "spectator_disconnection":
+			username = message.get("username")
+			users['spectator'].remove(username)
+			with transaction.atomic():
+				player = Player.get_or_create_player(username)
+				if player:
+					player.update_status('inactive')
+					
 			
 
 	def start_connections(self, game_id, admin_id, game_mode):

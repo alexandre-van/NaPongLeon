@@ -12,6 +12,7 @@ class Player(models.Model):
 		('waiting_for_players', 'Player is waiting for other players to join the game'),
 		('loading_game', 'Player is waiting for the game to load'),
 		('in_game', 'Player is currently playing in a game'),
+		('spectate', 'Player is currently spectating a game'),
 	]
 
 	username = models.CharField(max_length=100, unique=True)
@@ -86,6 +87,8 @@ class GameInstance(models.Model):
 
 	def update_score(self, team, score):
 		"""Met à jour le score de l'équipe spécifiée."""
+		if team not in self.teams:
+			self.teams[team] = []
 		self.scores[team] = score
 		self.save()  # Sauvegarde les modifications
 
@@ -121,10 +124,6 @@ class GameInstance(models.Model):
 			game_mode=game_mode,
 			teams={}  # Initialisation d'équipes vides
 		)
-		
-		# Initialiser les équipes en fonction du mode de jeu
-		for i in range(settings.GAME_MODES.get(game_mode).get('teams')):
-			new_game.teams[i + 1] = []
 		new_game.save()
 		return new_game
 
@@ -135,9 +134,8 @@ class GameInstance(models.Model):
 		except cls.DoesNotExist:
 			return None
 
-	def add_player_to_team(self, player, team_number):
-		"""Ajoute un joueur dans l'équipe spécifiée (team_number)."""
-		if team_number not in self.teams:
-			self.teams[team_number] = []
-		self.teams[team_number].append(player)
+	def add_player_to_team(self, player, team_name):
+		if team_name not in self.teams:
+			self.teams[team_name] = []
+		self.teams[team_name].append(player)
 		self.save()

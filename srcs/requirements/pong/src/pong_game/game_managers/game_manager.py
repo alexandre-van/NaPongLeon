@@ -7,6 +7,9 @@ import copy
 class game_manager:
 	def __init__(self) :
 		self.games_room = {}
+		self.status_list = [
+			'waiting', 'startup', 'loading', 'running', 'aborted', 'finished'
+		]
 		logger.debug("\ngame_manager initialised\n")
 
 	def add_games_room(self, game_id, admin_id, game_mode, players_list):
@@ -34,16 +37,20 @@ class game_manager:
 		if game_id not in self.games_room:
 			return None
 		room = self.games_room[game_id]
+		if not room['admin']['consumer']
+			return None
 		users = room['players']
+		log_user = 'Player'
 		if username not in room['expected_players']:
 			users = room['spectator']
+			log_user = 'Spectator'
+		logger.debug(f"{log_user}: {username} is in waiting room !")
 		users[username] = consumer
 		game_mode = room['game_mode']
 		if room['status'] is 'waiting'\
-			and len(room['players']) is game_modes[game_mode]['players'] \
-			and room['admin']['consumer']:
+			and len(room['players']) is game_modes[game_mode]['players']:
 			logger.debug('player start the game')
-			room['status'] = 'running'
+			room['status'] = 'startup'
 			new_game = Game(room['players'])
 			room['game_instance'] = new_game
 		return room
@@ -64,12 +71,17 @@ class game_manager:
 			and len(room['players']) is game_modes[game_mode]['players'] \
 			and room['admin']['consumer']:
 			logger.debug('admin start the game')
-			room['status'] = 'running'
+			room['status'] = 'startup'
 			new_game = Game(room['players'])
 			room['game_instance'] = new_game
-		else:
-			logger.debug('admin dont start game')
 		return room
+
+	def update_status(self, status, game_id):
+		if game_id not in self.games_room \
+			or status not in self.status_list:
+			return None
+		room = self.games_room[game_id]
+		room['status'] = status
 
 	def remove_user(self, username, game_id):
 		if game_id not in self.games_room:

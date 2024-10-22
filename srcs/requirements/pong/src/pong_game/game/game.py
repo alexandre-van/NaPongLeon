@@ -18,7 +18,6 @@ class Game:
 		self.ball = Ball()
 		self.timer = Timer()
 		self.timer.settup(None)
-		self.started = False
 		self.wait = 3
 
 	def input_players(self, username, input):
