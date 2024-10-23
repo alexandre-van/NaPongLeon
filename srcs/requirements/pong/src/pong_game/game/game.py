@@ -64,8 +64,8 @@ class Game:
 			elif self.players[player].side == 'right':
 				right.append(player)
 		return {
-			'1': list(left),
-			'2': list(right)
+			'left': list(left),
+			'right': list(right)
 		}
 
 	def getopponent(self, self_username):
@@ -84,16 +84,20 @@ class Game:
 		self.ball.reset_position()
 		player = self.get_player_in_side(scoring_side)
 		player.score += 1
-		if player.score >= 11:
+		if player.score >= 3:
 			return {
 				'type': 'game_end',
-				'reason': 'The ' + str(scoring_side) + ' side wins !'
+				'reason': 'The ' + str(scoring_side) + ' side wins !',
+				'score': str(player.score),
+				'team': str(scoring_side),
 			}
 		else:
 			self.timer.reset()
 			self.wait = 1
 			return {
 				'type': 'scored',
-				'msg': 'The ' + str(scoring_side) + ' scores : ' + str(player.score)
+				'msg': 'The ' + str(scoring_side) + ' scores : ' + str(player.score),
+				'score': str(player.score),
+				'team': str(scoring_side),
 			}
 		

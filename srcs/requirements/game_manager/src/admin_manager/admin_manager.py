@@ -30,7 +30,6 @@ class AdminManager:
 		}
 		async with websockets.connect(ws_url) as websocket:
 			logger.debug(f"Websocket connected : {ws_url}")
-			#self.admin_connected(game_id)
 			self.connections[game_id] = websockets
 			try:
 				async for message in websocket:
@@ -42,14 +41,6 @@ class AdminManager:
 				logger.error(f"WebSocket closed with error: {e}")
 			except json.JSONDecodeError as e:
 				logger.error(f"Failed to decode message: {e}")
-
-	#@sync_to_async
-	#def admin_connected(self, game_id):
-	#	game_instance = GameInstance.get_game(game_id)
-	#	if not game_instance:
-	#		return
-	#	with transaction.atomic():
-	#		game_instance.update_status('waiting')
 
 	@sync_to_async
 	def handle_message(self, game_id, message, users):
@@ -80,6 +71,11 @@ class AdminManager:
 			if not game_instance:
 				return
 			with transaction.atomic():
+				if status == "finished":
+					win_team = message.get("team")
+					score = message.get("score")
+					game_instance.update_score(win_team, score)
+					game_instance.set_winner(win_team)
 				game_instance.update_status(status)
 		elif type == "export_teams":
 			game_instance = GameInstance.get_game(game_id)
@@ -87,7 +83,6 @@ class AdminManager:
 				return
 			teams = message.get("teams")
 			with transaction.atomic():
-				game_instance.update_status(status)
 				for team in teams:
 					for player in teams[team]:
 						game_instance.add_player_to_team(player, team)
@@ -95,7 +90,7 @@ class AdminManager:
 			game_instance = GameInstance.get_game(game_id)
 			if not game_instance:
 				return
-			team_name = message.get("team_name")
+			team_name = message.get("team")
 			score = message.get("score")
 			with transaction.atomic():
 				game_instance.update_score(team_name, score)

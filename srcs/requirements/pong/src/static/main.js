@@ -43,7 +43,7 @@ socket.onmessage = function(event) {
 			break;
 		case "game_end":
 			console.log("Game ended. Reason:", data.reason);
-			socket.close();
+			//socket.close();
 			break;
 		default:
 			console.log("Unknown message type:", data.type);
