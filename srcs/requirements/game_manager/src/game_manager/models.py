@@ -49,7 +49,6 @@ class Player(models.Model):
 
 class GameInstance(models.Model):
 	STATUS_CHOICES = [
-		#('admin_pending', ''),
 		('waiting', 'Waiting for players to join'),
 		('loading', 'Players are loading game assets and configurations'),
 		('in_progress', 'Game currently in progress'),
@@ -59,12 +58,11 @@ class GameInstance(models.Model):
 
 
 	game_id = models.CharField(max_length=100, unique=True)  # ID de la partie
-	admin_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # ID de modo
+	#admin_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # ID de modo
 	usernames = models.JSONField()  # Tableau avec les usernames des joueurs
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')  # Statut de la partie
 	scores = models.JSONField(default=dict)  # Dictionnaire des scores par équipe
-	winner = models.IntegerField(blank=True, null=True)  # Vainqueur (team) s'il y en a un
-	game_duration = models.DurationField(blank=True, null=True)  # Durée de la partie
+	winner = models.CharField(max_length=20, blank=True, null=True)  # Vainqueur (team) s'il y en a un
 	game_date = models.DateTimeField(default=timezone.now)  # Date de la partie
 	game_mode = models.CharField(max_length=20)  # Mode de jeu
 	teams = models.JSONField(default=dict)  # Dictionnaire pour stocker les équipes et les joueurs
@@ -95,7 +93,6 @@ class GameInstance(models.Model):
 	def set_winner(self, team):
 		"""Définit l'équipe gagnante et met à jour le statut de la partie."""
 		self.winner = team
-		self.status = 'finished'  # Mettre à jour le statut de la partie
 		self.save()  # Sauvegarde les modifications
 
 	def update_status(self, new_status):
@@ -111,12 +108,12 @@ class GameInstance(models.Model):
 		self.save()
 
 	@classmethod
-	def create_game(cls, game_id, admin_id, game_mode, usernames):
+	def create_game(cls, game_id, game_mode, usernames):
 		"""Méthode de classe pour créer une nouvelle partie avec des équipes vides."""
 		# Initialiser l'état de la partie
 		new_game = cls(
 			game_id=game_id,
-			admin_id=admin_id,
+			#admin_id=admin_id,
 			usernames=usernames,
 			status='waiting',
 			scores={},  # Initialise les scores vides

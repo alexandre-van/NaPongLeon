@@ -6,7 +6,7 @@ start:
 
 stop:
 	@echo "Shutting down Docker containers"
-	docker-compose -f $(DC_FILE) stop --timeout=6
+	docker-compose -f $(DC_FILE) stop --timeout=10
 
 fclean:
 	@echo "Removing volumes and built containers"

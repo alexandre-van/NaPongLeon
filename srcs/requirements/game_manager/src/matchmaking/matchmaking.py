@@ -113,20 +113,40 @@ class Matchmaking:
 		result = game_id
 		admin_id = str(uuid.uuid4())
 		players = [p['username'] for p in queue_selected]
-		game = await self.create_game_instance(game_id, admin_id, game_mode, players)
+		game = await self.create_game_instance(game_id, game_mode, players)
 		for username in players:
 			logger.debug(f'{username} create_game_instance')
 			await self.update_player_status(username, 'pending')
 			await self.update_game_history(username, game_id)
-		if await self.game_notify(game_id, admin_id, game_mode, players) == 0:
-			await self.abord_game_instance(game)
-			await self.update_player_status(username, 'inactive')
+		if not await self.game_notify(game_id, admin_id, game_mode, players):
 			result = None
 		if result:
 			logger.debug(f'Game {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
 		else:
 			logger.debug(f'Game {game_id} aborted')
+			await self.abord_game_instance(game)
+			await self.update_player_status(username, 'inactive')
+		if not await self.check_futures(queue_selected):
+			result = None
+		await self.send_result(result, queue_selected, game_id)
+
+	async def check_futures(self, queue_selected):
+		result = 1
+		with self._futures_mutex:
+			for player_request in queue_selected:
+				username = player_request['username']
+				if username in self._futures:
+					future = self._futures[username]
+					if future.done():
+						result = 0
+						break
+				else:
+					result = 0
+					break
+		return result
+
+	async def send_result(self, result, queue_selected, game_id):
 		with self._futures_mutex:
 			for player_request in queue_selected:
 				username = player_request['username']
@@ -134,11 +154,13 @@ class Matchmaking:
 					future = self._futures[username]
 					if not future.done():
 						future.set_result({'game_id': result})
-					del self._futures[username]
+						del self._futures[username]
+					else:
+						result = None
 
 	@sync_to_async
-	def create_game_instance(self, game_id, admin_id, game_mode, players):
-		return GameInstance.create_game(game_id, admin_id, game_mode, players)
+	def create_game_instance(self, game_id, game_mode, players):
+		return GameInstance.create_game(game_id, game_mode, players)
 	
 	@sync_to_async
 	def get_player_status(self, username):
