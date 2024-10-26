@@ -47,7 +47,7 @@ class game_manager:
 		logger.debug(f"{log_user}: {username} is in waiting room !")
 		users[username] = consumer
 		game_mode = room['game_mode']
-		if room['status'] is 'waiting'\
+		if room['status'] == 'waiting'\
 			and len(room['players']) is game_modes[game_mode]['players']:
 			logger.debug('player start the game')
 			room['status'] = 'startup'
@@ -66,7 +66,7 @@ class game_manager:
 			return None
 		room['admin']['consumer'] = consumer
 		game_mode = room['game_mode']
-		if room['status'] is 'waiting'\
+		if room['status'] == 'waiting'\
 			and len(room['players']) is game_modes[game_mode]['players'] \
 			and room['admin']['consumer']:
 			logger.debug('admin start the game')
@@ -101,5 +101,12 @@ class game_manager:
 			return self.games_room[game_id]
 		return None
 
+	def abortgame(self, game_id):
+		if game_id in self.games_room:
+			if self.games_room[game_id]['admin']['consumer']:
+				self.games_room[game_id]['admin']['consumer'].game_end()
+				return True
+		else:
+			return None
 
 game_manager = game_manager()

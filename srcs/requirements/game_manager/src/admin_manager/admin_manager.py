@@ -14,7 +14,7 @@ class AdminManager:
 	def __init__(self):
 		self.threads = {}
 
-	def connect_to_game(self, game_id, admin_id, ws_url):
+	def connect_to_game(self, game_id, ws_url):
 		# Démarre un nouvel event loop pour chaque thread
 		logger.debug(f'new thread created to {ws_url} !')
 		loop = asyncio.new_event_loop()
@@ -39,6 +39,8 @@ class AdminManager:
 			logger.debug(f"Websocket connected : {ws_url}")
 			try:
 				async for message in websocket:
+					if await self.game_is_aborted(game_id):
+						await websocket.close()
 					message_dict = json.loads(message)
 					await self.handle_message(game_id, message_dict, users)
 			except websockets.exceptions.ConnectionClosedOK:
@@ -47,6 +49,17 @@ class AdminManager:
 				logger.error(f"WebSocket closed with error: {e}")
 			except json.JSONDecodeError as e:
 				logger.error(f"Failed to decode message: {e}")
+
+	@sync_to_async
+	def game_is_aborted(self, game_id):
+		game_instance = GameInstance.get_game(game_id)
+		if not game_instance:
+			logger.debug("game instance is None")
+			return True
+		status = game_instance.status
+		if status == 'finished' or status == 'aborted':
+			return True
+		return False
 
 	@sync_to_async
 	def handle_message(self, game_id, message, users):
@@ -152,14 +165,11 @@ class AdminManager:
 	# ADMIN_MANAGER
 
 	def start_connections(self, game_id, admin_id, game_mode):
-		# Extraire les informations de la partie
 		ws_url = settings.GAME_MODES.get(game_mode).get('service_ws') + game_id + '/' + admin_id + '/'
 		logger.debug(f'start_new_connection ws - game_id = {game_id}, admin_id = {admin_id}, ws_url = {ws_url}')
-		# Créer un thread pour la connexion WebSocket
-		thread = threading.Thread(target=self.connect_to_game, args=(game_id, admin_id, ws_url))
+		thread = threading.Thread(target=self.connect_to_game, args=(game_id, ws_url))
 		thread.start()
 
-		# Ajouter le thread à la liste des threads
 		self.threads[game_id] = {
 			'thread': thread,
 			'users': {
@@ -168,13 +178,14 @@ class AdminManager:
 			}
 		}
 
-	def close(self, game_id):
-		threads[game_id]['thread'].stop()
+	def force_close(self, game_id):
+		if self.threads[game_id]:
+			self.threads[game_id]['thread'].stop()
 
 	def close_all(self):
 		for game_id in self.threads:
-			threads[game_id]['thread'].join()
-		logger.debug("Tous les threads sont terminés, fermeture du programme.")
+			self.threads[game_id]['thread'].join()
+		logger.debug("All threads are closed.")
 
 if AdminManager.admin_manager_instance is None:
 	AdminManager.admin_manager_instance = AdminManager()

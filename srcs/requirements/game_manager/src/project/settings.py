@@ -178,7 +178,7 @@ LOGGING = {
 	'disable_existing_loggers': False,
 	'formatters': {
 		'verbose': {
-			'format': '{levelname} {asctime} {module} {message}',
+			'format': '{levelname} {module} {message}',
 			'style': '{',
 		},
 		'simple': {
@@ -205,7 +205,7 @@ LOGGING = {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',
         },
-		'gane_manager': {
+		'game_manager': {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',
         },
@@ -216,6 +216,10 @@ LOGGING = {
 		'admin_manager': {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',
+        },
+		'django': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
         },
 	},
 }

@@ -60,7 +60,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			and self.username in self.room['players']:
 			await self.startup()
 		elif self.room and self.room['status'] != 'waiting' and self.room['game_instance']:
-			await self.add_user()
+			await self.add_spectator()
 		else:
 			await self.send_message({
 				'type': 'waiting_room',
@@ -80,7 +80,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		await self.send_export_data(self.game_id, game_data)
 		logger.debug(f'Export data')
 
-	async def add_user(self):
+	async def add_spectator(self):
 		await self.send_message({
 			'type': "export_data",
 			'data': self.room['game_instance'].export_data()

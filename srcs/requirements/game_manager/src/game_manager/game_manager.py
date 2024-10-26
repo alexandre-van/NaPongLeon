@@ -15,7 +15,7 @@ class Game_manager:
 				player.update_status('inactive')
 		for game_instance in games_instance:
 			if game_instance.status != 'finished'\
-				or  game_instance.status != 'aborted':
+				and  game_instance.status != 'aborted':
 				game_instance.abort_game()
 
 def create_game_manager_instance():

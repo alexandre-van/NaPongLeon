@@ -27,3 +27,19 @@ def newgame(request):
 			return JsonResponse({'error': 'Invalid JSON data'}, status=400)
 	else:
 		return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def abortgame(request):
+	if request.method == 'POST':
+		try:
+			data = json.loads(request.body)
+			game_id = data.get('gameId')
+			if game_manager.abort_games_room(game_id) is False:
+				return JsonResponse({'error': 'Invalid game id'}, status=406)
+			logger.debug(f"Abort: gameId={game_id}")
+			return JsonResponse({'status': 'success'}, status=204)
+
+		except json.JSONDecodeError:
+			return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+	else:
+		return JsonResponse({'error': 'Invalid request method'}, status=405)

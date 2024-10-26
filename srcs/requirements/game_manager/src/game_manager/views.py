@@ -22,7 +22,7 @@ async def get_matchmaking(request, game_mode, username=None):
 
 	try:
 		future = await matchmaking_instance.add_player_request(username, game_mode)
-		game_data = await asyncio.wait_for(future, timeout=30)
+		game_data = await asyncio.wait_for(future, timeout=10)
 		return JsonResponse({"message": "Matchmaking succeeded", "data": game_data}, status=status.HTTP_200_OK)
 	except asyncio.TimeoutError:
 		if not future.done():

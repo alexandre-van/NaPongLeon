@@ -26,24 +26,9 @@ class Matchmaking:
 		self._futures_mutex = threading.Lock()
 		self.GAME_MODES = copy.deepcopy(settings.GAME_MODES)
 
-	async def get_player_request(self, username):
-		with self._queue_mutex:
-			for game_mode in list(self._queue.keys()):
-				for player_request in self._queue[game_mode][:]:
-					if player_request['username'] == username:
-						return player_request
-		return None
-
 	async def remove_player_request(self, username):
-		player_request = self.get_player_request(username)
-		if player_request is None:
-			return
 		with self._queue_mutex:
-			with self._futures_mutex:
-				self._queue[player_request['game_mode']].remove(player_request)
-				if self._futures[username]:
-					del self._futures[username]
-
+			await self._remove_player_request_in_queue(username)
 
 	async def add_player_request(self, username, game_mode):
 		logger.debug("Add player request")
@@ -67,30 +52,24 @@ class Matchmaking:
 		return future
 
 	async def matchmaking_logic(self):
-		for game_mode in list(self._queue.keys()):
-			if game_mode not in self._queue:
-				continue
-				
-			queue_selected = []
-			for player_request in self._queue[game_mode][:]:
-				queue_selected.append(player_request)
-				if len(queue_selected) == self.GAME_MODES.get(game_mode).get('players'):
-					await self.notify(game_mode, queue_selected)
-					
-					with self._queue_mutex:
-						for selected in queue_selected:
-							if selected in self._queue[game_mode]:
-								self._queue[game_mode].remove(selected)
-						
+		with self._queue_mutex:
+			for game_mode in list(self._queue.keys()):
+				if game_mode not in self._queue:
+					continue
+				await self.remove_disconnected_client(self._queue[game_mode], False)
+				queue_selected = []
+				for player_request in self._queue[game_mode][:]:
+					queue_selected.append(player_request)
+					if len(queue_selected) == self.GAME_MODES.get(game_mode).get('players'):
+						await self.notify(game_mode, queue_selected)
 						if not self._queue[game_mode]:
 							del self._queue[game_mode]
-					
-					break
+						break
 
 	async def game_notify(self, game_id, admin_id, game_mode, players):
-		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url')
+		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
 		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
-		logger.debug(f"send: {send}")
+		logger.debug(f"send to {game_service_url}: {send}")
 		try:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(game_service_url, json={
@@ -100,68 +79,133 @@ class Matchmaking:
 					'playersList': players
 				})
 			if response and response.status_code == 201 :
-				return 1
+				return True
 			else:
 				logger.debug(f'Error api request Game, response: {response}')
 		except httpx.RequestError as e:
 			logger.error(f"Authentication service error: {str(e)}")
-		return 0
+		return False
+
+	async def game_abort_notify(self, game_id, game_mode):
+		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_abort_game')
+		send = {'gameId': game_id}
+		logger.debug(f"send to {game_service_url}: {send}")
+		try:
+			async with httpx.AsyncClient() as client:
+				response = await client.post(game_service_url, json={
+					'gameId': game_id
+				})
+			if response and response.status_code == 204 :
+				return True
+			else:
+				logger.debug(f'Error api request Game, response: {response}')
+		except httpx.RequestError as e:
+			logger.error(f"Authentication service error: {str(e)}")
+		return False
 
 	async def notify(self, game_mode, queue_selected):
 		logger.debug(f'New group for game_mode {game_mode}!')
 		game_id = str(uuid.uuid4())
-		result = game_id
 		admin_id = str(uuid.uuid4())
 		players = [p['username'] for p in queue_selected]
-		game = await self.create_game_instance(game_id, game_mode, players)
-		for username in players:
-			logger.debug(f'{username} create_game_instance')
-			await self.update_player_status(username, 'pending')
-			await self.update_game_history(username, game_id)
-		if not await self.game_notify(game_id, admin_id, game_mode, players):
-			result = None
-		if result:
-			logger.debug(f'Game {game_id} created with players: {players}')
-			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
-		else:
-			logger.debug(f'Game {game_id} aborted')
+		game = None
+		game_connected = False
+		players_connected = False
+		# new game
+		if await self.check_futures(queue_selected):
+			game = await self.create_new_game(game_id, game_mode, players)
+		if game and await self.check_futures(queue_selected):
+			game_connected = await self.connect_to_game(game, game_id, admin_id, game_mode, players)
+		if game_connected and await self.check_futures(queue_selected):
+			players_connected = await self.send_result(game_id, queue_selected)
+		await self.remove_disconnected_client(queue_selected, players_connected)
+		if players_connected:
+			return
+		# aborting
+		if game_connected:
+			await self.disconnect_to_game(game, game_id, game_mode, players)
+			logger.debug(f'Game service {game_id} aborted')
+		if game:
 			await self.abord_game_instance(game)
-			await self.update_player_status(username, 'inactive')
-		if not await self.check_futures(queue_selected):
-			result = None
-		await self.send_result(result, queue_selected, game_id)
+			logger.debug(f'Game {game_id} aborted')
+
+	async def connect_to_game(self, game, game_id, admin_id, game_mode, players):
+		if not game:
+			return False
+		is_game_notified = await self.game_notify(game_id, admin_id, game_mode, players)
+		if is_game_notified:
+			logger.debug(f'Game service {game_id} created with players: {players}')
+			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
+			return True
+		else:
+			return False
+
+	async def disconnect_to_game(self, game_id, game_mode):
+		is_game_notified = await self.game_abort_notify(game_id, game_mode)
+		if is_game_notified:
+			logger.debug(f'Game service {game_id} aborted')
+			return True
+		else:
+			logger.debug(f'Game serice {game_id} was not aborted')
+			return False
 
 	async def check_futures(self, queue_selected):
-		result = 1
-		with self._futures_mutex:
-			for player_request in queue_selected:
-				username = player_request['username']
+		for player_request in queue_selected:
+			username = player_request['username']
+			with self._futures_mutex:
 				if username in self._futures:
 					future = self._futures[username]
-					if future.done():
-						result = 0
-						break
-				else:
-					result = 0
-					break
-		return result
+					if not future.done() and not future.cancelled():
+						continue
+			return None
+		return True
 
-	async def send_result(self, result, queue_selected, game_id):
-		with self._futures_mutex:
-			for player_request in queue_selected:
-				username = player_request['username']
+	async def send_result(self, result, queue_selected):
+		for player_request in queue_selected:
+			username = player_request['username']
+			with self._futures_mutex:
 				if username in self._futures:
 					future = self._futures[username]
-					if not future.done():
+					if not future.done() and not future.cancelled():
 						future.set_result({'game_id': result})
-						del self._futures[username]
-					else:
-						result = None
+						continue
+			logger.debug(f"return none at {username}")
+			return None
+		return True
+
+	async def remove_disconnected_client(self, queue, players_connected):
+		for player_request in queue:
+			username = player_request['username']
+			logger.debug(f"{username} removing...")
+			if not players_connected:
+				with self._futures_mutex:
+					if username in self._futures:
+						future = self._futures[username]
+						if not future.done() and not future.cancelled():
+							continue
+				await self.update_player_status(username, 'inactive')
+			await self._remove_player_request_in_queue(username)
+			logger.debug(f"{username} is removed")
+
+	async def create_new_game(self, game_id, game_mode, players):
+		game = await self.create_game_instance(game_id, game_mode, players)
+		if game:
+			for username in players:
+				await self.update_player_status(username, 'pending')
+				await self.update_game_history(username, game_id)
+			return game
+		else:
+			return None
+	
+	async def change_all_players_status(self, players, status):
+		for username in players:
+			await self.update_player_status(username, status)
 
 	@sync_to_async
 	def create_game_instance(self, game_id, game_mode, players):
-		return GameInstance.create_game(game_id, game_mode, players)
-	
+		game_instance = GameInstance.create_game(game_id, game_mode, players)
+		return game_instance
+
 	@sync_to_async
 	def get_player_status(self, username):
 		player = Player.get_or_create_player(username)
@@ -181,13 +225,17 @@ class Matchmaking:
 	def abord_game_instance(self, game):
 		game.abort_game()
 
+
+	# LOOP
+
+
 	async def matchmaking_loop(self):
 		logger.debug("matchmaking loop started")
 		while True:
 			with self._is_running_mutex:
 				if not self._is_running:
 					break
-			#logger.debug("Matchmaking loop is running...")
+			logger.debug("Matchmaking loop is running...")
 			await self.matchmaking_logic()
 			await asyncio.sleep(1)
 
@@ -208,6 +256,25 @@ class Matchmaking:
 			self._is_running = False
 			if self._task:
 				self._task.cancel()
+
+	# unproteged
+
+	async def _get_player_request(self, username):
+		for game_mode in list(self._queue.keys()):
+			for player_request in self._queue[game_mode][:]:
+				if player_request['username'] == username:
+					return player_request
+		return None
+
+	async def _remove_player_request_in_queue(self, username):
+		player_request = await self._get_player_request(username)
+		if player_request is None:
+			return
+		with self._futures_mutex:
+			game_mode = player_request['game_mode']
+			self._queue[game_mode].remove(player_request)
+			if self._futures[username]:
+				del self._futures[username]
 
 # Initialisation singleton
 if Matchmaking.matchmaking_instance is None:

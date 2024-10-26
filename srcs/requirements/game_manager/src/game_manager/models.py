@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import IntegrityError, DatabaseError
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -25,10 +26,17 @@ class Player(models.Model):
 	# Méthode pour créer un joueur
 	@classmethod
 	def get_or_create_player(cls, username):
-		player, created = cls.objects.get_or_create(username=username)
-		if created:
-			logger.debug(f'{player.username} game acount created')
-		return player  # ou renvoyer un message d'erreur si besoin
+		try:
+			player, created = cls.objects.get_or_create(username=username)
+			if created:
+				logger.debug(f'{player.username} game acount created')
+			return player
+		except IntegrityError as e:
+			logger.error(f"Integrity error while creating player: {e}")
+			return None
+		except DatabaseError as e:
+			logger.error(f"Database error while creating player: {e}")
+			return None
 
 	# Méthode pour ajouter une partie à l'historique du joueur
 	def add_game_to_history(self, game_id):
@@ -58,7 +66,6 @@ class GameInstance(models.Model):
 
 
 	game_id = models.CharField(max_length=100, unique=True)  # ID de la partie
-	#admin_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # ID de modo
 	usernames = models.JSONField()  # Tableau avec les usernames des joueurs
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')  # Statut de la partie
 	scores = models.JSONField(default=dict)  # Dictionnaire des scores par équipe
@@ -109,20 +116,24 @@ class GameInstance(models.Model):
 
 	@classmethod
 	def create_game(cls, game_id, game_mode, usernames):
-		"""Méthode de classe pour créer une nouvelle partie avec des équipes vides."""
-		# Initialiser l'état de la partie
-		new_game = cls(
-			game_id=game_id,
-			#admin_id=admin_id,
-			usernames=usernames,
-			status='waiting',
-			scores={},  # Initialise les scores vides
-			winner=None,
-			game_mode=game_mode,
-			teams={}  # Initialisation d'équipes vides
-		)
-		new_game.save()
-		return new_game
+		try:
+			new_game = cls(
+				game_id=game_id,
+				usernames=usernames,
+				status='waiting',
+				scores={},
+				winner=None,
+				game_mode=game_mode,
+				teams={}
+			)
+			new_game.save()
+			return new_game
+		except IntegrityError as e:
+			logger.error(f"Integrity error while creating game: {e}")
+			return None
+		except DatabaseError as e:
+			logger.error(f"Database error while creating game: {e}")
+			return None
 
 	@classmethod
 	def get_game(cls, game_id):
