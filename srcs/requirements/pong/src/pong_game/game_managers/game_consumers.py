@@ -59,6 +59,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if data_type == 'move':
 				game_room.input_players(self, data['input'])
 			elif data_type == 'ready':
+				logger.debug("Player is ready")
 				player_1.ready = True
 				player_2 = game_room.getopponent(player_1)
 				if not game_room.started and player_2.ready:

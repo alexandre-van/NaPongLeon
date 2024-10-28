@@ -9,6 +9,7 @@ def run_ia():
     
     ia = IA()
 
+
     ws = websocket.WebSocketApp(websocket_url,
                                 on_open=ia.on_open,
                                 on_message=ia.on_message,
