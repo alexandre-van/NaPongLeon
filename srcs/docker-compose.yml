@@ -38,6 +38,7 @@ services:
     volumes:
     - frontend_data:/app
     - /app/node_modules
+    - static_vol:/app/static
     environment:
       - CHOKIDAR_USEPOLLING=true
 
@@ -148,12 +149,6 @@ networks:
     driver: bridge
 
 volumes:
-  #  nginx_data:
-  #  driver: local
-  #  driver_opts:
-  #    type: none
-  #    device: /sgoinfre/avan/ft_transcendence/srcs/nginx
-  #    o: bind
   frontend_data:
     driver: local
     driver_opts:
@@ -168,15 +163,5 @@ volumes:
       device: ./.secrets
       o: bind
   media_vol:
-    #    driver: local
-      #    driver_opts:
-      #      type: none
-        #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/media
-        #      o: bind
   static_vol:
-    #    driver: local
-    #    driver_opts:
-    #      type: none
-    #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/static
-    #      o: bind
   redis_data:

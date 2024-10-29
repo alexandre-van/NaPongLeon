@@ -38,6 +38,7 @@ function AppContent() {
       <Routes>
         <Route element={isAuthenticated ? <ConnectedLayout /> : <DefaultLayout />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
+          <Route />
           <Route path="news" element={<NewsPage />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="game-modes" element={<GameModePage />} />

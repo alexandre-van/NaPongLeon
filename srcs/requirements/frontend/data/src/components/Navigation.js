@@ -5,6 +5,7 @@ export default function Navigation() {
         <div role='nav' className="nav-container">
             <div className="home-nav">
                 <Link to="/">SPICE PONG</Link>
+                <img src="/images/pinpoint.png" alt="test-image" />
             </div>
             <div className="main-nav">
                 <Link to="/">HOME</Link>

@@ -268,9 +268,9 @@ class Notification(models.Model):
     def to_dict(self):
         logger.debug(f"to_dict notification")
         return {
-            "id": self.recipient.id,
-            "recipient_username": self.recipient.username,
-            "sender_username": self.sender.username,
+            "id": self.id,
+            "recipient__username": self.recipient.username,
+            "sender__username": self.sender.username,
             "notification_type": self.notification_type,
             "created_at": self.created_at.isoformat(),
             "is_read": self.is_read,

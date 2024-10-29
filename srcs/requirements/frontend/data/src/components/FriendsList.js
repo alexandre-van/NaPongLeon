@@ -7,27 +7,40 @@ import api from '../services/api.js';
 const FriendsList = () => {
 //  const { friends, socket } = useWebSocket();
   const { user, friends, checkFriends } = useUser();
-  const [notifications, setNotifications] = useState([]);
+//  const [notifications, setNotifications] = useState([]);
+  const { notifications, setNotifications } = useWebSocket();
+  const [localNotifications, setLocalNotifications] = useState([]); // État local pour les notifications
 
+  // Synchroniser l'état local avec les notifications du contexte
+  useEffect(() => {
+    if (Array.isArray(notifications)) {
+      setLocalNotifications(notifications);
+    }
+  }, [notifications]);
   
   useEffect(() => {
     checkFriends()
   }, [checkFriends]);
 
-  const checkNotifications = useCallback(async () => {
+  const loadExistingNotifications = useCallback(async () => {
     try {
-      console.log('checkNotifications');
+      console.log('loadExistingNotifications');
       const response = await api.get('/authentication/notifications/');
       console.log(response);
-      setNotifications(response.data.data);
+      const formattedNotifications = response.data.data.map(notif => ({
+        ...notif,
+        notification_type: notif.notification_type || 'unknown'
+      }));
+      //setNotifications(response.data.data);
+      setNotifications(formattedNotifications);
     } catch (err) {
       console.error(err);
     }
-  }, []);
+  }, [setNotifications]);
 
   useEffect(() => {
-    checkNotifications();
-  }, [checkNotifications]);
+    loadExistingNotifications();
+  }, [loadExistingNotifications]);
 
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
@@ -36,6 +49,10 @@ const FriendsList = () => {
         notificationId: notificationId,
       };
       const response = await api.patch('/authentication/friends/requests/', data);
+      setNotifications(prev => 
+        prev.filter(notif => notif.id !== notificationId)
+      );
+      checkFriends();
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -50,6 +67,9 @@ const FriendsList = () => {
           id: notificationId,
         }
       });
+      setNotifications(prev => 
+        prev.filter(notif => notif.id !== notificationId)
+      );
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -78,6 +98,9 @@ const FriendsList = () => {
           id: notificationId,
         }
       });
+      setNotifications(prev => 
+        prev.filter(notif => notif.id !== notificationId)
+      );
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -164,11 +187,14 @@ const FriendsList = () => {
         </ul>
       )}
       <h4>Notifications</h4>
-      {notifications.length === 0 ? (
+      {!localNotifications || localNotifications.length === 0 ? (
         <p>No notifications yet</p>
       ) : (
         <ul>
-          {notifications.map((notification) => (
+          {localNotifications.map((notification) => {
+            if (!notification) return null;
+
+            return (
             <li key={notification.id}>
               {notification.notification_type === 'friend_request' && (
                 <>
@@ -190,7 +216,8 @@ const FriendsList = () => {
                 </>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

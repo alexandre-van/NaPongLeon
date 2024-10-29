@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         logger.debug(f'Connection attempt, scope[user]={self.scope["user"]}')
-        self.user = await self.get_user_from_token()
+#        self.user = await self.get_user_from_token()
+        self.user = self.scope["user"]
         if not self.user:
             logger.debug('No user, no connection')
             await self.close()
@@ -28,8 +29,18 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
             await self.accept()
+            #await send_online_status_friends()
             logger.debug('Connection accepted')
 
+    '''
+    async def send_online_status_friends(self):
+        await self.channel_layer.group_send(
+            f"user_{friend_id}",
+            
+        )
+    '''
+
+    '''
     @database_sync_to_async
     def get_user_from_token(self):
         token = self.scope['cookies'].get('access_token')
@@ -44,8 +55,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         user_id = decoded_data['user_id']
         CustomUser = get_user_model()
         return CustomUser.objects.get(id=user_id)
-
-
+    '''
 
     async def disconnect(self, close_code):
         pass
