@@ -29,16 +29,9 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
             await self.accept()
-            #await send_online_status_friends()
+            await self.user.update_user_status(True)
+            await self.send_status_friends(True)
             logger.debug('Connection accepted')
-
-    '''
-    async def send_online_status_friends(self):
-        await self.channel_layer.group_send(
-            f"user_{friend_id}",
-            
-        )
-    '''
 
     '''
     @database_sync_to_async
@@ -58,7 +51,8 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
     '''
 
     async def disconnect(self, close_code):
-        pass
+        await self.user.update_user_status(False)
+        await self.send_status_friends(False)
 
     async def receive(self, text_data):
         logger.debug('receive debut')
@@ -87,6 +81,19 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         logger.debug('receive end')
 
 
+        
+    async def send_status_friends(self, status):
+        friends = await self.user.aget_friends()
+        for friend in friends:
+            logger.debug(f"friend = {friend}")
+            await self.channel_layer.group_send(
+                f"user_{friend['id']}",
+                {
+                    "type": "friend_status",
+                    "friend": self.user.username,
+                    "status": status
+                }
+            )
 
     async def send_friend_request(self, target_user_id):
         try:
@@ -225,3 +232,10 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
     async def notification(self, event):
         await self.send(text_data=json.dumps(event['notification']))
+
+    async def friend_status(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "friend_status",
+            "friend": event["friend"],
+            "status": event["status"]
+        }))

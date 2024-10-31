@@ -118,6 +118,10 @@ export const WebSocketProvider = ({ children }) => {
               return newNotifs;
             });
             break;
+          case 'friend_status':
+            console.log('friend_status = ', data.status);
+            console.log('friend = ', data.friend);
+            break;
           default:
             console.log('Unknown message type: ', data.type);
         }

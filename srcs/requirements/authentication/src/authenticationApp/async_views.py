@@ -58,7 +58,6 @@ async def LoginView(request):
         # Log pour le débogage
         print(f"CSRF token stored in session during login: {csrf_token}")
 
-        await user.update_user_status(True)
         return response
     else:
         return HttpResponseJD('Invalid credentials', 401)
@@ -68,7 +67,6 @@ async def LogoutView(request):
         return HttpResponseJD('Method not allowed', 405)
     user = request.user
     if user.is_authenticated:
-        await user.update_user_status(False)
         response = HttpResponseJD('Logout successuful', 200)
         response.delete_cookie(
             'access_token',
