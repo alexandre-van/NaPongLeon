@@ -1,6 +1,5 @@
 from django.db import models
 from django.db import IntegrityError, DatabaseError
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .utils.logger import logger
@@ -14,6 +13,7 @@ class Player(models.Model):
 		('loading_game', 'Player is waiting for the game to load'),
 		('in_game', 'Player is currently playing in a game'),
 		('spectate', 'Player is currently spectating a game'),
+		('in_private_room', 'Player is currently in a private room'),
 	]
 
 	username = models.CharField(max_length=100, unique=True)

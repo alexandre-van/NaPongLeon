@@ -180,18 +180,23 @@ class GameConsumer(AsyncWebsocketConsumer):
 			return
 		if self.username not in self.room['players']:
 			return
-		data = json.loads(text_data)
-		data_type = data['type']
-		game_room = self.room['game_instance']
-		if game_room:
-			if data_type == 'move' and self.username in self.room['players']:
-				game_room.input_players(self.username, data['input'])
-			elif data_type == 'ready':
-				if self.username in self.room['players']:
-					async with GameConsumer.ready_queue:
-						await self.game_start()
-				elif self.username in self.room['spectator']:
-					await self.game_start_spectator()
+		try:
+			data = json.loads(text_data)
+			data_type = data['type']
+			game_room = self.room['game_instance']
+			if game_room:
+				if data_type == 'move' and self.username in self.room['players']:
+					game_room.input_players(self.username, data['input'])
+				elif data_type == 'ready':
+					if self.username in self.room['players']:
+						async with GameConsumer.ready_queue:
+							await self.game_start()
+					elif self.username in self.room['spectator']:
+						await self.game_start_spectator()
+		except json.JSONDecodeError:
+			logger.error("Failed to decode JSON data")
+		except Exception as e:
+			logger.error(f"Unexpected error: {e}")
 
 	async def game_start(self):
 		self.ready = True

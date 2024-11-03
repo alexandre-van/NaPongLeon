@@ -176,7 +176,6 @@ class Matchmaking:
 	async def remove_disconnected_client(self, queue, players_connected):
 		for player_request in queue:
 			username = player_request['username']
-			logger.debug(f"{username} removing...")
 			if not players_connected:
 				with self._futures_mutex:
 					if username in self._futures:
