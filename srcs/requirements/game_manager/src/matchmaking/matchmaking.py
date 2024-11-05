@@ -1,5 +1,6 @@
 # matchmaking.py
 from django.conf import settings
+from django.db import transaction
 from game_manager.models import GameInstance, Player
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
@@ -202,27 +203,34 @@ class Matchmaking:
 
 	@sync_to_async
 	def create_game_instance(self, game_id, game_mode, players):
-		game_instance = GameInstance.create_game(game_id, game_mode, players)
-		return game_instance
+		with transaction.atomic():
+			game_instance = GameInstance.create_game(game_id, game_mode, players)
+			return game_instance
+		return None
 
 	@sync_to_async
 	def get_player_status(self, username):
-		player = Player.get_or_create_player(username)
-		return player.status
+		with transaction.atomic():
+			player = Player.get_or_create_player(username)
+			return player.status
+		return None
 
 	@sync_to_async
 	def update_player_status(self, username, status):
-		player = Player.get_or_create_player(username)
-		player.update_status(status)
+		with transaction.atomic():
+			player = Player.get_or_create_player(username)
+			player.update_status(status)
 
 	@sync_to_async
 	def update_game_history(self, username, game_id):
-		player = Player.get_or_create_player(username)
-		player.add_game_to_history(game_id)
+		with transaction.atomic():
+			player = Player.get_or_create_player(username)
+			player.add_game_to_history(game_id)
 
 	@sync_to_async
 	def abord_game_instance(self, game):
-		game.abort_game()
+		with transaction.atomic():
+			game.abort_game()
 
 
 	# LOOP
