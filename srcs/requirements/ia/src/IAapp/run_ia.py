@@ -1,6 +1,7 @@
 # run_ia.py
 from .ia import IA
 import websocket
+from .logger import logger
 
 def run_ia():
     host = 'pong'  # Ou l'adresse IP de votre serveur

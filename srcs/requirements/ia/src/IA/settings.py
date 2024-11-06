@@ -150,25 +150,22 @@ LOGGING = {
             'mode': 'w',
         },
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'DEBUG',
-    },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',  # Change this to 'INFO' to reduce verbosity
-            'propagate': True,
+            'level': 'WARNING',  # Change this to 'INFO' to reduce verbosity
         },
         'daphne': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'WARNING',  # Change to 'ERROR' or 'CRITICAL' if needed
-            'propagate': False,
         },
         'http_protocol': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'WARNING',  # Suppress detailed HTTP request logs
-            'propagate': False,
+        },
+        'IAapp': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Suppress detailed HTTP request logs
         },
     },
 }
