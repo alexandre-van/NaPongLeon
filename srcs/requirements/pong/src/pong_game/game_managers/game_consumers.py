@@ -308,7 +308,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if game_id:
 			groups.append(game_id)
 		await self.send_to_multiple_groups(groups, {
-				'type': 'export_status',
+				'type': 'export_s	tatus',
 				'status': status
 		})
 

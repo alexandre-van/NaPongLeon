@@ -61,7 +61,7 @@ class Matchmaking:
 				queue_selected = []
 				for player_request in self._queue[game_mode][:]:
 					queue_selected.append(player_request)
-					if len(queue_selected) == self.GAME_MODES.get(game_mode).get('players'):
+					if len(queue_selected) == self.GAME_MODES.get(game_mode).get('number_of_players'):
 						await self.notify(game_mode, queue_selected)
 						if not self._queue[game_mode]:
 							del self._queue[game_mode]
