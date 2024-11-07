@@ -1,6 +1,7 @@
 # matchmaking.py
 from django.conf import settings
 from django.db import transaction
+from game_manager.game_manager import Game_manager
 from game_manager.models import GameInstance, Player
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
@@ -205,6 +206,7 @@ class Matchmaking:
 	def create_game_instance(self, game_id, game_mode, players):
 		with transaction.atomic():
 			game_instance = GameInstance.create_game(game_id, game_mode, players)
+			Game_manager.game_manager_instance.add_new_game(game_id)
 			return game_instance
 		return None
 
@@ -242,7 +244,7 @@ class Matchmaking:
 			with self._is_running_mutex:
 				if not self._is_running:
 					break
-			logger.debug("Matchmaking loop is running...")
+			#logger.debug("Matchmaking loop is running...")
 			await self.matchmaking_logic()
 			await asyncio.sleep(1)
 

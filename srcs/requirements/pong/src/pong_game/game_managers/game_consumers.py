@@ -48,7 +48,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 				return
 			await self.accept()
 			await self.channel_layer.group_add(self.admin_id, self.channel_name)
+			asyncio.create_task(self.status_loop())
 			logger.debug(f"Admin is connected !")
+
 			return
 		else:
 			self.room = game_manager.add_user(self.username, self, self.game_id)
@@ -280,6 +282,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 				}
 			})
 
+	# STATUS_LOOP
+	async def status_loop(self):
+		while self.room['status'] != 'aborted':
+			logger.debug("status_loop")
+			await asyncio.sleep(1)
+		await self.game_end()
+
 	# UTILS
 
 	async def send_export_data(self, game_id, data):
@@ -308,7 +317,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if game_id:
 			groups.append(game_id)
 		await self.send_to_multiple_groups(groups, {
-				'type': 'export_s	tatus',
+				'type': 'export_status',
 				'status': status
 		})
 

@@ -34,7 +34,7 @@ def abortgame(request):
 		try:
 			data = json.loads(request.body)
 			game_id = data.get('gameId')
-			if game_manager.abort_games_room(game_id) is False:
+			if game_manager.abortgame(game_id) is False:
 				return JsonResponse({'error': 'Invalid game id'}, status=406)
 			logger.debug(f"Abort: gameId={game_id}")
 			return JsonResponse({'status': 'success'}, status=204)

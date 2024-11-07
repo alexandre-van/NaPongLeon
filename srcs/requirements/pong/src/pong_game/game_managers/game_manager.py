@@ -103,9 +103,8 @@ class game_manager:
 
 	def abortgame(self, game_id):
 		if game_id in self.games_room:
-			if self.games_room[game_id]['admin']['consumer']:
-				self.games_room[game_id]['admin']['consumer'].game_end()
-				return True
+			self.games_room[game_id]['status'] = 'aborted'
+			return True
 		else:
 			return None
 
