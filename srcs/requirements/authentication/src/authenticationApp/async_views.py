@@ -62,6 +62,8 @@ async def LoginView(request):
     else:
         return HttpResponseJD('Invalid credentials', 401)
 
+
+
 async def LogoutView(request):
     if request.method != 'POST':
         return HttpResponseJD('Method not allowed', 405)

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext.js'
 
 const LoginForm = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
+  const { login42 } = useUser();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,6 +47,7 @@ const LoginForm = ({ onLogin }) => {
         />
       </div>
       <button type="submit">LOG IN</button>
+      <button onClick={login42}>LOG IN WITH 42</button>
       <Link to="/register">REGISTER</Link>
     </form>
   );

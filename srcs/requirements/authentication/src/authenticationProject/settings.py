@@ -114,10 +114,12 @@ TEMPLATES = [
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8080",
+    "https://api.intra.42.fr",
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
+    "https://api.intra.42.fr",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -153,6 +155,10 @@ def read_secret(secret_name):
         with open(file_path, 'r') as file:
             return file.read().strip()
     return None
+
+
+OAUTH_42_CLIENT_ID = read_secret('OAUTH_42_CLIENT_ID')
+OAUTH_42_CLIENT_SECRET = read_secret('OAUTH_42_CLIENT_SECRET')
 
 DATABASES = {
     'default': {
@@ -199,6 +205,8 @@ class CsrfExemptMiddleware:
         return self.get_response(request)
 
 LANGUAGE_CODE = 'en-us'
+
+SITE_URL = 'http://localhost:8080'
 
 TIME_ZONE = 'UTC'
 

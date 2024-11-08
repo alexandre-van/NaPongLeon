@@ -38,7 +38,7 @@ class FriendRequestService:
         if from_user:
             notification = await user.accept_friend_request(from_user, notification)
             if notification:
-                logger.debug(f'if notification\nfrom_user.id = {from_user.id}\n')
+                logger.debug(f'if notification\nfrom_user = {from_user.username}\nfrom_user.id = {from_user.id}\n')
                 await send_notification(from_user.id, notification)
                 return True
         return False

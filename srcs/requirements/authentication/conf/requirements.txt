@@ -37,3 +37,5 @@ channels_redis==4.2.0
 
 # For Cross Origin Resource Sharing
 django-cors-headers==4.4.0
+
+aiohttp>=3.9.0
