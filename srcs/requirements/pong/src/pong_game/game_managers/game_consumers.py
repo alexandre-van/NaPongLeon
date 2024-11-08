@@ -61,7 +61,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if self.room and self.room['status'] == 'startup' and self.room['game_instance'] \
 			and self.username in self.room['players']:
 			await self.startup()
-		elif self.room and self.room['status'] != 'waiting' and self.room['game_instance']:
+		elif self.room and self.room['status'] != 'waiting' and self.room['game_instance'] \
+			and self.username not in self.room['players']:
 			await self.add_spectator()
 		else:
 			await self.send_message({
@@ -73,6 +74,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		game_manager.update_status('loading', self.game_id)
 		admin = self.room['admin']
 		for player in self.room['players']:
+			logger.debug(f"add {player} to channel")
 			await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
 		for spectator in self.room['spectator']:
 			await self.channel_layer.group_add(self.game_id, self.room['spectator'][spectator].channel_name)
@@ -83,6 +85,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		logger.debug(f'Export data')
 
 	async def add_spectator(self):
+		logger.debug(f"{self.username} is here")
 		await self.send_message({
 			'type': "export_data",
 			'data': self.room['game_instance'].export_data()
@@ -285,7 +288,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 	# STATUS_LOOP
 	async def status_loop(self):
 		while self.room['status'] != 'aborted':
-			logger.debug("status_loop")
+			#logger.debug("status_loop")
 			await asyncio.sleep(1)
 		await self.game_end()
 
@@ -326,7 +329,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		for group in groups:
 			if group:  # S'assurer que le nom du groupe est valide
 				try:
-					logger.debug(f"Sending message to group: {group}")
+					logger.debug(f"Sending message to group: {group}\nmessage: {message}")
 					await self.channel_layer.group_send(
 						group, {
 							'type': 'send_state',
@@ -351,6 +354,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def send_state(self, event):
 		try:
 			if self.is_closed is False:
+				if event['state']['type'] == 'export_data':
+					logger.debug(f"{self.username} receive export data")
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True
 			else:

@@ -85,8 +85,9 @@ class Game_manager:
 	@sync_to_async	
 	def _set_current_game_status(self, game_id):
 		current_game = self._current_games[game_id]
-		game_instance = GameInstance.get_game(game_id).get_game(game_id)
-		if game_instance.status and game_instance.status != 'finished' and game_instance.status != 'aborted':
+		game_instance = GameInstance.get_game(game_id)
+		if game_instance and game_instance.status \
+			and game_instance.status != 'finished' and game_instance.status != 'aborted':
 			if current_game['latest_update_status'].get_elapsed_time() >= self.status_timer[current_game['status']]:
 				if game_instance.status != self._current_games[game_id]['status']:
 					logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s elapsed with status : {self._current_games[game_id]['status']}")

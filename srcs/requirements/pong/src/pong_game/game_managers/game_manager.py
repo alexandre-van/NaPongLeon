@@ -46,6 +46,7 @@ class game_manager:
 			log_user = 'Spectator'
 		logger.debug(f"{log_user}: {username} is in waiting room !")
 		users[username] = consumer
+		logger.debug(f"players: {room['players']}")
 		game_mode = room['game_mode']
 		if room['status'] == 'waiting'\
 			and len(room['players']) is game_modes[game_mode]['players']:
