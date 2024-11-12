@@ -26,7 +26,7 @@ function createBorders(data) {
 
 function createDashedLine(data) {
     const points = [];
-    const numberOfPoints = data.size.y/10;
+    const numberOfPoints = data.size.y/4;
     const lineLength = data.size.y;
     const step = lineLength / numberOfPoints;
     for (let i = -lineLength / 2; i <= lineLength / 2; i += step) {

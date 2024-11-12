@@ -34,8 +34,8 @@ async function init(data, ws){
 	
 	await padels_init(data.padel);
 	await createPlateau(data.arena);
-	//await init_map1();
-	await init_map2();
+	await init_map1();
+	//await init_map2();
 	renderer.render(scene, camera);
 	console.log("ready");
 	ws.send(JSON.stringify({type: 'ready'}));

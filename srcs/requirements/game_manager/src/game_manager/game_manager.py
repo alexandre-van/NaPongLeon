@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Player, GameInstance
+from .models import Player, GameInstance, GamePlayer
 from .utils.logger import logger
 from .private_room.private_room import PrivateRoom, GenerateUsername
 from .utils.timer import Timer
@@ -31,10 +31,11 @@ class Game_manager:
 	def update_databases(self):
 		if apps.is_installed('game_manager') and 'game_manager_player' in connection.introspection.table_names():
 			players = Player.objects.all()
+			#	for player in players:
+			#		if player.status != 'inactive':
+			#			player.update_status('inactive')
 			if players:
-				for player in players:
-					if player.status != 'inactive':
-						player.update_status('inactive')
+				[player.update_status('inactive') for player in players if player.status!= 'inactive']
 		if apps.is_installed('game_manager') and 'game_manager_gameinstance' in connection.introspection.table_names():
 			games_instance = GameInstance.objects.all()
 			if games_instance:
@@ -58,7 +59,7 @@ class Game_manager:
 				self._current_games[game_id] = {
 					'status': game.status,
 					'latest_update_status': Timer(),
-					'players': game.usernames
+					'players': list(GamePlayer.objects.filter(game=game).values_list('player__username', flat=True))
 				}
 
 	# game notify
