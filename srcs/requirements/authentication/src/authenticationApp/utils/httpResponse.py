@@ -1,5 +1,5 @@
 import json
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.core.serializers.json import DjangoJSONEncoder
 
 import logging
@@ -21,6 +21,23 @@ def HttpResponseJD(message, status, additionnal_data=None):
         content_type='application/json'
     )
     logger.debug(f"HttpResponseJD = {response}")
+    return response
+
+
+def HttpResponseRedirectJD(message, status, redirect_url, additionnal_data=None):
+    response_data = { 'message': message, 'status': status}
+    if additionnal_data:
+        response_data.update(additionnal_data)
+
+    response = HttpResponseRedirect(redirect_url)
+    response.set_cookie(
+        'redirect_data',
+        json.dumps(response_data, cls=DjangoJSONEncoder),
+        max_age=30,
+        httponly=True,
+        samesite='Strict'
+    )
+    logger.debug(f"HttpResponseRedirectJD = {response}")
     return response
 
 def HttpResponseBadRequestJD(errorMessage):

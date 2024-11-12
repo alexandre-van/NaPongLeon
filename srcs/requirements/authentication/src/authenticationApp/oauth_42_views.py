@@ -1,4 +1,4 @@
-from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseJDexception
+from .utils.httpResponse import HttpResponseJD, HttpResponseRedirectJD, HttpResponseJDexception
 from .services.OAuth42Service import async_oauth_42_service
 import logging
 
@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 async def OAuth42CallbackView(request):
     try:
         code = request.GET.get('code')
-        logger.debug("OAuth42CallBack\n\n")
+        logger.debug(f"OAuth42CallBack\ncode: {code}\n")
         if not code:
             return HttpResponseJD('No code provided', 400)
         
@@ -19,17 +19,21 @@ async def OAuth42CallbackView(request):
             logger.debug('0\n')
             access_token = await service.exchange_code_for_token(code)
 
-            logger.debug('1\n')
+            logger.debug(f'1 access_token: {access_token}\n')
             user_data = await service.get_user_data(access_token)
 
             logger.debug('2\n')
-            user, created = await service.get_or_create_user(user_data)
+            user = await service.get_or_create_user(user_data)
 
             logger.debug('3\n')
-            refresh = await database_sync_to_async(RefreshToken.fro_user)(user)
+            refresh = await database_sync_to_async(RefreshToken.for_user)(user)
 
             logger.debug('4\n')
-            response = HttpResponseJD('Login successful', 200)
+            response = HttpResponseRedirectJD(
+                message='Login successful',
+                redirect_url='/login/success',
+                status=200
+            )
             response.set_cookie(
                 'access_token',
                 str(refresh.access_token),
@@ -61,3 +65,4 @@ async def OAuth42CallbackView(request):
     except Exception as e:
         logger.debug(f"Could not get or create user via 42: {str(e)}")
         return HttpResponseJDexception('Could not get or create user via 42')
+

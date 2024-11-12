@@ -50,12 +50,11 @@ export function UserProvider({ children }) {
   const login42 = () => {
     const clientId = process.env.REACT_APP_42_CLIENT_ID;
     const redirectUri = encodeURIComponent(
-      `${window.location.origin}/api/authentication/oauth/42/callback/`
+      `${window.location.origin}/api/authentication/oauth/42/callback`
     );
 
     window.location.href =
       `https://api.intra.42.fr/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
-
   };
 
   const logout = async () => {

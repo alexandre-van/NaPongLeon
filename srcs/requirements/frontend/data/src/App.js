@@ -15,6 +15,7 @@ import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
 import LogoutPage from './pages/LogoutPage.js';
 import NewsPage from './pages/NewsPage.js';
+import Auth42Success from './components/Auth42Success.js';
 import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
 
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="game-modes" element={<GameModePage />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
+          <Route path='login/success' element={<Auth42Success />} />
           <Route path="*" element={<HomePage />} />
         </Route>
 

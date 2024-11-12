@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from io import BytesIO
 from typing import Optional, Dict, Any, Tuple
 from django.conf import settings
 import logging
@@ -37,72 +38,159 @@ class AsyncOAuth42Service:
 
 
 
+    async def _ensure_session(self):
+        if not self._session:
+            logger.debug("Creating session in _ensure_session")
+            self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            )
+
     async def _make_42_api_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
+        # S'assure qu'on a une session
+        await self._ensure_session()
+        
+        if not self._session:
+            raise RuntimeError("Failed to create session")
+
         max_retries = 3
         retry_delay = 1
-
+        
         for attempt in range(max_retries):
             try:
                 async with self._semaphore:
+                    logger.debug(f"Making {method} request to {url} (attempt {attempt + 1})")
                     async with self._session.request(method, url, **kwargs) as response:
-                        if response.status == 429: # Rate limit
+                        if response.status == 429:  # Rate limit
                             retry_after = int(response.headers.get('Retry_After', 5))
                             logger.warning(f"Rate limit, wait {retry_after}s")
                             await asyncio.sleep(retry_after)
                             continue
                         
-                        await response.raise_for_status()
-                        return await response.json()
+                        if response.status >= 400:
+                            error_text = await response.text()
+                            logger.error(f"HTTP {response.status}: {error_text}")
+                            
+                        response.raise_for_status()
+                        data = await response.json()
+                        logger.debug(f"Request successful")
+                        return data
             
             except aiohttp.ClientError as e:
                 if attempt == max_retries - 1:
+                    logger.error(f"Final attempt failed: {str(e)}")
                     raise
                 logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
                 await asyncio.sleep(retry_delay * (attempt + 1))
+    
 
 
-
-    ''' Exchange code for access_token '''
     async def exchange_code_for_token(self, code: str) -> str:
+        await self._ensure_session()
+
         async with self._lock:
-            return await self._make_42_api_request(
-                'POST',
-                'https://api.intra.42.fr/oauth/token',
-                data={
+            try:
+                data = {
                     'grant_type': 'authorization_code',
                     'client_id': self.client_id,
                     'client_secret': self.client_secret,
                     'code': code,
                     'redirect_uri': self.redirect_uri
                 }
-            )
+                
+                # Log détaillé de la requête
+                logger.debug("Sending token request with data:")
+                for key, value in data.items():
+                    if key in ['code', 'client_id', 'client_secret']:
+                        # Masque les données sensibles
+                        logger.debug(f"{key}: {value[:10]}...")
+                    else:
+                        logger.debug(f"{key}: {value}")
+
+                return await self._make_42_api_request(
+                    'POST',
+                    'https://api.intra.42.fr/oauth/token',
+                    data=data
+                )
+                    
+                    
+            except aiohttp.ClientError as e:
+                logger.error(f"Request failed: {str(e)}")
+                raise
     
 
 
-    async def get_user_data(self, access_token: str) -> Dict[str, Any]:
-        return await self._make_42_api_request(
-            'GET',
-            'https://api.intra.42.fr/v2/me',
-            headers={'Authorization': f'Bearer {access_token}'}
-        )
+    async def get_user_data(self, access_token_data: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            access_token = access_token_data.get('access_token')
+            if not access_token:
+                raise ValueError('No access token provided')
+        
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Accept': 'application/json'
+            }
+
+            result = await self._make_42_api_request(
+                'GET',
+                'https://api.intra.42.fr/v2/me',
+                headers=headers
+            )
+            logger.debug(f'get_user_data result= {result}')
+            if not result:
+                raise ValueError('No data received from API')
+            
+            return result
+
+        except aiohttp.ClientError as e:
+            logger.error(f"Failed to get user data: {str(e)}")
+            raise
 
 
 
-    async def get_or_create_user(self, user_data: Dict[str, Any]) -> Tuple[CustomUser, bool]:
+    async def download_avatar(self, url:str) -> BytesIO:
+        await self._ensure_session()
+
+        async with self._session.get(url) as response:
+            response.raise_for_status()
+            data = await response.read()
+            return BytesIO(data)
+
+
+
+    async def get_or_create_user(self, user_data: Dict[str, Any]) -> CustomUser:
+        from django.core.files.storage import default_storage
+        from ..utils.image_process import process_image
+        from asgiref.sync import sync_to_async
+
         async with self._lock:
             user = await CustomUser.objects.filter(email=user_data['email']).afirst()
 
             if user:
-                user.avatar_url = user_data['image']['link']
-                await user.asave()
-                return user, False
+                logger.debug(f"existing user: {user}")
+                new_username = user_data['login'] + '1'
             else:
-                user = await CustomUser.objects.acreate(
-                    username=user_data['login'],
-                    email=user_data['email'],
-                    avatar_url=user_data['image']['link']
-                )
-                return user, True
+                new_username = user_data['login']
+            logger.debug(f'new_username = {new_username}')
+
+
+            user = await CustomUser.objects.acreate(
+                username=new_username,
+                email=user_data['email']
+            )
+            logger.debug('CustomUser created')
+
+            if avatar_url := user_data.get('image', {}).get('link'):
+                avatar_content = await self.download_avatar(avatar_url)
+                filename = f"avatar_{user.id}.jpg"
+                filepath = f"users/{user.id}/avatar/{filename}"
+
+            
+            logger.debug('after avatar_url')
+
+            new_path = await sync_to_async(default_storage.save)(filepath, avatar_content)
+            await user.update_avatar_url(new_path)
+
+            return user
     
 
 
