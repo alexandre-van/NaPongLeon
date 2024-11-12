@@ -16,7 +16,7 @@ class IA:
 
 		self.last_message_time = 0
 		self.last_message_time2 = 0
-		self.message_cooldown = 0.5  # 1 seconde de délai
+		self.message_cooldown = 0.2  # 1 seconde de délai
 
 		# Constantes du terrain
 		self.COURT_HEIGHT = 32  # Hauteur du terrain (-30 à 30)
@@ -52,7 +52,7 @@ class IA:
 			return None
 
 		# Position x de notre raquette
-		paddle_x = 3 # 39 pour la raquette droite et 3 pour gauche
+		paddle_x = -39 # 39 pour la raquette droite et -39 pour gauche
 
 		# Calcul du temps jusqu'à l'intersection
 		distance_to_paddle = paddle_x - self.ball_pos['x']
@@ -95,8 +95,6 @@ class IA:
 		Déplace la raquette de manière prédictive en fonction de la trajectoire calculée
 		"""
 		try:
-			#logger.debug(f"PREDICTED Y : {self.predicted_y}")
-			#logger.debug(f"PADDLE POS : {self.paddle_pos}")
 			# Marge de tolérance adaptée à l'échelle du terrain
 			TOLERANCE = 5  # Augmentée car l'échelle est plus grande
 
@@ -118,7 +116,7 @@ class IA:
 					self.send_command(ws, 2)  # Descendre
 					self.is_moving_down = True
 					logger.debug("DESCEND vers position optimale")
-
+					
 			else:
 				if self.is_moving_up:
 					self.send_command(ws, 3)  # Arrêter de monter
@@ -126,7 +124,7 @@ class IA:
 				elif self.is_moving_down:
 					self.send_command(ws, 4)  # Arrêter de descendre
 					self.is_moving_down = False
-				logger.debug("STABLE à la position optimale")
+				#logger.debug("STABLE à la position optimale")
 
 			# Log des informations de debug
 			# Mise à jour de la position précédente de la balle
@@ -155,8 +153,9 @@ class IA:
 				self.calculate_ball_velocity()
 				self.predicted_y = self.predict_ball_intersection()
 				self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-				logger.debug(f"PREDICTED Y : {self.predicted_y}")
 				logger.debug(f"PADDLE POS : {self.paddle_pos}")
+				logger.debug(f"PREDICTED Y : {self.predicted_y}")
+				logger.debug(f"data :{data}")
 			self.ft_move(ws, self.optimal_paddle_position)
 		elif data['type'] == 'scored':
 			logger.debug(data['msg'])
