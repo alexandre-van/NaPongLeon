@@ -10,15 +10,17 @@ class Game:
 		sides = ['left', 'right']
 		random.shuffle(sides)  # Mélange aléatoire des côtés
 		self.players = {}
-		# Assigner les côtés aux joueurs dynamiquement
 		for i, (username, player_consumer) in enumerate(players.items()):
-			side = sides[i % len(sides)]  # Assigner gauche/droite de manière cyclique
+			side = sides[i % len(sides)]
 			self.players[username] = Player(player_consumer, side)
 			logger.debug(f"{username} is the {side} player !")
 		self.ball = Ball()
 		self.timer = Timer()
 		self.timer.settup(None)
 		self.wait = 3
+		maps = ['mountain', 'island']
+		random.shuffle(maps)
+		self.map = maps[0]
 
 	def input_players(self, username, input):
 		self.players[username].move_padel(input)
@@ -52,7 +54,8 @@ class Game:
 			'arena': arena_data,
 			'padel': padel_data,
 			'ball': ball_data,
-			'teams': self.export_teams()
+			'teams': self.export_teams(),
+			'map': self.map
 		}
 	
 	def export_teams(self):

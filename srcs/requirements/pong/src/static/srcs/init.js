@@ -24,6 +24,17 @@ async function init_map2()
 	await createMap2();
 }
 
+async function map_choice(map) {
+	switch(map) {
+		case "mountain":
+			await init_map1();
+			break;
+		case "island":
+			await init_map2();
+			break;
+	}
+}
+
 async function init(data, ws){
 	init_keyboard(data.key, data.input);
 	ball_init(data.ball);
@@ -31,11 +42,9 @@ async function init(data, ws){
 	createDashedLine(data.arena);
 	createSunlight();
 	createPlateauLight();
-	
 	await padels_init(data.padel);
 	await createPlateau(data.arena);
-	await init_map1();
-	//await init_map2();
+	await map_choice(data.map);
 	renderer.render(scene, camera);
 	console.log("ready");
 	ws.send(JSON.stringify({type: 'ready'}));
