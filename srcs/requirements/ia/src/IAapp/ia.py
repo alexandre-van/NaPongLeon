@@ -16,7 +16,7 @@ class IA:
 
 		self.last_message_time = 0
 		self.last_message_time2 = 0
-		self.message_cooldown = 0.2  # 1 seconde de délai
+		self.message_cooldown = 0.05 # 1 seconde de délai
 
 		# Constantes du terrain
 		self.COURT_HEIGHT = 32  # Hauteur du terrain (-30 à 30)
@@ -63,7 +63,7 @@ class IA:
 
 		# Prise en compte des rebonds
 		bounces = 0
-		while abs(predicted_y) > self.COURT_HEIGHT:  # Rebonds sur les murs (30 ou -30)
+		while abs(predicted_y) > self.COURT_HEIGHT:  # Rebonds sur les murs (32 ou -32)
 			if predicted_y > self.COURT_HEIGHT:
 				predicted_y = 2 * self.COURT_HEIGHT - predicted_y  # Rebond sur le mur supérieur
 			elif predicted_y < -self.COURT_HEIGHT:
@@ -82,11 +82,11 @@ class IA:
 			return self.paddle_pos['p1']  # Maintenir la position actuelle
 
 		# Ajustement pour centrer la raquette sur le point d'intersection prédit
-		half_paddle = self.PADDLE_HEIGHT / 2
-		self.optimal_paddle_position = predicted_y - half_paddle
+		##half_paddle = self.PADDLE_HEIGHT / 2
+		##self.optimal_paddle_position = predicted_y - half_paddle
 
 		# Limiter la position aux bornes permises pour la raquette
-		self.optimal_paddle_position = max(self.PADDLE_MIN_Y, min(self.PADDLE_MAX_Y, self.optimal_paddle_position))
+		self.optimal_paddle_position = max(self.PADDLE_MIN_Y, min(self.PADDLE_MAX_Y, predicted_y))
 
 		return self.optimal_paddle_position
 
