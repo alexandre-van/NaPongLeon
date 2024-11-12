@@ -163,32 +163,25 @@ class AsyncOAuth42Service:
         from asgiref.sync import sync_to_async
 
         async with self._lock:
-            user = await CustomUser.objects.filter(email=user_data['email']).afirst()
+            new_username = user_data['login'] + '_42'
+            user = await CustomUser.objects.filter(username=new_username).afirst()
 
             if user:
                 logger.debug(f"existing user: {user}")
-                new_username = user_data['login'] + '1'
             else:
-                new_username = user_data['login']
-            logger.debug(f'new_username = {new_username}')
+                user = await CustomUser.objects.acreate(
+                    username=new_username,
+                    email=user_data['email']
+                )
+                logger.debug('CustomUser created')
 
-
-            user = await CustomUser.objects.acreate(
-                username=new_username,
-                email=user_data['email']
-            )
-            logger.debug('CustomUser created')
-
-            if avatar_url := user_data.get('image', {}).get('link'):
-                avatar_content = await self.download_avatar(avatar_url)
-                filename = f"avatar_{user.id}.jpg"
-                filepath = f"users/{user.id}/avatar/{filename}"
-
-            
-            logger.debug('after avatar_url')
-
-            new_path = await sync_to_async(default_storage.save)(filepath, avatar_content)
-            await user.update_avatar_url(new_path)
+                if avatar_url := user_data.get('image', {}).get('link'):
+                    avatar_content = await self.download_avatar(avatar_url)
+                    filename = f"avatar_{user.id}.jpg"
+                    filepath = f"users/{user.id}/avatar/{filename}"
+                    logger.debug('after avatar_url')
+                    new_path = await sync_to_async(default_storage.save)(filepath, avatar_content)
+                    await user.update_avatar_url(new_path)
 
             return user
     

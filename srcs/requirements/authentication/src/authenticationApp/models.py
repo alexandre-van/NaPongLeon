@@ -15,11 +15,26 @@ logger = logging.getLogger(__name__)
 def user_avatar_path(instance, filename):
     return f'users/{instance.id}/avatar/{filename}'
 
+def validate_no_underscore(value):
+    from django.core.exceptions import ValidationError
+    if '_' in value:
+        raise ValidationError(
+            'The caracter (_) is not authorized in the username'
+        )
+
 class FriendshipStatus(models.TextChoices):
     PENDING = 'PE', 'Pending'
     ACCEPTED = 'AC', 'Accepted'
 
 class CustomUser(AbstractUser):
+    username=models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[validate_no_underscore],
+        error_messages={
+            'unique': 'A user with this username already exists',
+        }
+    )
     avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True)
     nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
     AI = models.BooleanField(default=False)
