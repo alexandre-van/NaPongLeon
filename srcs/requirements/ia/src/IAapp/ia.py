@@ -11,12 +11,12 @@ class IA:
 		self.is_moving_up = False
 		self.is_moving_down = False
 		self.ball_velocity = {'x': 0, 'y': 0}
+		self.previous_velocity = {'x': 0, 'y': 0}
 		self.predicted_y = 0
 		self.optimal_paddle_position = 0
 
 		self.last_message_time = 0
-		self.last_message_time2 = 0
-		self.message_cooldown = 0.05 # 1 seconde de délai
+		self.message_cooldown = 1 # 1 seconde de délai
 
 		# Constantes du terrain
 		self.COURT_HEIGHT = 32  # Hauteur du terrain (-30 à 30)
@@ -30,14 +30,38 @@ class IA:
 
 	def calculate_ball_velocity(self):
 		"""
-		Calcule la vélocité de la balle basée sur ses positions actuelles et précédentes
+		Calcule la vélocité de la balle en détectant les changements brusques de direction
+		qui indiquent un rebond récent
 		"""
 		if self.previous_ball_pos is not None:
-			self.ball_velocity = {
-				'x': self.ball_pos['x'] - self.previous_ball_pos['x'],
-				'y': self.ball_pos['y'] - self.previous_ball_pos['y']
-			}
-		logger.debug(f"Vélocité : {self.ball_velocity}")
+		# Calculer la nouvelle vélocité
+			current_velocity = {
+			'x': self.ball_pos['x'] - self.previous_ball_pos['x'],
+			'y': self.ball_pos['y'] - self.previous_ball_pos['y']
+		}
+		else:
+			self.ball_velocity = {'x': 0, 'y': 0}
+			return
+		
+		if self.previous_velocity != {'x': 0, 'y': 0}:
+			# Si la direction en y a changé brutalement, c'est qu'il y a eu un rebond
+			if (self.previous_velocity['y'] * current_velocity['y'] < 0 and 
+				abs(self.previous_velocity['y']) > 0.1):  # Pour éviter les faux positifs quand la vélocité est proche de 0
+				logger.debug("Rebond détecté!")
+				# On garde la même amplitude de vélocité mais dans la direction opposée
+				self.ball_velocity = {
+					'x': current_velocity['x'],
+					'y': -self.previous_velocity['y']  # On garde la vélocité précédente mais inversée
+				}
+			else:
+				self.ball_velocity = current_velocity
+		else:
+			self.ball_velocity = current_velocity
+			
+		# Sauvegarder la vélocité pour la prochaine comparaison
+		self.previous_velocity = self.ball_velocity
+		
+		logger.debug(f"Vélocité calculée : {self.ball_velocity}")
 
 	def predict_ball_intersection(self):
 		"""
@@ -45,11 +69,11 @@ class IA:
 		Retourne la position y prédite ou None si la balle s'éloigne
 		"""
 		if self.ball_velocity['x'] == 0:
-			return None
+			return 0
 
 		# Si la balle s'éloigne de notre raquette
 		if self.ball_velocity['x'] > 0:
-			return None
+			return 0
 
 		# Position x de notre raquette
 		paddle_x = -39 # 39 pour la raquette droite et -39 pour gauche
@@ -59,20 +83,20 @@ class IA:
 		time_to_intersection = distance_to_paddle / self.ball_velocity['x']
 
 		# Calcul de la position y prédite
-		predicted_y = self.ball_pos['y'] + (self.ball_velocity['y'] * time_to_intersection)
+		self.predicted_y = self.ball_pos['y'] + (self.ball_velocity['y'] * time_to_intersection)
 
 		# Prise en compte des rebonds
 		bounces = 0
-		while abs(predicted_y) > self.COURT_HEIGHT:  # Rebonds sur les murs (32 ou -32)
-			if predicted_y > self.COURT_HEIGHT:
-				predicted_y = 2 * self.COURT_HEIGHT - predicted_y  # Rebond sur le mur supérieur
-			elif predicted_y < -self.COURT_HEIGHT:
-				predicted_y = -2 * self.COURT_HEIGHT - predicted_y  # Rebond sur le mur inférieur
+		while abs(self.predicted_y) > self.COURT_HEIGHT:  # Rebonds sur les murs (32 ou -32)
+			if self.predicted_y > self.COURT_HEIGHT:
+				self.predicted_y = 2 * self.COURT_HEIGHT - self.predicted_y  # Rebond sur le mur supérieur
+			elif self.predicted_y < -self.COURT_HEIGHT:
+				self.predicted_y = -2 * self.COURT_HEIGHT - self.predicted_y  # Rebond sur le mur inférieur
 			bounces += 1
 			if bounces > 10:  # Limite de sécurité pour éviter une boucle infinie
 				break
 
-		return predicted_y
+		return self.predicted_y
 
 	def get_optimal_paddle_position(self, predicted_y):
 		"""
@@ -80,10 +104,6 @@ class IA:
 		"""
 		if predicted_y is None:
 			return self.paddle_pos['p1']  # Maintenir la position actuelle
-
-		# Ajustement pour centrer la raquette sur le point d'intersection prédit
-		##half_paddle = self.PADDLE_HEIGHT / 2
-		##self.optimal_paddle_position = predicted_y - half_paddle
 
 		# Limiter la position aux bornes permises pour la raquette
 		self.optimal_paddle_position = max(self.PADDLE_MIN_Y, min(self.PADDLE_MAX_Y, predicted_y))
@@ -96,7 +116,7 @@ class IA:
 		"""
 		try:
 			# Marge de tolérance adaptée à l'échelle du terrain
-			TOLERANCE = 5  # Augmentée car l'échelle est plus grande
+			TOLERANCE = 3  # Augmentée car l'échelle est plus grande
 
 			# Décision de mouvement basée sur la position optimale
 			if self.paddle_pos['p1'] + TOLERANCE < optimal_position:
@@ -126,7 +146,6 @@ class IA:
 					self.is_moving_down = False
 				#logger.debug("STABLE à la position optimale")
 
-			# Log des informations de debug
 			# Mise à jour de la position précédente de la balle
 			self.previous_ball_pos = self.ball_pos.copy()
 
@@ -145,6 +164,7 @@ class IA:
 		elif data['type'] == 'game_start':
 			logger.debug("Le jeu a commencé!")
 		elif data['type'] == 'gu':
+			
 			current_time = time.time()
 			if current_time - self.last_message_time > self.message_cooldown:
 				self.last_message_time = current_time
@@ -153,15 +173,17 @@ class IA:
 				self.calculate_ball_velocity()
 				self.predicted_y = self.predict_ball_intersection()
 				self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-				logger.debug(f"PADDLE POS : {self.paddle_pos}")
 				logger.debug(f"PREDICTED Y : {self.predicted_y}")
 				logger.debug(f"data :{data}")
+			#logger.debug(f"FT_MOVE : predicted y : {self.optimal_paddle_position} et {data}")
 			self.ft_move(ws, self.optimal_paddle_position)
 		elif data['type'] == 'scored':
 			logger.debug(data['msg'])
 			# Réinitialiser les données de prédiction après un point
 			self.previous_ball_pos = None
 			self.ball_velocity = {'x': 0, 'y': 0}
+			self.previous_velocity = {'x': 0, 'y': 0}
+			self.optimal_paddle_position = 0
 		elif data['type'] == 'game_end':
 			logger.debug(f"Jeu terminé. Raison: {data['reason']}")
 			ws.close()

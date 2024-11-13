@@ -49,7 +49,9 @@ class Game:
 			'key': key_data,
 			'arena': arena_data,
 			'padel': padel_data,
-			'ball': ball_data
+			'ball': ball_data,
+			'left_player': self.get_player_username_in_side('left'),
+			'right_player': self.get_player_username_in_side('right')
 		}
 
 	def getopponent(self, player):
@@ -60,6 +62,10 @@ class Game:
 	def get_player_in_side(self, side):
 		return self.players['p1'] if self.players['p1'].side == side \
 			else self.players['p2']
+   
+	def get_player_username_in_side(self, side):
+		return "p1" if self.players['p1'].side == side \
+			else "p2"
 	
 	def scored(self, scoring_side):
 		self.ball.reset_position()

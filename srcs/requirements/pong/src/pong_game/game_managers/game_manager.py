@@ -16,7 +16,7 @@ class game_manager:
 		else:
 			player_2 = self.waiting_room.pop(0)
 			game_id = str(uuid.uuid4())
-			new_game = Game(player_1, player_2)
+			new_game = Game(player_2, player_1)
 			self.games_room[game_id] = new_game
 			return game_id, player_2
 
