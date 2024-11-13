@@ -161,6 +161,8 @@ class AsyncOAuth42Service:
         from django.core.files.storage import default_storage
         from ..utils.image_process import process_image
         from asgiref.sync import sync_to_async
+        from django.contrib.auth.hashers import make_password
+        import uuid
 
         async with self._lock:
             new_username = user_data['login'] + '_42'
@@ -171,6 +173,7 @@ class AsyncOAuth42Service:
             else:
                 user = await CustomUser.objects.acreate(
                     username=new_username,
+                    password=make_password(uuid.uuid4().hex),
                     email=user_data['email']
                 )
                 logger.debug('CustomUser created')
