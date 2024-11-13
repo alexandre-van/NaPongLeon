@@ -3,16 +3,26 @@ from .ball import Ball
 from ..utils.logger import logger
 
 class Game:
-	def __init__(self, players):
+	def __init__(self, players, game_mode):
 		from .timer import Timer
 		import random
 
 		sides = ['left', 'right']
 		random.shuffle(sides)  # Mélange aléatoire des côtés
+		self.game_mode = game_mode
 		self.players = {}
+		self.players_in_side = {
+			'left': [],
+			'right': []	
+		}
+		self.score = {
+			'left': 0,
+			'right': 0	
+		}
 		for i, (username, player_consumer) in enumerate(players.items()):
 			side = sides[i % len(sides)]
 			self.players[username] = Player(player_consumer, side)
+			self.players_in_side[side].append(self.players[username])
 			logger.debug(f"{username} is the {side} player !")
 		self.ball = Ball()
 		self.timer = Timer()
@@ -33,17 +43,36 @@ class Game:
 			self.players[username].padel.update_padel_position(self.ball)
 		if (self.timer.waiting(self.wait)):
 			self.wait = 0
-			self.ball.update_ball_position(self.get_player_in_side)
+			self.ball.update_ball_position(self.get_players_in_side)
 		else:
 			self.ball.timer.reset()
 		return {
 			'type': "gu", #game update
 			'bp': self.ball.position,
-			'pp': {
-				'p1': self.get_player_in_side('left').padel.position['y'],
-				'p2': self.get_player_in_side('right').padel.position['y']
-			}
+			'pp': self.export_padels_position()
 		}
+
+	def export_padels_position(self):
+		if self.game_mode == 'PONG_CLASSIC':
+		# Mode 1v1
+			return {
+				'p1': self.players_in_side['left'][0].padel.position['y'],
+				'p2': self.players_in_side['right'][0].padel.position['y']
+			}
+		elif self.game_mode == 'PONG_DUO':
+			# Mode 2v2
+			padels_position = {
+				f'p{i + 1}': player.padel.position['y']
+				for i, player in enumerate(self.players_in_side['left'])
+			}
+			padels_position.update({
+				f'p{i + 3}': player.padel.position['y']
+				for i, player in enumerate(self.players_in_side['right'])
+			})
+			return padels_position
+		else:
+			# Gestion d'autres modes de jeu si nécessaire
+			return {}
 
 	def export_data(self):
 		from .data import input_data, key_data
@@ -55,7 +84,8 @@ class Game:
 			'padel': padel_data,
 			'ball': ball_data,
 			'teams': self.export_teams(),
-			'map': self.map
+			'map': self.map,
+			'game_mode': self.game_mode
 		}
 	
 	def export_teams(self):
@@ -77,21 +107,19 @@ class Game:
 				return self.players[username].player_consumer
 		return None
 	
-	def get_player_in_side(self, side):
-		for username in self.players:
-			if self.players[username].side == side:
-				return self.players[username]
+	def get_players_in_side(self, side):
+		if side in self.players_in_side:
+			return self.players_in_side[side]
 		return None
 	
 	def scored(self, scoring_side):
 		self.ball.reset_position()
-		player = self.get_player_in_side(scoring_side)
-		player.score += 1
-		if player.score >= 3:
+		self.score[scoring_side] += 1
+		if self.score[scoring_side] >= 3:
 			return {
 				'type': 'game_end',
 				'reason': 'The ' + str(scoring_side) + ' side wins !',
-				'score': str(player.score),
+				'score': str(self.score[scoring_side]),
 				'team': str(scoring_side),
 			}
 		else:
@@ -99,8 +127,8 @@ class Game:
 			self.wait = 1
 			return {
 				'type': 'scored',
-				'msg': 'The ' + str(scoring_side) + ' scores : ' + str(player.score),
-				'score': str(player.score),
+				'msg': 'The ' + str(scoring_side) + ' scores : ' + str(self.score[scoring_side]),
+				'score': str(self.score[scoring_side]),
 				'team': str(scoring_side),
 			}
 		

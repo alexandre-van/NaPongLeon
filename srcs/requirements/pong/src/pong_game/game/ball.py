@@ -15,21 +15,23 @@ class Ball:
 		self.timer = Timer()
 		self.priority = False
 
-	def update_ball_position(self, get_player_in_side):
+	def update_ball_position(self, get_players_in_side):
 		destination = self.get_destination()
 		destination_collider = self.get_destination_collider(destination)
-		padel = get_player_in_side('right' if destination['x'] > 0 else 'left').padel
-		if padel.ball_contact != None:
-			self.updateSpeedAndDir(padel, padel.ball_contact, \
-				'DA' if padel.direction == 1 else 'BC')
-			return
-		padel_hitbox = padel.get_hitbox()
-		physic_position = get_position_physic(self.position, destination, ball_data['rad'],\
-					padel_hitbox)
-		if physic_position != None:
-			self.padel_contact(physic_position, padel)
-			self.priority = True
-			return
+		players_in_side = get_players_in_side('right' if destination['x'] > 0 else 'left')
+		for player_in_side in players_in_side:
+			padel = player_in_side.padel
+			if padel.ball_contact != None:
+				self.updateSpeedAndDir(padel, padel.ball_contact, \
+					'DA' if padel.direction == 1 else 'BC')
+				return
+			padel_hitbox = padel.get_hitbox()
+			physic_position = get_position_physic(self.position, destination, ball_data['rad'],\
+						padel_hitbox)
+			if physic_position != None:
+				self.padel_contact(physic_position, padel)
+				self.priority = True
+				return
 		border_collider = self.get_border_collider()
 		for axis in ['x', 'y']:
 			if destination_collider[axis] <= border_collider[axis] \

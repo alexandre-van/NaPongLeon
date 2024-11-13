@@ -35,7 +35,7 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			//console.log("Game state updated:", data);
+			console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":

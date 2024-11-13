@@ -6,7 +6,6 @@ class Player:
 		self.player_consumer = player_consumer
 		self.side = side
 		self.padel = Padel(self)
-		self.score = 0
 
 	def move_padel(self, input):
 		from .data import input_data

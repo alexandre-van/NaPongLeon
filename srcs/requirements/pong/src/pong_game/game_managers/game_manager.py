@@ -52,7 +52,7 @@ class game_manager:
 			and len(room['players']) is game_modes[game_mode]['players']:
 			logger.debug('player start the game')
 			room['status'] = 'startup'
-			new_game = Game(room['players'])
+			new_game = Game(room['players'], game_mode)
 			room['game_instance'] = new_game
 		return room
 

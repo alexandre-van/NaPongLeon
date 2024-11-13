@@ -2,50 +2,83 @@ import * as THREE from '../../js/three.module.js';
 import { loadModelSTL } from '../load.js';
 import scene from '../scene.js';
 
-let pad1, pad2;
-let padX, padZ; 
+let padels = []; // Tableau pour stocker tous les padels
+let padX, padZ;
 
 function create_padel_data(model, data) {
 	return {
 		model: model,
 		position: model.position,
 		data: data
-	}
+	};
 }
 
-async function padels_init(data) {
+async function padels_init(data, game_mode) {
 	try {
 		padX = data.pos.x;
 		padZ = data.pos.z;
-		const material1 = new THREE.MeshStandardMaterial({ color: 0x318CE7 });
+
+		// Matériaux pour les padels
+		const materials = [
+			new THREE.MeshStandardMaterial({ color: 0x318CE7 }), // Équipe gauche
+			new THREE.MeshStandardMaterial({ color: 0x01D758 })  // Équipe droite
+		];
+
+		// Charger les géométries des modèles
 		const geometry1 = await loadModelSTL('padel2.stl');
-		const model1 = new THREE.Mesh(geometry1, material1);
-		model1.position.set(-data.pos.x, data.pos.y, data.pos.z);
-		model1.castShadow = false;
-		model1.receiveShadow = false;
-		scene.add(model1);
-		const material2 = new THREE.MeshStandardMaterial({ color: 0x01D758 });
 		const geometry2 = await loadModelSTL('padel1.stl');
-		const model2 = new THREE.Mesh(geometry2, material2);
-		model2.position.set(-data.pos.x, data.pos.y, data.pos.z);
-		model2.castShadow = false;
-		model2.receiveShadow = false;
-		scene.add(model2);
-		pad1 = create_padel_data(model1, data);
-		pad2 = create_padel_data(model2, data);
-		window.pad1 = pad1;
-		window.pad2 = pad2;
+
+		// Déterminer le nombre de padels et leur configuration selon le mode de jeu
+		const numPadels = game_mode == 'PONG_DUO' ? 4 : 2;
+		console.log("game_mode=", game_mode);
+		console.log("numPadels=", numPadels);
+		for (let i = 0; i < numPadels; i++) {
+			const material = i % 2 === 0 ? materials[0] : materials[1];
+			const geometry = i % 2 === 0 ? geometry1 : geometry2;
+			const model = new THREE.Mesh(geometry, material);
+
+			// Positionner le padel initialement
+			let xPos;
+			if (game_mode == 'PONG_DUO') {
+				// Mode PONG_DUO (2v2)
+				xPos = i < 2 ? -padX : padX; // `pad1` et `pad3` à gauche, `pad2` et `pad4` à droite
+			} else {
+				// Mode PONG_CLASSIC (1v1)
+				xPos = i === 0 ? -padX : padX; // `pad1` à gauche, `pad2` à droite
+			}
+
+			model.position.set(xPos, data.pos.y, padZ);
+			model.castShadow = false;
+			model.receiveShadow = false;
+			scene.add(model);
+
+			// Ajouter le padel au tableau
+			const padel = create_padel_data(model, data);
+			padels.push(padel);
+			window[`pad${i + 1}`] = padel; // Pour garder la compatibilité avec ton ancien code (optionnel)
+		}
 	} catch (error) {
 		console.error("Error: ", error);
 	}
 }
 
-
-
 function updatePadsPosition(position) {
-	if (pad1 && pad2) {
-		pad1.position.set(-padX, position['p1'], padZ);
-		pad2.position.set(padX, position['p2'], padZ);
+	if (padels.length > 0) {
+		// Mettre à jour les positions des padels dynamiquement
+		padels.forEach((padel, index) => {
+			const padKey = `p${index + 1}`;
+			if (position[padKey] !== undefined) {
+				let xPos;
+				if (padels.length === 2) {
+					// Mode PONG_CLASSIC (1v1)
+					xPos = index === 0 ? -padX : padX;
+				} else {
+					// Mode PONG_DUO (2v2)
+					xPos = index < 2 ? -padX : padX;
+				}
+				padel.position.set(xPos, position[padKey], padZ);
+			}
+		});
 	} else {
 		console.error('Pads are not yet loaded');
 	}

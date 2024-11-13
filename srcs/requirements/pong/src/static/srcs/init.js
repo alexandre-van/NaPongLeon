@@ -42,7 +42,7 @@ async function init(data, ws){
 	createDashedLine(data.arena);
 	createSunlight();
 	createPlateauLight();
-	await padels_init(data.padel);
+	await padels_init(data.padel, data.game_mode);
 	await createPlateau(data.arena);
 	await map_choice(data.map);
 	renderer.render(scene, camera);
