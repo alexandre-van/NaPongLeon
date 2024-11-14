@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 async def LoginView(request):
     from django.contrib.auth import authenticate
-    from django.middleware.csrf import get_token
-    from rest_framework_simplejwt.tokens import RefreshToken
+    from django_otp import user_has_device
+    from .utils.two_factor_auth import create_login_response, validate_totp
 
     if request.method != 'POST':
         return HttpResponseBadRequestJD('Method not allowed')
@@ -20,47 +20,79 @@ async def LoginView(request):
         data = json.loads(request.body)
         username = data.get('username')
         password = data.get('password')
+        totp_token = data.get('totpToken') # Optional 2FA token
+        logger.debug(f'data:{data}')
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
 
     user = await database_sync_to_async(authenticate)(username=username, password=password)
 
-    if user is not None:
-        refresh = await database_sync_to_async(RefreshToken.for_user)(user)
 
-        response = HttpResponseJD('Login successful', 200)
-        response.set_cookie(
-            'access_token',
-            str(refresh.access_token),
-            httponly=True,
-            secure=False,  # True for production
-            samesite='Strict',
-            max_age=60 * 60
-        )
-        response.set_cookie(
-            'refresh_token',
-            str(refresh),
-            httponly=True,
-            secure=False,
-            samesite='Strict',
-            max_age=24 * 60 * 60
-        )
-        csrf_token = get_token(request)
-        response.set_cookie(
-            'csrftoken',
-            csrf_token,
-            httponly=False,
-            secure=False,  # True for production
-            samesite='Strict'
-        )
-        response['X-CSRFToken'] = csrf_token
-
-        # Log pour le débogage
-        print(f"CSRF token stored in session during login: {csrf_token}")
-
-        return response
-    else:
+    if user is None:
         return HttpResponseJD('Invalid credentials', 401)
+    
+    has_2fa = await database_sync_to_async(user_has_device)(user)
+    if not has_2fa:
+        return await create_login_response(user, request)
+
+    logger.debug(f'totp_token={totp_token}')
+    # If 2FA enabled but no token provided
+    if not totp_token:
+        logger.debug('not totp_token')
+        return HttpResponseJD('2FA token required', 403, {'requires_2fa': True})
+
+    is_valid = await validate_totp(user, totp_token)
+    if not is_valid:
+        return HttpResponseJD('Invalid 2FA token', 401)
+
+    return await create_login_response(user, request)
+
+
+
+async def Setup2FAView(request):
+    if not request.user.is_authenticated:
+        return HttpResponseJD('Authentication required', 401)
+
+    # Give QR code
+    if request.method == 'GET':
+        from .utils.two_factor_auth import setup_2fa
+
+        device, config_url = await setup_2fa(request.user)
+        return HttpResponseJD('2FA setup initiated', 200, {
+            'config_url': config_url,
+            'secret_key': device.config_url.split('secret=')[1].split('&')[0]
+        })
+    
+    # Register device
+    if request.method == 'POST':
+        try:
+            from django.db import transaction
+            from django_otp.plugins.otp_totp.models import TOTPDevice
+
+            data = json.loads(request.body)
+            token = data.get('token')
+
+            if not token:
+                return HttpResponseBadRequestJD('Token required')
+
+            @sync_to_async
+            def verify_token():
+                with transaction.atomic():
+                    devices = TOTPDevice.objects.filter(user=request.user, confirmed=False)
+                    if devices:
+                        device = devices[0]
+                        if device.verify_token(token):
+                            device.confirmed = True
+                            device.save()
+                            return True
+                return False
+
+            if await verify_token():
+                return HttpResponseJD('2FA setup successful', 200)
+            return HttpResponseJD('Invalid token', 400)
+        
+        except json.JSONDecodeError:
+            return HttpResponseBadRequestJD('Invalid JSON')
 
 
 
@@ -81,6 +113,8 @@ async def LogoutView(request):
         )
         return response
     return HttpResponseBadRequestJD('Anonymous user')
+
+
 
 async def UserNicknameView(request):
     logger.debug(f"request:{request}")
@@ -137,21 +171,15 @@ async def UserAvatarView(request):
             img_content = file.read()
             buffer = await sync_to_async(process_image)(img_content)
 
-            logger.debug(f"\n\nuser.id=[{user.id}]\n\n")
             filename = f"avatar_{user.id}.jpg"
             filepath = f"users/{user.id}/avatar/{filename}"
 
-            logger.debug(f"filepath: {filepath}\n")
-            logger.debug(f"user.avatar = {user.avatar}\n")
             # Check if file already exists, if true, deletes it and saves the new one
             if user.avatar:
                 await sync_to_async(default_storage.delete)(user.avatar.name)
 
-            logger.debug("else debut default_storage.save")
             new_path = await sync_to_async(default_storage.save)(filepath, ContentFile(buffer.getvalue()))
-            logger.debug("else fin default_storage.save")
             await user.update_avatar_url(new_path)
-            logger.debug("fin avant response")
 
             return HttpResponseJD('Avatar uploaded successfully', 200)
             

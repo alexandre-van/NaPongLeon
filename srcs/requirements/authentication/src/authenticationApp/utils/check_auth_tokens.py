@@ -1,2 +1,0 @@
-def CheckAuthTokens(token):
-    

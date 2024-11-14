@@ -44,7 +44,11 @@ export function UserProvider({ children }) {
     if (response.data && response.data.message !== "Login successful") {
       throw new Error("Login failed");
     }
+    if (response.requires_2fa) {
+      return true;
+    }
     await checkAuth();
+    return false;
   };
 
   const login42 = () => {

@@ -46,7 +46,6 @@ class AsyncOAuth42Service:
             )
 
     async def _make_42_api_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
-        # S'assure qu'on a une session
         await self._ensure_session()
         
         if not self._session:
@@ -97,11 +96,8 @@ class AsyncOAuth42Service:
                     'redirect_uri': self.redirect_uri
                 }
                 
-                # Log détaillé de la requête
-                logger.debug("Sending token request with data:")
                 for key, value in data.items():
                     if key in ['code', 'client_id', 'client_secret']:
-                        # Masque les données sensibles
                         logger.debug(f"{key}: {value[:10]}...")
                     else:
                         logger.debug(f"{key}: {value}")

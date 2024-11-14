@@ -27,3 +27,5 @@ const AuthSuccess = () => {
     </div>
   );
 };
+
+export default AuthSuccess;

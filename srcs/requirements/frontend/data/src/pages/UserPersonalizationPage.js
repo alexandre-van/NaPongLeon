@@ -1,5 +1,6 @@
 import AvatarUpload from '../components/AvatarUpload.js';
 import NicknameForm from '../components/NicknameForm.js';
+import Setup2FA from '../components/Setup2FA.js';
 import useAvatarUpload from '../hooks/useAvatarUpload.js';
 import useNicknameUpdate from '../hooks/useNicknameUpdate.js';
 
@@ -48,6 +49,8 @@ function UserPersonalizationPage() {
       <Link to="/">Back to Profile</Link>
       <NicknameForm onUpload={handleNicknameSubmit} onError={setError} />
       <AvatarUpload onUpload={handleAvatarUpload} onError={setError} />
+      <h2>Security Settings (2FA)</h2>
+      <Setup2FA onError={setError} />
       {error && <p>{error}</p>}
     </div>
   );

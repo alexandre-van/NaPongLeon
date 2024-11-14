@@ -21,6 +21,13 @@ django-environ==0.11.2
 # API Rest framework
 djangorestframework
 
+# 2FA authentication
+django-otp
+django-two-factor-auth
+qrcode
+django-phonenumber-field
+phonenumbers
+
 # JWT authentication
 djangorestframework-simplejwt
 

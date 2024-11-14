@@ -6,6 +6,7 @@ COPY data/package*.json ./
 
 RUN npm install
 RUN npm install react-router-dom
+RUN npm install qrcode.react
 RUN npm install axios
 
 COPY data/. .

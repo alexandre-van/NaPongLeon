@@ -1,13 +1,17 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView, WebSocketTokenView
-from .async_views import LoginView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView
+from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView
 from .oauth_42_views import OAuth42CallbackView
 
 # for development
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
 
 urlpatterns = [
+    # Admin
+    path('admin/', admin.site.urls),
+    
     # User management
     path('users/', UserView.as_view(), name='user_create'),
     path('users/me/', UserView.as_view(), name='user_detail'),
@@ -19,6 +23,7 @@ urlpatterns = [
     # Authentication
     path('auth/login/', LoginView, name='login'),
     path('auth/logout/', LogoutView, name='logout'),
+    path('auth/2fa/setup/', Setup2FAView, name='Setup2FA'),
 
     # Friends
     path('friends/', FriendsView, name='friends'),
