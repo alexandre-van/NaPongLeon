@@ -46,7 +46,7 @@ async function padels_init(data, game_mode) {
 				// Mode PONG_CLASSIC (1v1)
 				xPos = i === 0 ? -padX : padX; // `pad1` à gauche, `pad2` à droite
 			}
-
+			model.scale.set(data.size.x / 4, data.size.y / 12, data.size.z / 4);
 			model.position.set(xPos, data.pos.y, padZ);
 			model.castShadow = false;
 			model.receiveShadow = false;

@@ -1,15 +1,17 @@
 from .player import Player
 from .ball import Ball
 from ..utils.logger import logger
+from .getdata import get_data
 
 class Game:
-	def __init__(self, players, game_mode):
+	def __init__(self, players, game_mode, modifiers):
 		from .timer import Timer
 		import random
 
 		sides = ['left', 'right']
 		random.shuffle(sides)  # Mélange aléatoire des côtés
 		self.game_mode = game_mode
+		self.modifiers = modifiers
 		self.players = {}
 		self.players_in_side = {
 			'left': [],
@@ -21,10 +23,10 @@ class Game:
 		}
 		for i, (username, player_consumer) in enumerate(players.items()):
 			side = sides[i % len(sides)]
-			self.players[username] = Player(player_consumer, side)
+			self.players[username] = Player(player_consumer, side, game_mode, modifiers)
 			self.players_in_side[side].append(self.players[username])
 			logger.debug(f"{username} is the {side} player !")
-		self.ball = Ball()
+		self.ball = Ball(modifiers)
 		self.timer = Timer()
 		self.timer.settup(None)
 		self.wait = 3
@@ -75,14 +77,12 @@ class Game:
 			return {}
 
 	def export_data(self):
-		from .data import input_data, key_data
-		from .data import arena_data, padel_data, ball_data
 		return {
-			'input': input_data,
-			'key': key_data,
-			'arena': arena_data,
-			'padel': padel_data,
-			'ball': ball_data,
+			'input': get_data(self.modifiers, 'input_data'),
+			'key': get_data(self.modifiers, 'key_data'),
+			'arena': get_data(self.modifiers, 'arena_data'),
+			'ball': get_data(self.modifiers, 'ball_data'),
+			'padel': self.get_players_in_side('right')[0].padel.export_padel_data(),
 			'teams': self.export_teams(),
 			'map': self.map,
 			'game_mode': self.game_mode
@@ -115,7 +115,7 @@ class Game:
 	def scored(self, scoring_side):
 		self.ball.reset_position()
 		self.score[scoring_side] += 1
-		if self.score[scoring_side] >= 3:
+		if self.score[scoring_side] >= 11:
 			return {
 				'type': 'game_end',
 				'reason': 'The ' + str(scoring_side) + ' side wins !',

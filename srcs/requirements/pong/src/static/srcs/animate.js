@@ -3,6 +3,7 @@ import { updateBallPosition } from './object/ball.js'
 import { updatePadsPosition } from './object/pad.js'
 import { renderer, camera, scene } from './renderer.js';
 import { updateMap2Mixer } from './object/map2.js'
+import { controls } from './controls.js'
 
 const clock = new THREE.Clock();
 
