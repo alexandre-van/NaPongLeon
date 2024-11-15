@@ -12,16 +12,18 @@ class game_manager:
 		]
 		logger.debug("\ngame_manager initialised\n")
 
-	def add_games_room(self, game_id, admin_id, game_mode, players_list):
+	def add_games_room(self, game_id, admin_id, game_mode, modifiers, players_list):
 		if (game_mode not in game_modes):
 			logger.debug(f"Error: Wrong game_mode: {game_mode}")
 			return None
 		if len(players_list) != game_modes[game_mode]['players']:
 			logger.debug(f"Error: Wrong nomber of players for the game mode {game_mode}: {len(players_list)}")
 			return None
+		modifiers = modifiers.split(',')
 		self.games_room[game_id] = {
 			'status': 'waiting',
 			'game_mode': game_mode,
+			'modifiers': modifiers,
 			'admin': {
 				'id': admin_id,
 				'consumer': None
@@ -48,11 +50,12 @@ class game_manager:
 		users[username] = consumer
 		logger.debug(f"players: {room['players']}")
 		game_mode = room['game_mode']
+		modifiers = room['modifiers']
 		if room['status'] == 'waiting'\
 			and len(room['players']) is game_modes[game_mode]['players']:
 			logger.debug('player start the game')
 			room['status'] = 'startup'
-			new_game = Game(room['players'], game_mode, ['perfection', 'elusive'])
+			new_game = Game(room['players'], game_mode, modifiers)
 			room['game_instance'] = new_game
 		return room
 

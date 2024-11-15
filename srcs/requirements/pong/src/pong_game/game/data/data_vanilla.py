@@ -25,7 +25,7 @@ ball_data = {
 }
 
 padel_data = {
-	'spd': 15, # speed
+	'spd': 30, # speed
 	'pos': {
 		'x': 39, # coordinate x 39
 		'y': 0, # coordinate y

@@ -12,10 +12,10 @@ function createBorders(data) {
     const borderLeft = new THREE.Mesh(sideBorderGeometry, borderMaterial);
     const borderRight = new THREE.Mesh(sideBorderGeometry, borderMaterial);
 
-    borderTop.position.set(0, data.size.y / 2 + data.wallWidth / 2, 1);
-    borderBottom.position.set(0, -data.size.y / 2 - data.wallWidth / 2, 1);
-    borderLeft.position.set(-data.size.x / 2 - data.wallWidth / 2, 0, 1);
-    borderRight.position.set(data.size.x / 2 + data.wallWidth / 2, 0, 1);
+    borderTop.position.set(0, data.size.y / 2 + data.wallWidth / 2, data.size.z / 2);
+    borderBottom.position.set(0, -data.size.y / 2 - data.wallWidth / 2, data.size.z / 2);
+    borderLeft.position.set(-data.size.x / 2 - data.wallWidth / 2, 0, data.size.z / 2);
+    borderRight.position.set(data.size.x / 2 + data.wallWidth / 2, 0, data.size.z / 2);
 
     scene.add(borderTop);
     scene.add(borderBottom);

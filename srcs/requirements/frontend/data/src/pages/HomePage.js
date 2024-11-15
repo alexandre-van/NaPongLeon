@@ -1,5 +1,4 @@
 import Avatar from '../components/Avatar.js';
-import PlayButton from '../components/PlayButton.js';
 
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
@@ -26,7 +25,6 @@ function AuthenticatedHomePage() {
       <Link to="/user-personalization">Personalize Profile</Link>
       <Avatar user={{ ...user, avatar_url: getAvatarUrl() }} />
       {user.nickname ? <h3>My nickname: {user.nickname}</h3> : <p>No nickname yet</p>}
-      <PlayButton />
     </div>
   );
 }
