@@ -5,7 +5,7 @@ const PlayButton = () => {
 	const handlePlayButton = async () => {
 		try {
 			//const response = await api.get('/pong/');
-			const response = await api.get('/game_manager/matchmaking/game_mode=PONG_CLASSIC');
+			const response = await api.get('/game_manager/matchmaking/game_mode=PONG_CLASSIC?mods=random_speed');
 			const gameId = response.data['data']['game_id'];
 			if (!gameId)
 				throw new Error('Game ID is missing from the response.');

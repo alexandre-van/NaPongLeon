@@ -32,7 +32,7 @@ class Matchmaking:
 		with self._queue_mutex:
 			await self._remove_player_request_in_queue(username)
 
-	async def add_player_request(self, username, game_mode):
+	async def add_player_request(self, username, game_mode, modifiers):
 		logger.debug("Add player request")
 		future = asyncio.Future()
 		status = await self.get_player_status(username)
@@ -44,28 +44,31 @@ class Matchmaking:
 		with self._futures_mutex:
 				self._futures[username] = future
 		with self._queue_mutex:
-			if game_mode not in self._queue:
-				self._queue[game_mode] = []
-			self._queue[game_mode].append({
+			if game_mode + modifiers not in self._queue:
+				self._queue[game_mode + modifiers] = []
+			self._queue[game_mode + modifiers].append({
 				'username': username,
 				'game_mode': game_mode,
+				'modifiers': modifiers,
 				'time': Timer(),
 			})
 		return future
 
 	async def matchmaking_logic(self):
 		with self._queue_mutex:
-			for game_mode in list(self._queue.keys()):
-				if game_mode not in self._queue:
+			for queue in list(self._queue.keys()):
+				logger.debug(f"select player in {queue} queue")
+				if queue not in self._queue:
 					continue
-				await self.remove_disconnected_client(self._queue[game_mode], False)
+				await self.remove_disconnected_client(self._queue[queue], False)
 				queue_selected = []
-				for player_request in self._queue[game_mode][:]:
+				for player_request in self._queue[queue][:]:
 					queue_selected.append(player_request)
+					game_mode = player_request.get('game_mode')
 					if len(queue_selected) == self.GAME_MODES.get(game_mode).get('number_of_players'):
 						await self.notify(game_mode, queue_selected)
-						if not self._queue[game_mode]:
-							del self._queue[game_mode]
+						if not self._queue[queue]:
+							del self._queue[queue]
 						break
 
 	async def game_notify(self, game_id, admin_id, game_mode, players):
@@ -125,7 +128,7 @@ class Matchmaking:
 			return
 		# aborting
 		if game_connected:
-			await self.disconnect_to_game(game, game_id, game_mode, players)
+			await self.disconnect_to_game(game_id, game_mode)
 			logger.debug(f'Game service {game_id} aborted')
 		if game:
 			await self.abord_game_instance(game)
@@ -269,8 +272,8 @@ class Matchmaking:
 	# unproteged
 
 	async def _get_player_request(self, username):
-		for game_mode in list(self._queue.keys()):
-			for player_request in self._queue[game_mode][:]:
+		for queue in list(self._queue.keys()):
+			for player_request in self._queue[queue][:]:
 				if player_request['username'] == username:
 					return player_request
 		return None
@@ -280,8 +283,8 @@ class Matchmaking:
 		if player_request is None:
 			return
 		with self._futures_mutex:
-			game_mode = player_request['game_mode']
-			self._queue[game_mode].remove(player_request)
+			queue = player_request['game_mode'] + player_request['modifiers']
+			self._queue[queue].remove(player_request)
 			if self._futures[username]:
 				del self._futures[username]
 

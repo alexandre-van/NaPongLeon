@@ -42,6 +42,7 @@ for mode in game_mode_config.sections():
 		if not team_size.isdigit() or int(team_size) <= 0:
 			raise Exception(f"{game_mode_file}: team_size must be a positive integer for {mode} game mode")
 		team_size = int(team_size)
+	modifier_list = game_mode_config[mode].get('modifier_list')
 	if service_name in service_config['GAME_SERVICES_URL_NEW_GAME'] \
 		and service_name in service_config['GAME_SERVICES_URL_ABORT_GAME'] \
 		and service_name in service_config['GAME_SERVICES_WS']:
@@ -54,7 +55,8 @@ for mode in game_mode_config.sections():
 			'service_ws': service_ws,
 			'number_of_players': number_of_players,
 			'team_names': team_names,
-			'team_size': team_size
+			'team_size': team_size,
+			'modifier_list': modifier_list
 		}
 	else:
 		raise Exception(f"{service_file}: {service_name} is missing in one of the GAME_SERVICE sections of the {mode} game mode")
