@@ -5,11 +5,15 @@ import api from '../services/api.js';
 const Setup2FA = () => {
     const [configData, setConfigData] = useState(null);
     const [token, setToken] = useState('');
-    const [step, setStep] = useState('init'); // 'init', 'qr', 'verify'
+    const [step, setStep] = useState('init'); // 'init', '2fa already', 'qr', 'verify'
 
     const initiate2FASetup = async () => {
         try {
             const response = await api.get('/authentication/auth/2fa/setup/');
+            if (response.data && response.data.message === '2FA setup already setup') {
+                setStep('2fa already')
+                return ;
+            }
             setConfigData(response.data);
             setStep('qr');
         } catch (error) {
@@ -35,6 +39,10 @@ const Setup2FA = () => {
         <div>
             {step === 'init' && (
                 <button onClick={initiate2FASetup}>Setup 2FA</button>
+            )}
+
+            {step === '2fa already' && (
+                <p>2FA already set</p>
             )}
 
             {step === 'qr' && configData && (

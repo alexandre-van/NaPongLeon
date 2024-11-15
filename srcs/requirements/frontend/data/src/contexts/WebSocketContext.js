@@ -60,7 +60,9 @@ export const WebSocketProvider = ({ children }) => {
 
 import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
 import { useUser } from './UserContext.js';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api.js';
+
 
 const WebSocketContext = createContext(null);
 
@@ -77,8 +79,9 @@ export const WebSocketProvider = ({ children }) => {
   const [onlineFriends, setOnlineFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, logout } = useUser();
   const socketRef = useRef(null);
+  const navigate = useNavigate();
 
   const createWebSocketConnection = useCallback(async () => {
     if (!isAuthenticated || socketRef.current) {
@@ -121,6 +124,14 @@ export const WebSocketProvider = ({ children }) => {
           case 'friend_status':
             console.log('friend_status = ', data.status);
             console.log('friend = ', data.friend);
+            break;
+          case 'disconnected_from_server':
+            try {
+              logout();
+              navigate('/forced-logout');
+            } catch (err) {
+              console.log('Failed Required Disconnect from the server from this browser');
+            }
             break;
           default:
             console.log('Unknown message type: ', data.type);

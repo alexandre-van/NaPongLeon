@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import VerifyTokenView, UserView, WebSocketTokenView
-from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView
+from .views import VerifyTokenView, UserView
+from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView
 from .oauth_42_views import OAuth42CallbackView
 
 # for development
@@ -34,7 +34,8 @@ urlpatterns = [
 
     path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
 
-    path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
+    #path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
+    path('auth/token/get-access/', WebSocketTokenView, name='get_websocket_token'),
 
     # OAUTH 42 API
     path('oauth/42/callback/', OAuth42CallbackView, name='oauth_42_callback'),

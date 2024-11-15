@@ -43,9 +43,7 @@ async def create_login_response(user, request):
 
 
 async def setup_2fa(user):
-    '''
-    Setup TOTP device for user
-    '''
+    # Setup TOTP device for user
     from django_otp.plugins.otp_totp.models import TOTPDevice
 
     device = await database_sync_to_async(TOTPDevice.objects.create)(
@@ -54,20 +52,19 @@ async def setup_2fa(user):
         confirmed=False
     )
     config_url = device.config_url
-    return device, config_url
+    return config_url
+
+
 
 async def validate_totp(user, token):
     from django_otp import devices_for_user
     from asgiref.sync import sync_to_async
 
-    logger.debug(f"\nvalidate_totp: token = {token}")
     @sync_to_async
     def check_token(user, token):
         for device in devices_for_user(user, confirmed=True):
             if device.verify_token(token):
-                logger.debug("true")
                 return True
-        logger.debug("false")
         return False
     
     return await check_token(user, token)

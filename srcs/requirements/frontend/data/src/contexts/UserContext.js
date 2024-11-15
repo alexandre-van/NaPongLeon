@@ -41,7 +41,9 @@ export function UserProvider({ children }) {
 
   const login = async (userData) => {
     const response = await api.post('/authentication/auth/login/', userData);
+    console.log('response:', response);
     if (response.data && response.data.message !== "Login successful") {
+      console.log('Login failed');
       throw new Error("Login failed");
     }
     if (response.requires_2fa) {
@@ -65,7 +67,6 @@ export function UserProvider({ children }) {
     await api.post('/authentication/auth/logout/');
     setUser(null);
     setIsAuthenticated(false);
-    navigate('/logout-success');
     await checkAuth();
   };
 

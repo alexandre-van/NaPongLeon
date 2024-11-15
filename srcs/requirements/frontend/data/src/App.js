@@ -9,6 +9,7 @@ import DefaultLayout from './layouts/DefaultLayout.js';
 import SpecialLayout from './layouts/SpecialLayout.js';
 
 import HomePage from './pages/HomePage.js';
+import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
@@ -58,6 +59,7 @@ function AppContent() {
         <Route element={<SpecialLayout />} >
           <Route path="login" element={<LoginPage />} />
           <Route path="logout-success" element={<LogoutPage /> } />
+          <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
         </Route>

@@ -51,8 +51,24 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
     '''
 
     async def disconnect(self, close_code):
+        from django_otp import devices_for_user
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+        from asgiref.sync import sync_to_async
+
         await self.user.update_user_status(False)
         await self.send_status_friends(False)
+
+        @sync_to_async
+        def delete_unconfirmed_2fa_auth(user):
+            for device in devices_for_user(user, confirmed=False):
+                device.delete()
+                return True
+            return False
+        
+        result = await delete_unconfirmed_2fa_auth(self.user)
+        logger.debug(f"\n\nconsumers delete_unconfirmed_2fa_auth : {result}\n")
+
+
 
     async def receive(self, text_data):
         logger.debug('receive debut')

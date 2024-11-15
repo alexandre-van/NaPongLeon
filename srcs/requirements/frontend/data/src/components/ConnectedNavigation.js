@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ConnectedNavigation() {
   const { logout } = useUser();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -13,6 +15,7 @@ export default function ConnectedNavigation() {
     setLoading(true);
     try {
       logout();
+      navigate('/logout-success');
     } catch (error) {
       setError(true);
     } finally {

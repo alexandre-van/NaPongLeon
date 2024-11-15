@@ -4,13 +4,15 @@ from django.contrib.auth.models import AnonymousUser
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 
+# for LoginView and Setup2FAView
+from django_otp import user_has_device
+
 import json
 import logging
 logger = logging.getLogger(__name__)
 
 async def LoginView(request):
     from django.contrib.auth import authenticate
-    from django_otp import user_has_device
     from .utils.two_factor_auth import create_login_response, validate_totp
 
     if request.method != 'POST':
@@ -50,17 +52,22 @@ async def LoginView(request):
 
 
 async def Setup2FAView(request):
-    if not request.user.is_authenticated:
+    user = request.user
+    if not user.is_authenticated:
         return HttpResponseJD('Authentication required', 401)
 
     # Give QR code
     if request.method == 'GET':
         from .utils.two_factor_auth import setup_2fa
 
-        device, config_url = await setup_2fa(request.user)
+        user_has_2fa = await database_sync_to_async(user_has_device)(user)
+        if user_has_2fa:
+            return HttpResponseJD('2FA setup already setup', 200)
+        
+        config_url = await setup_2fa(user)
         return HttpResponseJD('2FA setup initiated', 200, {
             'config_url': config_url,
-            'secret_key': device.config_url.split('secret=')[1].split('&')[0]
+            #'secret_key': config_url.split('secret=')[1].split('&')[0]
         })
     
     # Register device
@@ -78,7 +85,7 @@ async def Setup2FAView(request):
             @sync_to_async
             def verify_token():
                 with transaction.atomic():
-                    devices = TOTPDevice.objects.filter(user=request.user, confirmed=False)
+                    devices = TOTPDevice.objects.filter(user=user, confirmed=False)
                     if devices:
                         device = devices[0]
                         if device.verify_token(token):
@@ -347,9 +354,11 @@ async def NotificationsView(request):
         return HttpResponseJD('Method not allowed', 405)
 
 async def WebSocketTokenView(request):
+    from rest_framework_simplejwt.tokens import AccessToken
+
     if request.method == "GET":
         logger.debug(f"\n\n\n WEBSOCKETTOKENVIEW request.user={request.user}")
         token = AccessToken.for_user(request.user)
         #return Response({'token': str(token)})
-        return HttpResponseJD('Token ', 200)
+        return HttpResponseJD('Access Token provided', 200, { 'token': str(token) })
     return HttpResponseJD('Method not allowed', 405)
