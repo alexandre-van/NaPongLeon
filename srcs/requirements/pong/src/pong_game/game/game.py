@@ -36,7 +36,10 @@ class Game:
 		return {
 			'type': type, #game update
 			'bp': self.ball.position,
-			'bs': self.ball.speed,
+			'bs': {
+				'x': self.ball.speed['x'] * self.ball.direction['x'],
+				'y': self.ball.speed['y'] * self.ball.direction['y']
+			},
 			'pp': {
 				'p1': self.get_player_in_side('left').padel.position['y'],
 				'p2': self.get_player_in_side('right').padel.position['y']
