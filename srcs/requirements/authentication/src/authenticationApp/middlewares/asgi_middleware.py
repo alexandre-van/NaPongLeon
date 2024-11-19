@@ -144,7 +144,12 @@ class CsrfAsgiMiddleware:
 
 
         # Exempt routes
-        exempt_paths = ['/api/authentication/auth/login/', '/api/authentication/users/', '/api/authentication/oauth/42/callback/']
+        exempt_paths = [
+            '/api/authentication/auth/login/',
+            '/api/authentication/users/',
+            '/api/authentication/oauth/42/callback/'
+            '/api/authentication/oauth/42/authorize/'
+        ]
         if request.path in exempt_paths:
             response = await self.get_response(scope, receive, send)
             return response

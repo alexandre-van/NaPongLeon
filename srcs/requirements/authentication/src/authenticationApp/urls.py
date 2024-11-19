@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView
 from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView
-from .oauth_42_views import OAuth42CallbackView
+from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 
 # for development
 from django.conf import settings
@@ -39,6 +39,7 @@ urlpatterns = [
 
     # OAUTH 42 API
     path('oauth/42/callback/', OAuth42CallbackView, name='oauth_42_callback'),
+    path('oauth/42/authorize/', OAuth42AuthorizeView, name='oauth_42_authorize'),
 ]
 
 if settings.DEBUG:

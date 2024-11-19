@@ -155,12 +155,14 @@ CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
 def read_secret(secret_name):
     file_path = os.environ.get(f'{secret_name}_FILE')
     if file_path and os.path.exists(file_path):
         with open(file_path, 'r') as file:
             return file.read().strip()
     return None
+
 
 
 OAUTH_42_CLIENT_ID = read_secret('OAUTH_42_CLIENT_ID')

@@ -4,12 +4,50 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+async def OAuth42AuthorizeView(request):
+    from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+    from django.conf import settings
+    import secrets
+
+    state = secrets.token_urlsafe(32)
+    client_id = settings.OAUTH_42_CLIENT_ID
+    redirect_uri = f"{settings.SITE_URL}/api/authentication/oauth/42/callback"
+    '''
+    state_token = str(RefreshToken.for_user(
+        {"state": state}
+    ).access_token)
+    '''
+
+    #auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state_token}"
+    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+
+    return HttpResponseRedirectJD(
+        message='Redirect to 42 API',
+        redirect_url=auth_url,
+        status=200
+    )
+
+
+
 async def OAuth42CallbackView(request):
     try:
         code = request.GET.get('code')
+        '''
+        state_token = request.GET.get('state')
         logger.debug(f"OAuth42CallBack\ncode: {code}\n")
-        if not code:
-            return HttpResponseJD('No code provided', 400)
+        if not code or not state_token:
+            return HttpResponseJD('No code or state token provided', 400)
+
+        try: # Validate state_token
+            from rest_framework_simplejwt.tokens import AccessToken
+
+            token = AccessToken(state_token)
+            if 'state' not in token.payload:
+                return HttpResponseJD('Invalid state token', 400)
+
+        except Exception:
+            return HttpResponseJD('Invalid state token', 400)
+        '''
         
         async with async_oauth_42_service as service:
             from channels.db import database_sync_to_async
