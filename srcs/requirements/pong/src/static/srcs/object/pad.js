@@ -1,6 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 import { loadModelSTL } from '../load.js';
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 let padels = []; // Tableau pour stocker tous les padels
 let padX, padZ;

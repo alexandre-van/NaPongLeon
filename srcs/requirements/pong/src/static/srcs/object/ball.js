@@ -1,6 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 let ball = null;
 

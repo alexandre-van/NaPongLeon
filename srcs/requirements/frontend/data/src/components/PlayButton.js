@@ -1,45 +1,85 @@
+import { useState, useEffect } from 'react'; // Ajouter useEffect ici
 import api from '../services/api.js';
-import { useState } from 'react';
 
 const PlayButton = ({ gameMode, modifiers }) => {
 	const [loading, setLoading] = useState(false);
+	const [errorMessage, setErrorMessage] = useState(null);
 
-    const handlePlayButton = async () => {
-        try {
+	const handlePlayButton = async () => {
+		try {
 			setLoading(true);
-            const mods = modifiers.join(",");
-            const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`);
-            const gameId = response.data['data']['game_id'];
-            if (!gameId) throw new Error('Game ID is missing from the response.');
+			setErrorMessage(null); // Reset error message before starting
 
-            if (!window.gameInfo) {
-                window.gameInfo = {};
-            }
-            window.gameInfo.gameId = gameId;
+			const mods = modifiers.join(",");
+			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`);
+			const gameId = response.data['data']['game_id'];
+			if (!gameId) throw new Error('Game ID is missing from the response.');
 
-            const host = window.location.hostname;
-            const port = window.location.port;
-            const scriptUrl = `http://${host}:${port}/api/pong/static/pong/main.js`;
+			// Stocker le gameId dans window.gameInfo
+			if (!window.gameInfo) {
+				window.gameInfo = {};
+			}
+			window.gameInfo.gameId = gameId;
 
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.src = scriptUrl;
-            document.body.appendChild(script);
-        } catch (error) {
-            console.log(error.message);
-        } finally {
+			// Construire l'URL du jeu avec le gameId
+			const host = window.location.hostname;
+			const port = window.location.port;
+			const gameUrl = `http://${host}:${port}/api/pong?gameId=${gameId}`;
+
+			// Créer une iframe pour afficher le jeu
+			const iframe = document.createElement('iframe');
+			iframe.src = gameUrl;
+			iframe.width = "100%";
+			iframe.height = "500px";
+			iframe.style.border = "none";
+
+			// Supprimer l'ancienne iframe s'il en existe une
+			const existingIframe = document.querySelector('#gameFrame');
+			if (existingIframe) {
+				existingIframe.remove();
+			}
+
+			iframe.id = "gameFrame";
+			document.body.appendChild(iframe);
+		} catch (error) {
+			console.error(error.message);
+			setErrorMessage(error.message); // Afficher l'erreur à l'utilisateur
+		} finally {
 			setLoading(false);
 		}
-    };
+	};
 
-    return (
+	useEffect(() => {
+		const handleGameFinished = (event) => {
+			if (event.data === 'game_end') {
+				// Supprimer l'iframe lorsque le jeu est terminé
+				const iframe = document.querySelector('#gameFrame');
+				if (iframe) {
+					iframe.remove();
+				}
+			}
+		};
+
+		// Ajouter l'écouteur d'événements
+		window.addEventListener('message', handleGameFinished);
+
+		// Nettoyer l'écouteur d'événements lorsqu'on quitte le composant
+		return () => {
+			window.removeEventListener('message', handleGameFinished);
+		};
+	}, []);
+
+	return (
 		<>
-        	{!loading && <button onClick={handlePlayButton} style={{ marginTop: "10px" }}>
-            	Play {gameMode}
-        	</button>}
-			{loading && <p>Is waiting</p>}
+			{!loading && (
+				<button onClick={handlePlayButton} style={{ marginTop: "10px" }}>
+					Play {gameMode}
+				</button>
+			)}
+			{loading && <p>Waiting...</p>}
+			{errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
 		</>
-    );
+	);
 };
 
 export default PlayButton;

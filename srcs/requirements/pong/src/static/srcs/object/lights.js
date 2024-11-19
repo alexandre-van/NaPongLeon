@@ -1,5 +1,5 @@
 import * as THREE from '../../js/three.module.js';
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 function createSunlight() {
 	const pointLight = new THREE.PointLight(0xffaa00, 200000000, 50000);

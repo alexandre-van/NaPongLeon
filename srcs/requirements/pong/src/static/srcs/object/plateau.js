@@ -1,6 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 import { loadTexture } from '../load.js';
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 async function createPlateau(data) {
     try {

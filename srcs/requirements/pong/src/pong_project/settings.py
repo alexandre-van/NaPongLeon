@@ -44,6 +44,8 @@ INSTALLED_APPS = [
 	'django.contrib.staticfiles',
 	'channels',
 	'pong_game',
+    'csp',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +57,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'pong_project.urls'
@@ -157,6 +160,12 @@ CACHES = {
 		}
 	}
 }
+
+#CSP
+
+X_FRAME_OPTIONS = 'SAMEORIGIN' 
+CSP_FRAME_ANCESTORS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Log
 

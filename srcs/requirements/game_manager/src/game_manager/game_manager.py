@@ -80,27 +80,27 @@ class Game_manager:
 		except httpx.RequestError as e:
 			logger.error(f"Authentication service error: {str(e)}")
 		return False
-	
+
 	# LOOP
 
 	@sync_to_async	
 	def _set_current_game_status(self, game_id):
 		current_game = self._current_games[game_id]
 		game_instance = GameInstance.get_game(game_id)
-		if game_instance and game_instance.status \
-			and game_instance.status != 'finished' and game_instance.status != 'aborted':
-			if current_game['latest_update_status'].get_elapsed_time() >= self.status_timer[current_game['status']]:
-				if game_instance.status != self._current_games[game_id]['status']:
-					logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s elapsed with status : {self._current_games[game_id]['status']}")
-					current_game['status'] = game_instance.status
-					current_game['latest_update_status'].reset()
-					return None, None
-				else:
-					logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
-					for player in current_game['players']:
-						player_instance = Player.get_or_create_player(player)
-						player_instance.update_status('inactive')
-					return game_id, game_instance.game_mode
+		if game_instance and game_instance.status:
+			if game_instance.status != 'finished' and game_instance.status != 'aborted':
+				if current_game['latest_update_status'].get_elapsed_time() \
+					>= self.status_timer[current_game['status']]:
+					if game_instance.status != self._current_games[game_id]['status']:
+						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s elapsed with status : {self._current_games[game_id]['status']}")
+						current_game['status'] = game_instance.status
+						current_game['latest_update_status'].reset()
+						return None, None
+				logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
+				for player in current_game['players']:
+					player_instance = Player.get_or_create_player(player)
+					player_instance.update_status('inactive')
+				return game_id, game_instance.game_mode
 		else:
 			return game_id, None
 
@@ -111,14 +111,12 @@ class Game_manager:
 				result = await self._set_current_game_status(game_id)
 				if result:
 					game_id, game_mode = result
+					game_disconnected = False
 					if game_mode:
 						await self.game_abort_notify(game_id, game_mode)
-
 					if game_id:
 						del self._current_games[game_id]
 						break
-
-
 
 	async def _game_manager_loop(self):
 		logger.debug("game_manager loop started")

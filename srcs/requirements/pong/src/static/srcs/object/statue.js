@@ -1,6 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 import { loadModelSTL } from '../load.js'
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 async function createStatue() {
 	try {

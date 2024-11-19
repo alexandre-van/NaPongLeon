@@ -1,5 +1,5 @@
 import * as THREE from '../../js/three.module.js';
-import scene from '../scene.js';
+import { scene } from '../scene.js';
 
 function createBorders(data) {
     const borderGeometry = new THREE.BoxGeometry(data.size.x + data.wallWidth * 2, data.wallWidth, data.size.z);

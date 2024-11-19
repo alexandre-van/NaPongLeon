@@ -5,6 +5,7 @@ import { renderer, camera, scene } from './renderer.js';
 import { updateMap2Mixer } from './object/map2.js'
 import { controls } from './controls.js'
 
+let animationId;
 const clock = new THREE.Clock();
 
 function startGame() {
@@ -12,7 +13,7 @@ function startGame() {
 }
 
 function animate() {
-	requestAnimationFrame(animate);
+	animationId = requestAnimationFrame(animate);
 	const delta = clock.getDelta();
 	updateMap2Mixer(delta);
 	renderer.render(scene, camera);
@@ -23,4 +24,8 @@ function updateGame(state) {
 	updatePadsPosition(state.pp);
 }
 
-export { startGame, updateGame };
+function stopAnimation() {
+	cancelAnimationFrame(animationId);
+}
+
+export { startGame, updateGame, stopAnimation };
