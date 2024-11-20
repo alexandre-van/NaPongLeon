@@ -36,6 +36,10 @@ export default function GameModePage() {
             <h2>Join a matchmaking queue</h2>
             <PlayButton gameMode="PONG_CLASSIC" modifiers={modifiers} />
             <PlayButton gameMode="PONG_DUO" modifiers={modifiers} />
+            <h2>TOURNAMENT</h2>
+            <h2>Join a matchmaking queue</h2>
+            <PlayButton gameMode="PONG_CLASSIC_TOURNAMENT" modifiers={modifiers} />
+            <PlayButton gameMode="PONG_DUO_TOURNAMENT" modifiers={modifiers} />
         </div>
     );
 }

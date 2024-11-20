@@ -76,7 +76,7 @@ class GameInstance(models.Model):
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
 	winner = models.CharField(max_length=20, blank=True, null=True)
 	game_date = models.DateTimeField(default=timezone.now)
-	game_mode = models.CharField(max_length=20)
+	game_mode = models.CharField(max_length=30)
 
 	def __str__(self):
 		return f"Game {self.game_id} - Status: {self.status} - Mode: {self.game_mode}"
@@ -133,8 +133,13 @@ class GameInstance(models.Model):
 				game_mode=game_mode
 			)
 			new_game.save()
+
+			# Ajouter chaque joueur au jeu et à l'historique
 			for username in usernames:
 				player = Player.get_or_create_player(username)
+				if player:
+					PlayerGameHistory.objects.get_or_create(player=player, game=new_game)
+
 			return new_game
 		except IntegrityError as e:
 			logger.error(f"Integrity error while creating game: {e}")

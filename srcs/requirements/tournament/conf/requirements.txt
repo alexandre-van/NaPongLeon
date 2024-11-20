@@ -1,9 +1,11 @@
-# Django Framework
-Django==4.2.7
-
-# Library to connect to PostgreSQL, binary to fully run without compilation on host machine
+Django==4.2.7   
+daphne==4.1.2
+Twisted[tls,http2]
+channels==4.1.0
 psycopg2-binary==2.9.9
-
-# Library to manage env variables, can read from .env files
-django-environ==0.11.2
-
+django-redis==5.2.0
+channels_redis==4.2.0
+whitenoise==6.5.0
+httpx
+django-csp
+django-cors-headers

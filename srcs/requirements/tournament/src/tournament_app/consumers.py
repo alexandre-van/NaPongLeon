@@ -1,12 +1,12 @@
-from ..utils.logger import logger
+from .utils.logger import logger
 import json
 import asyncio
-from .game_manager import game_manager
+from .tournament_manager import Tournament_manager
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
-from ..utils.decorators import auth_required
+from .utils.decorators import auth_required
 
-class GameConsumer(AsyncWebsocketConsumer):
+class tournamentConsumer(AsyncWebsocketConsumer):
 	ready_queue = asyncio.Lock()
 
 	# CONNECT
@@ -15,13 +15,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 		path = self.scope['path']
 		segments = path.split('/')
 		self.room = None
-		self.game_id = None
+		self.tournament_id = None
 		self.is_closed = False
 		self.admin_id = None
 		self.username = username
 		self.can_be_disconnected = True
 		if len(segments) >= 4:
-			self.game_id = segments[3]
+			self.tournament_id = segments[3]
 		if len(segments) >= 6:
 			self.admin_id = segments[4]
 			logger.debug(f'admin_id = {self.admin_id}')
@@ -29,21 +29,21 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if not self.username and not self.admin_id:
 			logger.warning(f'An unauthorized connection has been received')
 			return
-		logger.debug(f'{self.username} tries to connect to the game: {self.game_id}')
-		if game_manager.get_room(self.game_id) is not None:
+		logger.debug(f'{self.username} tries to connect to the tournament: {self.tournament_id}')
+		if Tournament_manager.get_room(self.tournament_id) is not None:
 			await self.new_users()
 		else:
-			logger.debug(f'{self.game_id} does not exist')
+			logger.debug(f'{self.tournament_id} does not exist')
 			await self.send_message({
 				'error': '404',
-				'message': f'{self.game_id} does not exist'
+				'message': f'{self.tournament_id} does not exist'
 			})
 
 	async def new_users(self):
 		logger.debug("new_user")
 		self.ready = False
 		if self.admin_id:
-			self.room = game_manager.add_admin(self.admin_id, self, self.game_id)
+			self.room = Tournament_manager.add_admin(self.admin_id, self, self.tournament_id)
 			if self.room is None:
 				return
 			await self.accept()
@@ -53,15 +53,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 			return
 		else:
-			self.room = game_manager.add_user(self.username, self, self.game_id)
+			self.room = Tournament_manager.add_user(self.username, self, self.tournament_id)
 			if self.room is None:
 				return
 			await self.send_user_connection()
 			await self.accept()
-		if self.room and self.room['status'] == 'startup' and self.room['game_instance'] \
+		if self.room and self.room['status'] == 'startup' and self.room['tournament_instance'] \
 			and self.username in self.room['players']:
 			await self.startup()
-		elif self.room and self.room['status'] != 'waiting' and self.room['game_instance'] \
+		elif self.room and self.room['status'] != 'waiting' and self.room['tournament_instance'] \
 			and self.username not in self.room['players']:
 			await self.add_spectator()
 		else:
@@ -71,24 +71,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def startup(self):
 		logger.debug("startup")
-		game_manager.update_status('loading', self.game_id)
+		Tournament_manager.update_status('loading', self.tournament_id)
 		admin = self.room['admin']
 		for player in self.room['players']:
 			logger.debug(f"add {player} to channel")
-			await self.channel_layer.group_add(self.game_id, self.room['players'][player].channel_name)
+			await self.channel_layer.group_add(self.tournament_id, self.room['players'][player].channel_name)
 		for spectator in self.room['spectator']:
-			await self.channel_layer.group_add(self.game_id, self.room['spectator'][spectator].channel_name)
-		await self.send_game_status(admin['id'], self.game_id, 'loading')
-		game_data = self.room['game_instance'].export_data()
-		await self.send_export_teams(admin['id'], game_data['teams'])
-		await self.send_export_data(self.game_id, game_data)
+			await self.channel_layer.group_add(self.tournament_id, self.room['spectator'][spectator].channel_name)
+		await self.send_tournament_status(admin['id'], self.tournament_id, 'loading')
+		tournament_data = self.room['tournament_instance'].export_data()
+		await self.send_export_teams(admin['id'], tournament_data['teams'])
+		await self.send_export_data(self.tournament_id, tournament_data)
 		logger.debug(f'Export data')
 
 	async def add_spectator(self):
 		logger.debug(f"{self.username} is here")
 		await self.send_message({
 			'type': "export_data",
-			'data': self.room['game_instance'].export_data()
+			'data': self.room['tournament_instance'].export_data()
 		})
 
 	async def send_user_connection(self):
@@ -100,7 +100,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		else:
 			return
 		admin = self.room['admin']
-		groups = [admin['id'], self.game_id]
+		groups = [admin['id'], self.tournament_id]
 		await self.send_to_multiple_groups(groups, {
 				'type': type_name,
 				'username': self.username
@@ -112,32 +112,32 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if not self.room or self.is_closed == True:
 			return
 		self.is_closed = True
-		await self.channel_layer.group_discard(self.game_id, self.channel_name)
+		await self.channel_layer.group_discard(self.tournament_id, self.channel_name)
 		if self.admin_id == self.room['admin']['id']:
-			await self.game_end()
+			await self.tournament_end()
 			return
 		if self.username in self.room['players']:
 			admin = self.room['admin']
-			await self.send_game_status(admin['id'], self.game_id, 'aborted')
-			await self.game_end()
+			await self.send_tournament_status(admin['id'], self.tournament_id, 'aborted')
+			await self.tournament_end()
 		else:
 			if self.username in self.room['spectator']:
 				await self.send_user_disconnection()
-				game_manager.remove_user(self.username, self.game_id)
+				Tournament_manager.remove_user(self.username, self.tournament_id)
 
 	async def disconnect_all_users(self):
 		logger.debug('disconnect_all_user')
 		for player in self.room['players']:
 			try:
 				self.room['players'][player].is_closed = True
-				await self.channel_layer.group_discard(self.game_id, self.room['players'][player].channel_name)
+				await self.channel_layer.group_discard(self.tournament_id, self.room['players'][player].channel_name)
 				await self.room['players'][player].close()
 			except Exception as e:
 				logger.error(f"Error closing player connection: {e}")
 		for spectator in self.room['spectator']:
 			try:
 				self.room['spectator'][spectator].is_closed = True
-				await self.channel_layer.group_discard(self.game_id, self.room['spectator'][spectator].channel_name)
+				await self.channel_layer.group_discard(self.tournament_id, self.room['spectator'][spectator].channel_name)
 				await self.room['spectator'][spectator].close()
 			except Exception as e:
 				logger.error(f"Error closing spectator connection: {e}")
@@ -151,7 +151,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		else:
 			return
 		admin = self.room['admin']
-		groups = [admin['id'], self.game_id]
+		groups = [admin['id'], self.tournament_id]
 		await self.send_to_multiple_groups(groups, {
 				'type': type_name,
 				'username': self.username
@@ -164,7 +164,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			while True:
 				if admin['consumer'].can_be_disconnected == True:
 					admin['consumer'].is_closed = True
-					await self.channel_layer.group_discard(self.game_id, self.room['admin']['consumer'].channel_name)
+					await self.channel_layer.group_discard(self.tournament_id, self.room['admin']['consumer'].channel_name)
 					await self.room['admin']['consumer'].close()
 					return
 				else:
@@ -172,11 +172,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 		except Exception as e:
 			logger.error(f"Error closing admin connection: {e}")
 
-	async def game_end(self):
-		logger.debug("game_end")
+	async def tournament_end(self):
+		logger.debug("tournament_end")
 		await self.disconnect_all_users()
 		await self.disconnect_admin()
-		game_manager.remove_room(self.game_id)
+		Tournament_manager.remove_room(self.tournament_id)
 
 	# RECEIVE
 
@@ -188,74 +188,74 @@ class GameConsumer(AsyncWebsocketConsumer):
 		try:
 			data = json.loads(text_data)
 			data_type = data['type']
-			game_room = self.room['game_instance']
-			if game_room:
+			tournament_room = self.room['tournament_instance']
+			if tournament_room:
 				if data_type == 'move' and self.username in self.room['players']:
-					game_room.input_players(self.username, data['input'])
+					tournament_room.input_players(self.username, data['input'])
 				elif data_type == 'ready':
 					if self.username in self.room['players']:
-						async with GameConsumer.ready_queue:
-							await self.game_start()
+						async with tournamentConsumer.ready_queue:
+							await self.tournament_start()
 					elif self.username in self.room['spectator']:
-						await self.game_start_spectator()
+						await self.tournament_start_spectator()
 		except json.JSONDecodeError:
 			logger.error("Failed to decode JSON data")
 		except Exception as e:
 			logger.error(f"Unexpected error: {e}")
 
-	async def game_start(self):
+	async def tournament_start(self):
 		self.ready = True
 		for player in self.room['players']:
 			if self.room['players'][player].ready == False:
 				return
 		if self.room['status'] == 'loading':
-			game_manager.update_status('running', self.game_id)
+			Tournament_manager.update_status('running', self.tournament_id)
 			admin = self.room['admin']
-			await self.send_game_status(admin['id'], None, 'in_progress')
-			await self.channel_layer.group_send(self.game_id, {
+			await self.send_tournament_status(admin['id'], None, 'in_progress')
+			await self.channel_layer.group_send(self.tournament_id, {
 				'type': 'send_state',
 				'state': {
-					'type': 'game_start'
+					'type': 'tournament_start'
 				}
 			})
-			asyncio.create_task(self.game_loop(self.game_id))
-			logger.debug(f'Game start')
+			asyncio.create_task(self.tournament_loop(self.tournament_id))
+			logger.debug(f'tournament start')
 	
-	async def game_start_spectator(self):
+	async def tournament_start_spectator(self):
 		self.ready = True
 		if self.room['status'] == 'running':
-			await self.channel_layer.group_add(self.game_id, self.channel_name)
+			await self.channel_layer.group_add(self.tournament_id, self.channel_name)
 			await self.send_message({
-				'type': 'game_start'
+				'type': 'tournament_start'
 			})
 			logger.debug(f'Spectate start for {self.username}')
 
 
 
-	# GAME LOOP
+	# tournament LOOP
 
-	async def game_loop(self, game_id):
+	async def tournament_loop(self, tournament_id):
 		if not self.room:
 			return
-		logger.debug("Game loop is running")
-		while game_manager.get_room(self.game_id):
-			game = self.room['game_instance']
-			if game:
-				game_state = game.update()
+		logger.debug("tournament loop is running")
+		while Tournament_manager.get_room(self.tournament_id):
+			tournament = self.room['tournament_instance']
+			if tournament:
+				tournament_state = tournament.update()
 				await self.channel_layer.group_send(
-					game_id,
+					tournament_id,
 					{
 						'type': 'send_state',
-						'state': game_state
+						'state': tournament_state
 					}
 				)
-				if game_state['type'] == 'scored':
+				if tournament_state['type'] == 'scored':
 					logger.debug('scored')
-					await self.send_update_score(game_state['team'], game_state['score'])
-				elif game_state['type'] == 'game_end':
-					game_manager.update_status('finished', self.game_id)
-					await self.send_game_finished(game_state['team'], game_state['score'])
-					await self.game_end()
+					await self.send_update_score(tournament_state['team'], tournament_state['score'])
+				elif tournament_state['type'] == 'tournament_end':
+					Tournament_manager.update_status('finished', self.tournament_id)
+					await self.send_tournament_finished(tournament_state['team'], tournament_state['score'])
+					await self.tournament_end()
 					return
 				await asyncio.sleep(0.025)
 			else:
@@ -272,7 +272,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				}
 			})
 		
-	async def send_game_finished(self, team, score):
+	async def send_tournament_finished(self, team, score):
 		admin = self.room['admin']
 		admin['consumer'].can_be_disconnected = False
 		await self.channel_layer.group_send(admin['id'], {
@@ -290,12 +290,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 		while self.room['status'] != 'aborted':
 			#logger.debug("status_loop")
 			await asyncio.sleep(1)
-		await self.game_end()
+		await self.tournament_end()
 
 	# UTILS
 
-	async def send_export_data(self, game_id, data):
-		await self.channel_layer.group_send(game_id, {
+	async def send_export_data(self, tournament_id, data):
+		await self.channel_layer.group_send(tournament_id, {
 				'type': "send_state",
 				'state': {
 					'type': "export_data",
@@ -312,13 +312,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 				}
 			})
 
-	async def send_game_status(self, admin_id, game_id, status):
+	async def send_tournament_status(self, admin_id, tournament_id, status):
 		logger.debug(f"export status {status}")
 		groups = []
 		if admin_id:
 			groups.append(admin_id)
-		if game_id:
-			groups.append(game_id)
+		if tournament_id:
+			groups.append(tournament_id)
 		await self.send_to_multiple_groups(groups, {
 				'type': 'export_status',
 				'status': status

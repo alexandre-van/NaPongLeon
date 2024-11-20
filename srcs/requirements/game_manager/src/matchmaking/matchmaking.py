@@ -119,10 +119,10 @@ class Matchmaking:
 		players_connected = False
 		# new game
 		if await self.check_futures(queue_selected):
+			game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players)
+		if game_connected and await self.check_futures(queue_selected):
 			game = await self.create_new_game(game_id, game_mode, players)
 		if game and await self.check_futures(queue_selected):
-			game_connected = await self.connect_to_game(game, game_id, admin_id, game_mode, modifiers, players)
-		if game_connected and await self.check_futures(queue_selected):
 			players_connected = await self.send_result(game_id, queue_selected)
 		await self.remove_disconnected_client(queue_selected, players_connected)
 		if players_connected:
@@ -135,9 +135,7 @@ class Matchmaking:
 			await self.abord_game_instance(game)
 			logger.debug(f'Game {game_id} aborted')
 
-	async def connect_to_game(self, game, game_id, admin_id, game_mode, modifiers, players):
-		if not game:
-			return False
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players):
 		is_game_notified = await self.game_notify(game_id, admin_id, game_mode, modifiers, players)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
@@ -197,7 +195,6 @@ class Matchmaking:
 		if game:
 			for username in players:
 				await self.update_player_status(username, 'pending')
-				await self.update_game_history(username, game_id)
 			return game
 		else:
 			return None
@@ -226,12 +223,6 @@ class Matchmaking:
 		with transaction.atomic():
 			player = Player.get_or_create_player(username)
 			player.update_status(status)
-
-	@sync_to_async
-	def update_game_history(self, username, game_id):
-		with transaction.atomic():
-			player = Player.get_or_create_player(username)
-			player.add_game_to_history(game_id)
 
 	@sync_to_async
 	def abord_game_instance(self, game):

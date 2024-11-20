@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Player, GameInstance, GamePlayer
+from .models import Player, GameInstance, PlayerGameHistory
 from .utils.logger import logger
 from .private_room.private_room import PrivateRoom, GenerateUsername
 from .utils.timer import Timer
@@ -23,17 +23,14 @@ class Game_manager:
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 30,
-			'loading' : 120,
+			'waiting': 20,
+			'loading' : 60,
 			'in_progress': 3600
 		}
 
 	def update_databases(self):
 		if apps.is_installed('game_manager') and 'game_manager_player' in connection.introspection.table_names():
 			players = Player.objects.all()
-			#	for player in players:
-			#		if player.status != 'inactive':
-			#			player.update_status('inactive')
 			if players:
 				[player.update_status('inactive') for player in players if player.status!= 'inactive']
 		if apps.is_installed('game_manager') and 'game_manager_gameinstance' in connection.introspection.table_names():
@@ -54,13 +51,20 @@ class Game_manager:
 
 	def add_new_game(self, game_id):
 		game = GameInstance.get_game(game_id)
-		if game.status and game.status != 'finished' and game.status != 'aborted':
+		if game.status and game.status not in ['finished', 'aborted']:
 			with self._current_games_mutex:
+				players_queryset = PlayerGameHistory.objects.filter(game=game)
+				logger.debug(f"Raw PlayerGameHistory queryset for game {game_id}: {players_queryset}")
+			
+				players_list = list(players_queryset.values_list('player__username', flat=True))
+				logger.debug(f"Player usernames for game {game_id}: {players_list}")
+	
 				self._current_games[game_id] = {
 					'status': game.status,
 					'latest_update_status': Timer(),
-					'players': list(GamePlayer.objects.filter(game=game).values_list('player__username', flat=True))
+					'players': players_list
 				}
+
 
 	# game notify
 
@@ -87,8 +91,8 @@ class Game_manager:
 	def _set_current_game_status(self, game_id):
 		current_game = self._current_games[game_id]
 		game_instance = GameInstance.get_game(game_id)
-		if game_instance and game_instance.status:
-			#if game_instance.status != 'finished' and game_instance.status != 'aborted':
+		if game_instance and game_instance.status\
+			and game_instance.status != 'finished' and game_instance.status != 'aborted':
 			if current_game['latest_update_status'].get_elapsed_time() \
 				>= self.status_timer[current_game['status']]:
 					if game_instance.status != self._current_games[game_id]['status']:
@@ -96,13 +100,18 @@ class Game_manager:
 						current_game['status'] = game_instance.status
 						current_game['latest_update_status'].reset()
 						return None, None
-			else:
-				logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
-				for player in current_game['players']:
-					player_instance = Player.get_or_create_player(player)
-					player_instance.update_status('inactive')
-				return game_id, game_instance.game_mode
+					else:
+						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
+						for player in current_game['players']:
+							player_instance = Player.get_or_create_player(player)
+							player_instance.update_status('inactive')
+						return game_id, game_instance.game_mode
+			else :
+				return None, None
 		else:
+			for player in current_game['players']:
+				player_instance = Player.get_or_create_player(player)
+				player_instance.update_status('inactive')
 			return game_id, None
 
 	async def _game_manager_logic(self):

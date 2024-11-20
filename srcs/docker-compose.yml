@@ -75,11 +75,11 @@ services:
     build: ./requirements/tournament
     container_name: tournament
     volumes:
-      - ./requirements/tournament:/app
+      - ./requirements/tournament/src:/app
     restart: on-failure
     depends_on:
       - nginx
-      - postgres
+      - redis
     networks:
       - backend
     

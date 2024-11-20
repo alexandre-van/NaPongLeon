@@ -8,4 +8,5 @@ const api = axios.create({
   withCredentials: true
 });
 
+api.defaults.timeout = 0;
 export default api;

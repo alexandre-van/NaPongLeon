@@ -11,7 +11,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			setErrorMessage(null); // Reset error message before starting
 
 			const mods = modifiers.join(",");
-			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`);
+			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`, 3600000);
 			const gameId = response.data['data']['game_id'];
 			if (!gameId) throw new Error('Game ID is missing from the response.');
 
@@ -19,7 +19,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			if (!window.gameInfo) {
 				window.gameInfo = {};
 			}
-			window.gameInfo.gameId = gameId;
+			//window.gameInfo.gameId = gameId;
 
 			// Construire l'URL du jeu avec le gameId
 			const host = window.location.hostname;
@@ -29,9 +29,12 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;
-			iframe.width = "100%";
-			iframe.height = "500px";
-			iframe.style.border = "none";
+			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
+			iframe.style.top = "0";         // Aligner en haut de la page
+			iframe.style.left = "0";        // Aligner à gauche de la page
+			iframe.style.width = "100vw";   // Largeur : 100% de la fenêtre
+			iframe.style.height = "100vh";  // Hauteur : 100% de la fenêtre
+			iframe.style.border = "none";   // Supprimer les bordures
 
 			// Supprimer l'ancienne iframe s'il en existe une
 			const existingIframe = document.querySelector('#gameFrame');
