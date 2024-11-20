@@ -17,6 +17,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         logger.debug(f'Connection attempt, scope[user]={self.scope["user"]}')
 #        self.user = await self.get_user_from_token()
         self.user = self.scope["user"]
+        logger.debug(f'\n-------------------------------------CONNECTION WEBSOCKET\n\n\nself.user: {self.user}\n')
         if not self.user:
             logger.debug('No user, no connection')
             await self.close()

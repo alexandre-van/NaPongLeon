@@ -6,12 +6,8 @@ from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 # for development
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 
 urlpatterns = [
-    # Admin
-    path('admin/', admin.site.urls),
-    
     # User management
     path('users/', UserView.as_view(), name='user_create'),
     path('users/me/', UserView.as_view(), name='user_detail'),

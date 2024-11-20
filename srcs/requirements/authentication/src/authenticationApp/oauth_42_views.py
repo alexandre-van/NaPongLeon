@@ -78,7 +78,7 @@ async def OAuth42CallbackView(request):
                 httponly=True,
                 secure=False,  # True for production
                 samesite='Strict',
-                max_age=60 * 60
+                max_age=60# * 60
             )
             response.set_cookie(
                 'refresh_token',

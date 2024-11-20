@@ -88,8 +88,6 @@ MIDDLEWARE = [
     'authenticationApp.middlewares.request.DjangoUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#    'authenticationApp.auth_middleware.JWTAuthMiddleware',
-    'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
