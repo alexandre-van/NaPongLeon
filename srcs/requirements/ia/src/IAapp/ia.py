@@ -19,12 +19,12 @@ class IA:
 
 		self.paddle_hit = False
 		self.player = 'p2'
-		self.player_pos_left = True
 
 		self.last_message_time = 0
 		self.message_cooldown = 0.1 # 1 seconde de délai
 
 		# Constantes du terrain
+		self.paddle_speed = 30
 		self.COURT_HEIGHT = 32  # Hauteur du terrain (-30 à 30)
 		self.COURT_WIDTH = 42   # Largeur du terrain (-42 à 42)
 		self.PADDLE_HEIGHT = 12 # Hauteur de la raquette
@@ -34,6 +34,18 @@ class IA:
 		# Initialisation de votre IA
 		logger.debug("IA instantiated.")
 
+
+	def time_to_reach_target(self, current_y, target_y):
+		"""
+		Calcule le temps nécessaire pour que la raquette atteigne une position Y donnée.
+		:param current_y: Position actuelle de la raquette en Y.
+		:param target_y: Position cible en Y.
+		:return: Temps en secondes.
+		"""
+		distance = abs(target_y - current_y)
+		return distance / self.paddle_speed
+
+ 
 	def calculate_ball_velocity(self):
 		"""
 		Calcule la vélocité de la balle en détectant les changements brusques de direction
@@ -76,7 +88,7 @@ class IA:
 		"""
 		if self.ball_velocity['x'] == 0:
 			return 0
-		if (self.player_pos_left == True):
+		if (self.player == 'p1'):
 			# Si la balle s'éloigne de notre raquette
 			if self.ball_velocity['x'] > 0:
 				return 0
@@ -111,12 +123,8 @@ class IA:
 		"""
 		Détermine la position optimale de la raquette en fonction de la prédiction
 		"""
-		if (self.player_pos_left == True):
-			if predicted_y is None:
-				return self.paddle_pos['p1']  # Maintenir la position actuelle
-		else:
-			if predicted_y is None:
-				return self.paddle_pos['p2']
+		if predicted_y is None:
+			return self.paddle_pos[self.player]  # Maintenir la position actuelle
 
 		# Limiter la position aux bornes permises pour la raquette
 		self.optimal_paddle_position = max(self.PADDLE_MIN_Y, min(self.PADDLE_MAX_Y, predicted_y))
@@ -129,7 +137,7 @@ class IA:
 		"""
 		try:
 			# Marge de tolérance adaptée à l'échelle du terrain
-			TOLERANCE = 2  # Augmentée car l'échelle est plus grande
+			TOLERANCE = 1.5  # Augmentée car l'échelle est plus grande
 
 			# Décision de mouvement basée sur la position optimale
 			if self.paddle_pos[p] + TOLERANCE < optimal_position:
@@ -165,21 +173,36 @@ class IA:
 		except Exception as e:
 			logger.error(f"Erreur lors du mouvement prédictif: {str(e)}")
 
+	def ft_move_by_timer(self, timer, target, pos_actuel, ws):
+		TOLERANCE = 1.5
+		start_time = time.time()
+		if (pos_actuel + TOLERANCE < target):
+			if not self.is_moving_up:
+				if self.is_moving_down:
+					self.send_command(ws, 4)  # Arrêter de descendre
+					self.is_moving_down = False
+				self.send_command(ws, 1)  # Monter
+				self.is_moving_up = True
+			if (timer > time.time() - start_time):
+			
+		
+		return
+     
 	def on_message(self, ws, message):
 		data = json.loads(message)
-		if data['type'] == 'export_data':
-			logger.debug(f":::{data}")
-			data = data['data']
-			logger.debug(f"LEFT:::{data['left_player']}")
-			logger.debug(f"RIGHT:::{data['right_player']}")
-			logger.debug(f"US:::{self.player}")
-			if data['left_player'] == self.player:
-				self.player_pos_left = True
-			else:
-				self.player_pos_left = False
-		elif data['type'] == 'waiting_room':
+		if data['type'] == 'waiting_room':
 			logger.debug("En attente d'un adversaire...")
 			self.player = 'p1'
+		elif data['type'] == 'export_data':
+			logger.debug(f":::{data}")
+			data = data['data']
+			# logger.debug(f"LEFT:::{data['left_player']}")
+			# logger.debug(f"RIGHT:::{data['right_player']}")
+			# logger.debug(f"US:::{self.player}")
+			if data['left_player'] == self.player:
+				self.player = 'p1'
+			else:
+				self.player = 'p2'
 		elif data['type'] == 'export_data':
 			game_id = data['game_id']
 			logger.debug("Jeu créé! ID du jeu :", game_id)
@@ -189,18 +212,13 @@ class IA:
 			self.ball_velocity = data['bs']
 			self.predicted_y = self.predict_ball_intersection()
 			self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-			if (self.player_pos_left == True):
-				self.ft_move(ws, self.optimal_paddle_position, 'p1')
-			else:
-				self.ft_move(ws, self.optimal_paddle_position, 'p2')
+			time_start = time.time()
+			self.ft_move_by_timer(time_start, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
+			#self.ft_move(ws, self.optimal_paddle_position, self.player)
+
 		elif data['type'] == 'game_start':
 			logger.debug("Le jeu a commencé!")
 		elif data['type'] == 'gu':
-			if (self.player_pos_left == True):
-				self.ft_move(ws, self.optimal_paddle_position, 'p1')
-			else:
-				self.ft_move(ws, self.optimal_paddle_position, 'p2')
-			
 			current_time = time.time()
 			if current_time - self.last_message_time > self.message_cooldown:
 				self.last_message_time = current_time
@@ -210,7 +228,9 @@ class IA:
 					self.calculate_ball_velocity()	
 					self.predicted_y = self.predict_ball_intersection()
 					self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-				#logger.debug(f"optimal_paddle_position : {self.optimal_paddle_position}")
+					self.ft_move(ws, self.optimal_paddle_position, self.player)
+					
+				logger.debug(f"optimal_paddle_position : {self.optimal_paddle_position}")
 			#logger.debug(f"FT_MOVE : predicted y : {self.optimal_paddle_position} et {data}")
 		elif data['type'] == 'scored':
 			logger.debug(data['msg'])
