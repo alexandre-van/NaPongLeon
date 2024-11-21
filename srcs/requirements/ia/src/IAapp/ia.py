@@ -175,7 +175,6 @@ class IA:
 
 	def ft_move_by_timer(self, timer, target, pos_actuel, ws):
 		TOLERANCE = 1.5
-		start_time = time.time()
 		if (pos_actuel + TOLERANCE < target):
 			if not self.is_moving_up:
 				if self.is_moving_down:
@@ -183,7 +182,9 @@ class IA:
 					self.is_moving_down = False
 				self.send_command(ws, 1)  # Monter
 				self.is_moving_up = True
-			if (timer > time.time() - start_time):
+			if (self.time_to_reach_target(pos_actuel, target) < timer - time.time()):
+				self.send_command(ws, 3)  # Arrêter de monter
+				self.is_moving_up = False
 			
 		
 		return
