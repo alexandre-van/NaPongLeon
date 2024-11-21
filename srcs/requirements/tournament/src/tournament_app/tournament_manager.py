@@ -16,10 +16,9 @@ class Tournament_manager:
 		if (game_mode not in game_modes):
 			logger.debug(f"Error: Wrong tournament_mode: {game_mode}")
 			return None
-		if len(players_list) != game_modes[game_mode]['players']:
+		if len(players_list) != game_modes[game_mode]['players'] * 4:
 			logger.debug(f"Error: Wrong nomber of players for the tournament mode {game_mode}: {len(players_list)}")
 			return None
-		modifiers = modifiers.split(',')
 		self.tournaments_room[tournament_id] = {
 			'status': 'waiting',
 			'game_mode': game_mode,

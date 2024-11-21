@@ -48,6 +48,8 @@ services:
       - media_vol:/app/media
       - static_vol:/app/static_files
     restart: on-failure
+    environment:
+      - TZ=${TZ}
     secrets:
       - db_user
       - db_password

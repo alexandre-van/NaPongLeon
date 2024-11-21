@@ -1,7 +1,7 @@
-from django.urls import path
+from django.urls import re_path
 from .views import *
 
 urlpatterns = [
 	#matchmaking
-	path('matchmaking/game_mode=<str:game_mode>/', get_matchmaking, name='matchmaking'),
+	re_path(r'^matchmaking/game_mode=(?P<game_mode>.*)/$', get_in_matchmaking, name='matchmaking'),
 ]

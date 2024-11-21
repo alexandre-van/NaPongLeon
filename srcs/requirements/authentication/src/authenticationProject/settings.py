@@ -214,7 +214,7 @@ LANGUAGE_CODE = 'en-us'
 
 SITE_URL = 'http://localhost:8080'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Paris'
 
 USE_I18N = True
 

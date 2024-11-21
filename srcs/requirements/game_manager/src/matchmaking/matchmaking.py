@@ -30,10 +30,11 @@ class Matchmaking:
 
 	async def remove_player_request(self, username):
 		with self._queue_mutex:
-			await self._remove_player_request_in_queue(username)
+			await self.update_player_status(username, 'inactive')
+			future = await self._remove_player_request_in_queue(username)
+			future.set_result({'game_id': None})
 
 	async def add_player_request(self, username, game_mode, modifiers):
-		logger.debug("Add player request")
 		future = asyncio.Future()
 		status = await self.get_player_status(username)
 		if (status != 'inactive'):
@@ -64,9 +65,7 @@ class Matchmaking:
 				for y, m in enumerate(valid_modifiers):
 					if m in modifiers_list:
 						queue_name += chr(y + ord('0'))
-					logger.debug(f"{m}")
 				break
-		logger.debug(f"queue_name : {queue_name}")
 		return queue_name
 
 
@@ -289,12 +288,14 @@ class Matchmaking:
 	async def _remove_player_request_in_queue(self, username):
 		player_request = await self._get_player_request(username)
 		if player_request is None:
-			return
+			return None
 		with self._futures_mutex:
 			queue = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'])
 			self._queue[queue].remove(player_request)
 			if self._futures[username]:
+				future = self._futures[username]
 				del self._futures[username]
+				return future
 
 # Initialisation singleton
 if Matchmaking.matchmaking_instance is None:

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Ajouter useEffect ici
+import { useState, useEffect } from 'react';
 import api from '../services/api.js';
 
 const PlayButton = ({ gameMode, modifiers }) => {
@@ -19,7 +19,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			if (!window.gameInfo) {
 				window.gameInfo = {};
 			}
-			//window.gameInfo.gameId = gameId;
+			window.gameInfo.gameId = gameId;
 
 			// Construire l'URL du jeu avec le gameId
 			const host = window.location.hostname;
@@ -52,6 +52,26 @@ const PlayButton = ({ gameMode, modifiers }) => {
 		}
 	};
 
+	const handleCancelMatchmaking = async () => {
+		try {
+			setLoading(true);
+			setErrorMessage(null); // Reset error message before starting
+			const game_mode = "";
+			await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
+
+			// Optionnel : retirer l'iframe en cas d'annulation
+			const iframe = document.querySelector('#gameFrame');
+			if (iframe) {
+				iframe.remove();
+			}
+		} catch (error) {
+			console.error("Failed to cancel matchmaking:", error.message);
+			setErrorMessage(error.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	useEffect(() => {
 		const handleGameFinished = (event) => {
 			if (event.data === 'game_end') {
@@ -74,12 +94,36 @@ const PlayButton = ({ gameMode, modifiers }) => {
 
 	return (
 		<>
+			{/* Bouton "Play" visible uniquement quand pas en chargement */}
 			{!loading && (
 				<button onClick={handlePlayButton} style={{ marginTop: "10px" }}>
 					Play {gameMode}
 				</button>
 			)}
-			{loading && <p>Waiting...</p>}
+
+			{/* Bouton en croix visible uniquement pendant le chargement */}
+			{loading && (
+				<>
+					<p>Waiting...
+					<button
+						onClick={handleCancelMatchmaking}
+						style={{
+							marginLeft: "10px",
+							background: "red",
+							color: "white",
+							border: "none",
+							borderRadius: "50%",
+							width: "30px",
+							height: "30px",
+							cursor: "pointer",
+						}}
+					>
+						X
+					</button></p>
+				</>
+			)}
+
+			{/* Message d'erreur */}
 			{errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
 		</>
 	);

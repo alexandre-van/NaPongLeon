@@ -37,7 +37,7 @@ async def create_login_response(user, request):
         samesite='Strict'
     )
     response['X-CSRFToken'] = csrf_token
-
+    logger.debug(f"\n\n\n\n\nCREATE_LOGIN_RESPONSE\nresponse={response}")
     return response
 
 

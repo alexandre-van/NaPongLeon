@@ -9,7 +9,9 @@ from rest_framework import status
 import asyncio
 
 @auth_required
-async def get_matchmaking(request, game_mode, username=None):
+async def get_in_matchmaking(request, game_mode, username=None):
+	if game_mode is "":
+		return await get_out_matchmaking(username)
 	matchmaking_instance = Matchmaking.matchmaking_instance
 	if matchmaking_instance is None:
 		return JsonResponse({"message": "Matchmaking is not initialised"}, status=200)
@@ -32,4 +34,15 @@ async def get_matchmaking(request, game_mode, username=None):
 		return JsonResponse({"message": "Matchmaking timed out"}, status=status.HTTP_504_GATEWAY_TIMEOUT)
 	except Exception as e:
 		logger.error(f"Error in matchmaking for user {username}: {str(e)}")
+		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	
+async def get_out_matchmaking(username):
+	matchmaking_instance = Matchmaking.matchmaking_instance
+	if matchmaking_instance is None:
+		return JsonResponse({"message": "Matchmaking is not initialised"}, status=200)
+	try:
+		await matchmaking_instance.remove_player_request(username)
+		return JsonResponse({"message": "Get out matchmaking succeeded"}, status=status.HTTP_200_OK)
+	except Exception as e:
+		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
