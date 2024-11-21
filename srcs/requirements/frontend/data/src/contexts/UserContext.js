@@ -7,6 +7,7 @@ const UserContext = createContext();
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [avatarVersion, setAvatarVersion] = useState(0);
   const [nicknameVersion, setNicknameVersion] = useState(0);
@@ -17,6 +18,7 @@ export function UserProvider({ children }) {
     try {
       setLoading(true);
       const response = await api.get('/authentication/users/me/'); // gets a "user" object
+      console.log(response);
       setUser(response.data.user);
       setIsAuthenticated(true);
       setError(null);
@@ -45,20 +47,49 @@ export function UserProvider({ children }) {
     await checkAuth();
   };
 
+  const login42 = () => {
+    const clientId = process.env.REACT_APP_42_CLIENT_ID;
+    const redirectUri = encodeURIComponent(
+      `${window.location.origin}/api/authentication/oauth/42/callback`
+    );
+
+    window.location.href =
+      `https://api.intra.42.fr/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+  };
+
   const logout = async () => {
     await api.post('/authentication/auth/logout/');
     setUser(null);
     setIsAuthenticated(false);
-    navigate('/logout-success');
+    navigate('/login');
     await checkAuth();
   };
 
+  // Update user's Friends
+  const checkFriends = useCallback(async () => {
+    try {
+      console.log('checkFriends');
+      const response = await api.get('/authentication/friends/');
+      console.log(response);
+      setFriends(response.data.data);
+      setUser(prevUser => ({
+        ...prevUser,
+        friends: response.data.data
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   const sendFriendRequest = async (target_username) => {
-    const response = await api.post('/authentication/friends/requests/', target_username);
+    console.log('sendFriendRequest, target_user:', target_username);
+    const response = await api.post('/authentication/friends/requests/', {
+      'target_user': target_username,
+    });
     if (response.data && response.data.message !== "Friend request sent") {
       throw new Error('Could not send friend request');
     }
-    await checkAuth();
+    await checkFriends();
   };
 
   // For any user update
@@ -89,9 +120,12 @@ export function UserProvider({ children }) {
     user,
     setUser,
     isAuthenticated,
+    friends,
+    checkFriends,
     loading,
     error,
     login,
+    login42,
     logout,
     checkAuth,
     register,

@@ -13,11 +13,13 @@ import Formations from './pages/Formations.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
-import LogoutPage from './pages/LogoutPage.js';
 import NewsPage from './pages/NewsPage.js';
+import Auth42Success from './components/Auth42Success.js';
 import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../src/App.css'
+import Profile from './pages/Profile.js'
 
 import ProtectedRoute from './components/ProtectedRoute.js';
 //import './assets/App.css';
@@ -36,12 +38,14 @@ function AppContent() {
 
   return (
       <Routes>
-        <Route element={isAuthenticated ? <ConnectedLayout /> : <DefaultLayout />} >
+        <Route element={isAuthenticated ? <ConnectedLayout /> : <LoginPage />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
+          <Route />
           <Route path="news" element={<NewsPage />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="game-modes" element={<GameModePage />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
+          <Route path="profile" element={<Profile/>}/>
           <Route path="*" element={<HomePage />} />
         </Route>
 
@@ -52,9 +56,8 @@ function AppContent() {
           </Route>
         </Route>
 
-        <Route element={<SpecialLayout />} >
+        <Route>
           <Route path="login" element={<LoginPage />} />
-          <Route path="logout-success" element={<LogoutPage /> } />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
         </Route>

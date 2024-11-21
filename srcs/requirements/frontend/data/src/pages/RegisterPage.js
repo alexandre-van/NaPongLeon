@@ -15,7 +15,7 @@ export function RegisterPage() {
     setError(false);
     try {
       await register(userData);
-      navigate('/register-success');
+      navigate('/login');
     } catch (error) {
       setError(true);
       console.log('Error during registering:', error.response);
@@ -25,20 +25,20 @@ export function RegisterPage() {
   };
 
   return (
-    <>
+    <div className='login-page'>
       {loading && <p>Registering...</p>}
       {error && <p>An user with this name already exists</p>}
       <RegisterForm onRegister={handleRegister} />
-    </>
+    </div>
   );
 }
 
 export function RegisterSuccessPage() {
   return (
-    <>
+    <div>
       <p>You are now registered and you may now log in</p>
       <Link to="/login">Login Page</Link>
-    </>
+    </div>
   );
 }
 

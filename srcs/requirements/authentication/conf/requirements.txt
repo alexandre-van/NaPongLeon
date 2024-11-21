@@ -25,7 +25,7 @@ djangorestframework
 djangorestframework-simplejwt
 
 # Image management
-Pillow==9.1.0
+Pillow>=9.1.0
 
 # Web sockets
 channels==4.1.0

@@ -1,17 +1,10 @@
-
-const Avatar = ({ user, size = 100}) => {
-
+const Avatar = ({ user }) => {
   return (
-    <div>
+    <div className="avatar-container">
       <img
         src={user.avatar_url}
         alt={user.username}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          objectFit: 'cover'
-        }}
+        className="avatar-image"
         onError={(e) => {
           console.error('Error loading image:', e);
         }}

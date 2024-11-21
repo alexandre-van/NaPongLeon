@@ -1,11 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
+import "./Navigation.css"
+import logo from '../elements/logo.png'
+import Avatar from '../components/Avatar.js';
 
 export default function ConnectedNavigation() {
   const { logout } = useUser();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { user, getAvatarUrl } = useUser();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -21,20 +25,16 @@ export default function ConnectedNavigation() {
   };
 
   return (
-    <div role="nav" className="nav-container">
-      <div className="home-nav">
-        <Link to="/">SPICE PONG</Link>
-      </div>
-      <div className="main-nav">
-        <Link to='/'>MY PROFILE</Link>
-        <Link to='/formations'>FORMATIONS</Link>
-        <Link to='/game-modes'>GAME MODES</Link>
-        <Link to='/leaderboard'>LEADERBOARD</Link>
-      </div>
-      <div className="right-nav">
-        <Link to='/logout' onClick={handleLogout}>LOG OUT</Link>
-        {loading && <p>Logging out...</p>}
-        {error && <p>Error: could not log out</p>}
+    <div>
+      <div className="topnav">
+        <Link className="active" to="/"><img className="logo" src={logo}/></Link>
+        <Link to="/news">News</Link>
+        <Link to="/game-modes">Game Modes</Link>
+        <Link to="/leaderboard">Learderboard</Link>
+        <Link onClick={handleLogout}>Logout</Link>
+        <div className="right-profile">
+          <Link className="avatarprofile" to="/profile"><Avatar user={{ ...user, avatar_url: getAvatarUrl() }} /></Link>
+        </div>
       </div>
     </div>
   );

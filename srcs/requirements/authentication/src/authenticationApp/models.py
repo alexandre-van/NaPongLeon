@@ -166,4 +166,4 @@ class Notification(models.Model):
 
     @classmethod
     async def get_all_notifications(cls, user):
-        return await cls.objects.filter(user=user)
+      return await cls.objects.filter(user=user)

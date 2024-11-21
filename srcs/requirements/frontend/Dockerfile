@@ -5,8 +5,6 @@ WORKDIR /app
 COPY data/package*.json ./
 
 RUN npm install
-RUN npm install react-router-dom
-RUN npm install axios
 
 COPY data/. .
 
@@ -15,3 +13,7 @@ COPY data/. .
 
 # Run app 
 CMD [ "npm", "start" ]
+
+RUN npm install react-bootstrap bootstrap
+RUN npm install react-router-dom
+RUN npm install axios

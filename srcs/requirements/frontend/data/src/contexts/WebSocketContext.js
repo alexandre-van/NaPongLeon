@@ -67,13 +67,15 @@ const WebSocketContext = createContext(null);
 const getWindowURLinfo = () => {
   const host = window.location.hostname;
   const port = window.location.port;
-  const protocol = window.location.protocol === 'http:' ? 'ws' : 'ws';
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
   return { host, port, protocol };
 };
 
 export const WebSocketProvider = ({ children }) => {
   const [friends, setFriends] = useState([]);
+  const [onlineFriends, setOnlineFriends] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
   const { isAuthenticated } = useUser();
   const socketRef = useRef(null);
@@ -98,8 +100,30 @@ export const WebSocketProvider = ({ children }) => {
 
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.type === 'friend_list_update') {
-          setFriends(data.friends);
+        console.log('data: ', data);
+
+        switch (data.type) {
+          case 'friend_list_update':
+            setFriends(data.friends);
+            break;
+          case 'notification':
+            console.log('notification_type = ', data.notification_type);
+            //setNotifications(prev => [...prev, data.notification]);
+            setNotifications(prevNotifs => {
+              const newNotifs = [...prevNotifs];
+              // Vérifier si la notification n'existe pas déjà
+              if (!newNotifs.some(n => n.id === data.id)) {
+                newNotifs.push(data);
+              }
+              return newNotifs;
+            });
+            break;
+          case 'friend_status':
+            console.log('friend_status = ', data.status);
+            console.log('friend = ', data.friend);
+            break;
+          default:
+            console.log('Unknown message type: ', data.type);
         }
       };
 
@@ -130,7 +154,9 @@ export const WebSocketProvider = ({ children }) => {
   const value = React.useMemo(() => ({
     socket,
     friends,
-  }), [socket, friends]);
+    notifications,
+    setNotifications
+  }), [socket, friends, notifications]);
 
   return (
     <WebSocketContext.Provider value={value}>

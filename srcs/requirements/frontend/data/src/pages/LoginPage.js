@@ -24,10 +24,10 @@ export default function LoginPage() {
     }
   };
   return (
-    <>
+    <div className='login-page'>
       {loading && <p>Logging in...</p>}
       {error && <p>Error while trying to log in</p>}
       <LoginForm onLogin={handleLogin} />
-    </>
+    </div>
   );
 }

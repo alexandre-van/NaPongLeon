@@ -1,20 +1,30 @@
+import "./Navigation.css"
 import { Link } from 'react-router-dom';
 
-export default function Navigation() {
-    return (
-        <div role='nav' className="nav-container">
-            <div className="home-nav">
-                <Link to="/">SPICE PONG</Link>
-            </div>
-            <div className="main-nav">
-                <Link to="/">HOME</Link>
-                <Link to="/news">NEWS</Link>
-                <Link to="/game-modes">GAME MODES</Link>
-                <Link to="/leaderboard">LEADERBOARD</Link>
-            </div>
-            <div className="right-nav">
-                <Link to="/login">LOG IN</Link>
-            </div>
-        </div>
-    );
+import logo from '../elements/logo.png'
+import { useUser } from '../contexts/UserContext.js';
+
+function Navigation() {
+
+  const { logout } = useUser(); // Récupérez la fonction logout
+
+  const handleLogout = () => {
+    logout(); // Appelle la fonction de déconnexion
+  };
+  return (
+    <div>
+      <div class="topnav">
+        <Link className="active" to="/"><img className="logo" src={logo}/></Link>
+        <Link to="/news">News</Link>
+        <Link to="/game-modes">Game Modes</Link>
+        <Link to="/leaderboard">Learderboard</Link>
+        <Link to="/login">Log in</Link>
+        <Link to="/register">Register</Link>
+        <Link onClick={handleLogout}>Logout</Link>
+        <Link to="/login">Profile</Link>
+      </div>
+    </div>
+  );
 }
+
+export default Navigation;

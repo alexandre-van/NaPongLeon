@@ -1,0 +1,32 @@
+.logo {
+    width: 35px;
+    transition: transform 0.3s ease; /* Ajoute une transition fluide pour la rotation */
+}
+
+.logo:hover {
+    transform: rotate(10deg); /* Pivote légèrement vers la droite */
+}
+
+.topnav {
+    overflow: hidden;
+}
+  
+.topnav a {
+    font-weight: bold;
+    float: left;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 25px;
+    padding-left : 30px;
+}
+  
+  
+.topnav a.active {
+    color: white;
+}
+
+.right-profile{
+    margin-left: 93%;
+}

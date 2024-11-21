@@ -4,14 +4,13 @@ import FriendsList from '../components/FriendsList.js';
 
 export default function ConnectedLayout() {
   return (
-    <div className="layout">
+    <div className="backgroundpage">
       <header>
         <ConnectedNavigation />
       </header>
       <main>
         <Outlet />
       </main>
-      <FriendsList />
     </div>
   );
 }

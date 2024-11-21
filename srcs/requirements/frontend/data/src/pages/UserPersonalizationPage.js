@@ -45,7 +45,7 @@ function UserPersonalizationPage() {
 
   return (
     <div>
-      <Link to="/">Back to Profile</Link>
+      <Link to="/profile">Back to Profile</Link>
       <NicknameForm onUpload={handleNicknameSubmit} onError={setError} />
       <AvatarUpload onUpload={handleAvatarUpload} onError={setError} />
       {error && <p>{error}</p>}

@@ -1,7 +1,9 @@
 import Avatar from '../components/Avatar.js';
+import PlayButton from '../components/PlayButton.js';
 
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
+import FriendsList from '../components/FriendsList.js';
 
 export default function HomePage({ isAuthenticated }) {
   if (!isAuthenticated) {
@@ -17,14 +19,12 @@ export default function HomePage({ isAuthenticated }) {
 }
 
 function AuthenticatedHomePage() {
-  const { user, getAvatarUrl } = useUser();
+
 
   return (
-    <div className="profile">
-      <h2>{user.username}'s Profile</h2>
-      <Link to="/user-personalization">Personalize Profile</Link>
-      <Avatar user={{ ...user, avatar_url: getAvatarUrl() }} />
-      {user.nickname ? <h3>My nickname: {user.nickname}</h3> : <p>No nickname yet</p>}
+    <div className="backgroundpage">
+      <h1 className="title-home">Welcome to Napongleon</h1>
+      <Link to="/game-modes"><button className="play-button btn btn-outline-warning" type="button">PLAY</button></Link>
     </div>
   );
 }
