@@ -43,16 +43,32 @@ class Matchmaking:
 		await self.update_player_status(username, 'in_queue')
 		with self._futures_mutex:
 				self._futures[username] = future
+		queue_name = self.generate_queue_name(game_mode, modifiers)
 		with self._queue_mutex:
-			if game_mode + modifiers not in self._queue:
-				self._queue[game_mode + modifiers] = []
-			self._queue[game_mode + modifiers].append({
+			if queue_name not in self._queue:
+				self._queue[queue_name] = []
+			self._queue[queue_name].append({
 				'username': username,
 				'game_mode': game_mode,
 				'modifiers': modifiers,
 				'time': Timer(),
 			})
 		return future
+
+	def generate_queue_name(self, game_mode, modifiers_list):
+		queue_name = ""
+		for i, gm in enumerate(self.GAME_MODES):
+			if gm == game_mode:
+				queue_name = chr(i + ord('0'))
+				valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
+				for y, m in enumerate(valid_modifiers):
+					if m in modifiers_list:
+						queue_name += chr(y + ord('0'))
+					logger.debug(f"{m}")
+				break
+		logger.debug(f"queue_name : {queue_name}")
+		return queue_name
+
 
 	async def matchmaking_logic(self):
 		with self._queue_mutex:
@@ -275,7 +291,7 @@ class Matchmaking:
 		if player_request is None:
 			return
 		with self._futures_mutex:
-			queue = player_request['game_mode'] + player_request['modifiers']
+			queue = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'])
 			self._queue[queue].remove(player_request)
 			if self._futures[username]:
 				del self._futures[username]

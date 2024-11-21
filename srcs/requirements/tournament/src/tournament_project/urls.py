@@ -1,5 +1,5 @@
 """
-URL configuration for tournament project.
+URL configuration for pong_project project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -17,5 +17,5 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path('api/pong/', include('tournament_app.urls')),
+    path('api/tournament/', include('tournament_app.urls')),
 ]

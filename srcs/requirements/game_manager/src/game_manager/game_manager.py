@@ -156,6 +156,16 @@ class Game_manager:
 			if self._task:
 				self._task.cancel()
 
+	#utils
+
+	def parse_modifier(self, modifiers, game_mode):
+		modifiers_list = modifiers.split(",") if modifiers else []
+		valid_modifiers = settings.GAME_MODES.get(game_mode).get("modifier_list")
+		if not all(mod in valid_modifiers for mod in modifiers_list):
+			return None
+		modifiers_list.sort()
+		return modifiers_list
+
 def create_game_manager_instance():
 	if Game_manager.game_manager_instance is None:
 		logger.debug("creating game manager...")

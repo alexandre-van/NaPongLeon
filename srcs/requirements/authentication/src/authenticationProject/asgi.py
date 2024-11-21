@@ -13,15 +13,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'authenticationProject.settings'
 django_http_server = get_asgi_application()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
 from authenticationApp.routing import websocket_urlpatterns
-
+from authenticationApp.middlewares.asgi_middleware import ASGIUserMiddleware, AsyncJWTAuthMiddleware, AsyncJWTAuthMiddlewareStack, CsrfAsgiMiddleware 
 
 application = ProtocolTypeRouter({
-    "http": django_http_server,
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            websocket_urlpatterns
+    "http": CsrfAsgiMiddleware(
+        AsyncJWTAuthMiddleware(
+            ASGIUserMiddleware(django_http_server)
         )
     ),
+    "websocket": AsyncJWTAuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
 })

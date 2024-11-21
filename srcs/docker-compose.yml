@@ -12,13 +12,11 @@ services:
 
   nginx:
     build: ./nginx
-      #    image: nginx:latest
     container_name: nginx
     depends_on:
       - init_media
     restart: on-failure
     volumes:
-      #  - nginx_data:/etc/nginx/conf.d
       - media_vol:/media
       - static_vol:/static_files
     networks:
@@ -31,6 +29,8 @@ services:
     build: ./requirements/frontend
     container_name: frontend
     restart: on-failure
+    env_file:
+      - .env/.env.frontend
     depends_on:
       - nginx
     networks:
@@ -38,18 +38,21 @@ services:
     volumes:
     - frontend_data:/app
     - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+    - static_vol:/app/static
 
   authentication:
     build: ./requirements/authentication
     container_name: authentication
     volumes:
       - ./requirements/authentication/src:/app
-      - secrets_vol:/run/secrets:ro
       - media_vol:/app/media
       - static_vol:/app/static_files
     restart: on-failure
+    secrets:
+      - db_user
+      - db_password
+      - oauth_42_client_id
+      - oauth_42_client_secret
     env_file:
       - .env/.env.web
     depends_on:
@@ -86,9 +89,11 @@ services:
   game_manager:
     build: ./requirements/game_manager
     container_name: game_manager
+    secrets:
+      - db_user
+      - db_password
     volumes:
       - ./requirements/game_manager/src:/app
-      - secrets_vol:/run/secrets:ro
     restart: on-failure
     env_file:
       - .env/.env.web
@@ -110,11 +115,13 @@ services:
     image: postgres:13
     container_name: postgres
     restart: on-failure
+    secrets:
+      - db_user
+      - db_password
     env_file:
       - .env/.env.postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - secrets_vol:/run/secrets:ro
       - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
@@ -148,12 +155,6 @@ networks:
     driver: bridge
 
 volumes:
-  #  nginx_data:
-  #  driver: local
-  #  driver_opts:
-  #    type: none
-  #    device: /sgoinfre/avan/ft_transcendence/srcs/nginx
-  #    o: bind
   frontend_data:
     driver: local
     driver_opts:
@@ -161,22 +162,17 @@ volumes:
       device: ./requirements/frontend/data
       o: bind
   postgres_data:
-  secrets_vol:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./.secrets
-      o: bind
   media_vol:
-    #    driver: local
-      #    driver_opts:
-      #      type: none
-        #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/media
-        #      o: bind
   static_vol:
-    #    driver: local
-    #    driver_opts:
-    #      type: none
-    #      device: /sgoinfre/avan/ft_transcendence/srcs/volumes/static
-    #      o: bind
   redis_data:
+
+secrets:
+  db_user:
+    file: ./.secrets/db_user
+  db_password:
+    file: ./.secrets/db_password
+  oauth_42_client_id:
+    file: ./.secrets/oauth_42_client_id
+  oauth_42_client_secret:
+    file: ./.secrets/oauth_42_client_secret
+  

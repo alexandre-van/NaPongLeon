@@ -5,6 +5,7 @@ WORKDIR /app
 COPY data/package*.json ./
 
 RUN npm install
+RUN npm install qrcode.react
 
 COPY data/. .
 

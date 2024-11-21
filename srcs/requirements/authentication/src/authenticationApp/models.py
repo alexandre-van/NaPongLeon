@@ -1,7 +1,11 @@
+from channels.db import database_sync_to_async
 from django.contrib.auth.models import AbstractUser
+from django.db.models import UniqueConstraint, Q
 from django.db import models
+from asgiref.sync import sync_to_async
 #from django.contrib.staticfiles.storage import staticfiles_storage
 from django.templatetags.static import static
+from django.core.cache import cache
 import os
 
 import logging
@@ -11,19 +15,36 @@ logger = logging.getLogger(__name__)
 def user_avatar_path(instance, filename):
     return f'users/{instance.id}/avatar/{filename}'
 
+def validate_no_underscore(value):
+    from django.core.exceptions import ValidationError
+    if '_' in value:
+        raise ValidationError(
+            'The caracter (_) is not authorized in the username'
+        )
+
 class FriendshipStatus(models.TextChoices):
     PENDING = 'PE', 'Pending'
     ACCEPTED = 'AC', 'Accepted'
 
 class CustomUser(AbstractUser):
+    username=models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[validate_no_underscore],
+        error_messages={
+            'unique': 'A user with this username already exists',
+        }
+    )
     avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True)
     nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    AI = models.BooleanField(default=False)
     friends = models.ManyToManyField(
         'self',
         through='Friendship',
         symmetrical=False,
         related_name="friended_by"
     )
+    is_online = models.BooleanField(default=False)
 
     @property
     def avatar_url(self):
@@ -31,6 +52,29 @@ class CustomUser(AbstractUser):
             return self.avatar.url
         else:
             return static('images/default_avatar.png')
+
+    @property
+    def friends(self):
+        cache_key = f'user_friends_{self.id}'
+        friends = cache.get(cache_key)
+        logger.debug(f"friends 1 ={friends}")
+
+        if friends is None:
+            friends_as_from = self.friendships_sent.filter(status=FriendshipStatus.ACCEPTED).values_list('to_user', flat=True)
+            friends_as_to = self.friendships_received.filter(status=FriendshipStatus.ACCEPTED).values_list('from_user', flat=True)
+            friend_ids = list(set(friends_as_from) | set(friends_as_to))
+            friends = list(CustomUser.objects.filter(id__in=friend_ids).values(
+                'id',
+                'username',
+                'nickname',
+                'is_online',
+                'avatar'
+            ))
+
+            # Mettre en cache pour 5 minutes (300 secondes)
+            cache.set(cache_key, friends, 300)
+        logger.debug(f"friends 2 ={friends}")
+        return friends
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -45,6 +89,21 @@ class CustomUser(AbstractUser):
                 pass
         super().save(*args, **kwargs)
 
+    async def asave(self, *args, **kwargs):
+        await sync_to_async(super().save)(*args, **kwargs)
+
+    async def update_user_status(self, is_online):
+        self.is_online = is_online
+        await self.asave()
+
+    async def update_nickname(self, nickname):
+        self.nickname = nickname
+        await self.asave()
+    
+    async def update_avatar_url(self, avatar_url):
+        self.avatar = avatar_url
+        await self.asave()
+
     def delete(self, *args, **kwargs):
         if self.avatar:
             avatar_path = os.path.join(settings.MEDIA_ROOT, self.avatar.name)
@@ -53,41 +112,100 @@ class CustomUser(AbstractUser):
                 print(f"Deleted avatar during user deletion: {avatar_path}")
         super().delete(*args, **kwargs)
 
-    async def send_friend_request(self, to_user):
+    async def create_friendship(self, to_user):
+        logger.debug(f"self={self} ------- to_user={to_user}\n\n")
         if (to_user != self):
-            return Friendship.objects.aget_or_create(
-                from_user=self,
-                to_user=to_user,
-                defaults={'status': FriendshipStatus.PENDING}
-            )
+            try:
+                friendship, created = await Friendship.aget_or_create_friendship(self, to_user)
+
+                if created:
+                    notification = await Notification.objects.acreate(
+                        sender=self,
+                        recipient=to_user,
+                        notification_type="friend_request"
+                    )
+                    return notification
+                return false
+            except Exception as e:
+                logger.error(f"Error creating friendship: {e}")
+                return None
         return None
 
-    async def accept_friend_request(self, from_user):
-        if (to_user != self):
-            friendship = await Friendship.objects.filter(
+    @database_sync_to_async
+    def accept_friend_request(self, from_user, notification):
+        logger.debug("CustomUser: accept_friend_request debut")
+        if (from_user != self):
+            friendship = Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,
                 status=FriendshipStatus.PENDING
             ).first()
+            logger.debug(f"CustomUser: accept_friend_request avant friendship: friendship={friendship}\nfriendship.from_user={friendship.from_user}\nfriendship.to_user={friendship.to_user}\n")
             if friendship:
+                logger.debug(f"dans le if de friendship friendship.status={friendship.status}\n")
                 friendship.status = FriendshipStatus.ACCEPTED
-                friendship.asave()
+                friendship.save()
+            if notification:
+                notification.sender = self
+                notification.recipient = from_user
+                notification.notification_type = 'friend_request_accepted'
+                notification.save()
+                return notification
+            return None
+        return None
 
-
-    def reject_friend_request(self, from_user):
-        if (to_user != self):
+    @database_sync_to_async
+    def reject_friend_request(self, from_user, notification):
+        if (from_user != self):
             Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,
                 status=FriendshipStatus.PENDING
             ).delete()
+            if notification:
+                notification.delete()
+            return True
+        return False
 
+    @database_sync_to_async
     def remove_friend_from_list(self, friend):
-        Friendship.objects.filter(
-            (models.Q(from_user=self, to_user=friend) |
-             models.Q(from_user=friend, to_user=self)),
-            status=FriendshipStatus.ACCEPTED
-        ).delete()
+        # Request to show friendships where user is 'from_user'
+        friends_as_from = self.friendships_sent.filter(to_user=friend, status=FriendshipStatus.ACCEPTED).first()
+        if friends_as_from:
+            friends_as_from.delete()
+            return True
+            
+        # Request to show friendships where user is 'to_user'
+        friends_as_to = self.friendships_received.filter(from_user=friend, status=FriendshipStatus.ACCEPTED).first()
+        if friends_as_to:
+            friends_as_to.delete()
+            return True
+        return False
+
+
+    async def aget_friends(self):
+        @sync_to_async
+        def get_friends():
+            # Request to show friendships where user is 'from_user'
+            friends_as_from = self.friendships_sent.filter(status=FriendshipStatus.ACCEPTED).values_list('to_user', flat=True)
+            
+            # Request to show friendships where user is 'to_user'
+            friends_as_to = self.friendships_received.filter(status=FriendshipStatus.ACCEPTED).values_list('from_user', flat=True)
+
+            # Combine both sets of friendships
+            friend_ids = list(set(friends_as_from) | set(friends_as_to))
+
+            # Formate data in correct way
+            friends = list(CustomUser.objects.filter(id__in=friend_ids).values(
+                'id',
+                'username',
+                'nickname',
+                'is_online',
+                'avatar'
+            ))
+            return friends
+
+        return await get_friends()
 
     def get_friends(self):
         return CustomUser.objects.filter(
@@ -110,39 +228,64 @@ class Friendship(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ( 'from_user', 'to_user')
+        constraints = [
+            UniqueConstraint(
+                fields=['from_user', 'to_user'],
+                name='unique_friendship'
+            )
+        ]
         indexes = [
             models.Index(fields=['status', 'from_user']),
             models.Index(fields=['status', 'to_user']),
         ]
 
+    @classmethod
+    async def aget_or_create_friendship(cls, from_user, to_user):
+        try:
+            friendship = await cls.objects.aget(
+                Q(from_user=from_user, to_user=to_user) |
+                Q(from_user=to_user, to_user=from_user)
+            )
+            return friendship, False
+        except cls.DoesNotExist:
+            friendship = await cls.objects.acreate(
+                from_user=from_user,
+                to_user=to_user,
+                status=FriendshipStatus.PENDING
+            )
+            return friendship, True
+
 
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = [
-        ('friend_request_sent', 'Friend request sent'),
-        ('friend_request_received', 'Friend request received'),
-        ('accept_friend_request', 'Accept friend request'),
+        ('friend_request', 'Friend request'),
         ('friend_request_accepted', 'Friend request accepted'),
-        ('reject_friend_request', 'Reject friend request'),
-        ('friend_request_rejected', 'Friend request rejected')
+        ('friend_request_rejected', 'Friend request rejected'),
     ]
 
-    user = models.ForeignKey(CustomUser, related_name='notifications', on_delete=models.CASCADE)
-    content = models.TextField(blank=True)
+    sender = models.ForeignKey(CustomUser, related_name='sender_notification', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(CustomUser, related_name='notifications', on_delete=models.CASCADE, null=True, blank=True)
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            UniqueConstraint(
+                fields=['recipient', 'sender', 'notification_type'],
+                condition=Q(notification_type='friend_request'),
+                name='unique_friend_request'
+            )
+        ]
 
     def to_dict(self):
         logger.debug(f"to_dict notification")
         return {
-            "id": self.user.id,
-            "receiver_username": self.user.username,
-            "content": self.content,
+            "id": self.id,
+            "recipient__username": self.recipient.username,
+            "sender__username": self.sender.username,
             "notification_type": self.notification_type,
             "created_at": self.created_at.isoformat(),
             "is_read": self.is_read,
@@ -150,7 +293,7 @@ class Notification(models.Model):
         }
 
     def to_group_send_format(self):
-        logger.debug(f"to_group_send_format notification username: {self.user.username}")
+        logger.debug(f"to_group_send_format notification username: {self.recipient.username}")
         return {
                 "type": "notification", # Gets the notification method in Consumers called
                 "notification": self.to_dict()
@@ -162,8 +305,42 @@ class Notification(models.Model):
 
     @classmethod
     async def get_unread_notifications(cls, user):
-        return await cls.objects.filter(user=user, is_read=False)
+        return await cls.objects.filter(recipient=user, is_read=False)
 
     @classmethod
     async def get_all_notifications(cls, user):
-      return await cls.objects.filter(user=user)
+        @sync_to_async
+        def get_notifications():
+            return list(cls.objects.filter(Q(recipient=user) | Q(sender=user)).select_related(
+                    'recipient', 'sender'
+                ).order_by('-created_at').values(
+                    'id',
+                    'recipient__username',
+                    'sender__username',
+                    'notification_type',
+                    'created_at',
+                ))
+
+        return await get_notifications()
+
+    @classmethod
+    async def get_all_received_notifications(cls, user):
+        @sync_to_async
+        def get_received_notifications():
+            return list(cls.objects.filter(Q(recipient=user)).order_by('-created_at').values(
+                'id',
+                'recipient__username',
+                'sender__username',
+                'notification_type',
+                'created_at'
+            ))
+        return await get_received_notifications()
+
+    @classmethod
+    @database_sync_to_async
+    def delete_notification(cls, notification_id):
+        notification = cls.objects.get(id=notification_id)
+        if notification:
+            notification.delete()
+            return True
+        return False

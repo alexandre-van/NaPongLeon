@@ -43,6 +43,8 @@ for mode in game_mode_config.sections():
 			raise Exception(f"{game_mode_file}: team_size must be a positive integer for {mode} game mode")
 		team_size = int(team_size)
 	modifier_list = game_mode_config[mode].get('modifier_list')
+	if modifier_list:
+		modifier_list = modifier_list.split(',')
 	if service_name in service_config['GAME_SERVICES_URL_NEW_GAME'] \
 		and service_name in service_config['GAME_SERVICES_URL_ABORT_GAME'] \
 		and service_name in service_config['GAME_SERVICES_WS']:

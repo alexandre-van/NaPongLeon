@@ -38,17 +38,24 @@ INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
+    'phonenumber_field',
+    'two_factor.plugins.phonenumber',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sessions',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'authenticationApp',
     'channels',
 ]
 
 ASGI_APPLICATION = "authenticationProject.asgi.application"
+WSGI_APPLICATION = 'authenticationProject.wsgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
@@ -71,14 +78,19 @@ CACHES = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+#    'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
+    'authenticationApp.middlewares.request.DjangoUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'authenticationApp.auth_middleware.AutoRefreshTokenMiddleware',
 ]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -104,10 +116,43 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'authenticationProject.wsgi.application'
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+    "https://api.intra.42.fr",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "https://api.intra.42.fr",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+
 
 def read_secret(secret_name):
     file_path = os.environ.get(f'{secret_name}_FILE')
@@ -115,6 +160,11 @@ def read_secret(secret_name):
         with open(file_path, 'r') as file:
             return file.read().strip()
     return None
+
+
+
+OAUTH_42_CLIENT_ID = read_secret('OAUTH_42_CLIENT_ID')
+OAUTH_42_CLIENT_SECRET = read_secret('OAUTH_42_CLIENT_SECRET')
 
 DATABASES = {
     'default': {
@@ -150,12 +200,19 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+# Middleware to deactivate CSRF check of Django
+class CsrfExemptMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+    def __call__(self, request):
+        if getattr(request, 'csrf_exempt', False):
+            setattr(request, '_dont_enforce_csrf_checks', True)
+        return self.get_response(request)
 
 LANGUAGE_CODE = 'en-us'
+
+SITE_URL = 'http://localhost:8080'
 
 TIME_ZONE = 'UTC'
 

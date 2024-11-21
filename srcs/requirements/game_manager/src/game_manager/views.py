@@ -2,6 +2,7 @@
 from django.conf import settings
 from django.http import JsonResponse
 from .utils.decorators import auth_required
+from .game_manager import Game_manager
 from matchmaking.matchmaking import Matchmaking
 from .utils.logger import logger
 from rest_framework import status
@@ -15,14 +16,13 @@ async def get_matchmaking(request, game_mode, username=None):
 	if settings.GAME_MODES.get(game_mode) is None:
 		return JsonResponse({"message": "Wrong game mode"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 	modifiers = request.GET.get("mods", "")
-	modifier_list = modifiers.split(",") if modifiers else []
-	valid_modifiers = settings.GAME_MODES.get(game_mode).get("modifier_list")
-	if not all(mod in valid_modifiers for mod in modifier_list):
+	modifier_list = Game_manager.game_manager_instance.parse_modifier(modifiers, game_mode)
+	if modifier_list is None:
 		return JsonResponse({"message": "Wrong game modifier"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 	logger.debug(f"get_matchmaking: player_request: (username: {username}, game_mode: {game_mode}, modifier: {modifier_list})")
 	future = None
 	try:
-		future = await matchmaking_instance.add_player_request(username, game_mode, modifiers)
+		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list)
 		game_data = await asyncio.wait_for(future, timeout=3600)
 		return JsonResponse({"message": "Matchmaking succeeded", "data": game_data}, status=status.HTTP_200_OK)
 	except asyncio.TimeoutError:

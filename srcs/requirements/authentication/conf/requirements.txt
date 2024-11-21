@@ -21,6 +21,13 @@ django-environ==0.11.2
 # API Rest framework
 djangorestframework
 
+# 2FA authentication
+django-otp
+django-two-factor-auth
+qrcode
+django-phonenumber-field
+phonenumbers
+
 # JWT authentication
 djangorestframework-simplejwt
 
@@ -34,3 +41,8 @@ django-redis==5.2.0
 
 # Redis-backed ASGI channel layer implementation
 channels_redis==4.2.0
+
+# For Cross Origin Resource Sharing
+django-cors-headers==4.4.0
+
+aiohttp>=3.9.0

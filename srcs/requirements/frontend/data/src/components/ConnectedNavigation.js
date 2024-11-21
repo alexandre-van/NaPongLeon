@@ -17,6 +17,7 @@ export default function ConnectedNavigation() {
     setLoading(true);
     try {
       logout();
+      navigate('/logout-success');
     } catch (error) {
       setError(true);
     } finally {

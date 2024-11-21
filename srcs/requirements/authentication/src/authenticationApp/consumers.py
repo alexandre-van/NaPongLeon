@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        logger.debug('Connection attempt')
-        self.user = await self.get_user_from_token()
+        logger.debug(f'Connection attempt, scope[user]={self.scope["user"]}')
+#        self.user = await self.get_user_from_token()
+        self.user = self.scope["user"]
+        logger.debug(f'\n-------------------------------------CONNECTION WEBSOCKET\n\n\nself.user: {self.user}\n')
         if not self.user:
             logger.debug('No user, no connection')
             await self.close()
@@ -28,8 +30,11 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
             await self.accept()
+            await self.user.update_user_status(True)
+            await self.send_status_friends(True)
             logger.debug('Connection accepted')
 
+    '''
     @database_sync_to_async
     def get_user_from_token(self):
         token = self.scope['cookies'].get('access_token')
@@ -44,11 +49,27 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         user_id = decoded_data['user_id']
         CustomUser = get_user_model()
         return CustomUser.objects.get(id=user_id)
-
-
+    '''
 
     async def disconnect(self, close_code):
-        pass
+        from django_otp import devices_for_user
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+        from asgiref.sync import sync_to_async
+
+        await self.user.update_user_status(False)
+        await self.send_status_friends(False)
+
+        @sync_to_async
+        def delete_unconfirmed_2fa_auth(user):
+            for device in devices_for_user(user, confirmed=False):
+                device.delete()
+                return True
+            return False
+        
+        result = await delete_unconfirmed_2fa_auth(self.user)
+        logger.debug(f"\n\nconsumers delete_unconfirmed_2fa_auth : {result}\n")
+
+
 
     async def receive(self, text_data):
         logger.debug('receive debut')
@@ -77,6 +98,19 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         logger.debug('receive end')
 
 
+        
+    async def send_status_friends(self, status):
+        friends = await self.user.aget_friends()
+        for friend in friends:
+            logger.debug(f"friend = {friend}")
+            await self.channel_layer.group_send(
+                f"user_{friend['id']}",
+                {
+                    "type": "friend_status",
+                    "friend": self.user.username,
+                    "status": status
+                }
+            )
 
     async def send_friend_request(self, target_user_id):
         try:
@@ -215,3 +249,10 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
     async def notification(self, event):
         await self.send(text_data=json.dumps(event['notification']))
+
+    async def friend_status(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "friend_status",
+            "friend": event["friend"],
+            "status": event["status"]
+        }))

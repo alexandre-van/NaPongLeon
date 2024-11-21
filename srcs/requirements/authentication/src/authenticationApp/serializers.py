@@ -32,7 +32,8 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def get_friends(self, obj):
-        return [friend.username for friend in obj.get_friends()] # get_friends from models.py
+        return obj.friends
+#        return [friend.username for friend in obj.get_friends()] # get_friends from models.py
 
     def get_pending_friend_requests(self, obj):
         return [user.username for user in obj.get_pending_friend_requests()] # get_pending_friend_requests from models.py

@@ -41,21 +41,22 @@ export function UserProvider({ children }) {
 
   const login = async (userData) => {
     const response = await api.post('/authentication/auth/login/', userData);
+    console.log('response:', response);
     if (response.data && response.data.message !== "Login successful") {
+      console.log('Login failed');
       throw new Error("Login failed");
     }
+    if (response.requires_2fa) {
+      return true;
+    }
     await checkAuth();
+    return false;
   };
 
   const login42 = () => {
-    const clientId = process.env.REACT_APP_42_CLIENT_ID;
-    const redirectUri = encodeURIComponent(
-      `${window.location.origin}/api/authentication/oauth/42/callback`
-    );
-
-    window.location.href =
-      `https://api.intra.42.fr/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+    window.location.href = '/api/authentication/oauth/42/authorize';
   };
+
 
   const logout = async () => {
     await api.post('/authentication/auth/logout/');

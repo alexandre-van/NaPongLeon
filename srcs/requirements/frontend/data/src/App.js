@@ -9,6 +9,7 @@ import DefaultLayout from './layouts/DefaultLayout.js';
 import SpecialLayout from './layouts/SpecialLayout.js';
 
 import HomePage from './pages/HomePage.js';
+import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import GameModePage from './pages/GameModesPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
@@ -45,6 +46,7 @@ function AppContent() {
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="game-modes" element={<GameModePage />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
+          <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
           <Route path="*" element={<HomePage />} />
         </Route>
@@ -58,6 +60,7 @@ function AppContent() {
 
         <Route>
           <Route path="login" element={<LoginPage />} />
+          <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
         </Route>

@@ -19,7 +19,6 @@ class game_manager:
 		if len(players_list) != game_modes[game_mode]['players']:
 			logger.debug(f"Error: Wrong nomber of players for the game mode {game_mode}: {len(players_list)}")
 			return None
-		modifiers = modifiers.split(',')
 		self.games_room[game_id] = {
 			'status': 'waiting',
 			'game_mode': game_mode,

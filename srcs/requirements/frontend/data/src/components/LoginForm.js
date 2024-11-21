@@ -4,10 +4,16 @@ import { Button, Form } from 'react-bootstrap'; // Importation de React-Bootstra
 import { useUser } from '../contexts/UserContext.js';
 
 const LoginForm = ({ onLogin }) => {
+  /*const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+    totpToken: '',
+  });*/
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-  });
+  })
+  const [step, setStep] = useState('credentials'); // 'credentials' or 'totp'
   const { login42 } = useUser();
 
   const handleChange = (e) => {
@@ -21,6 +27,16 @@ const LoginForm = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onLogin(formData);
+    /*try {
+      const has_2fa = onLogin(credentials);
+      if (has_2fa) {
+        setStep('totp');
+      } else {
+        console.log('Login successful');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }*/
   };
 
   return (
