@@ -12,14 +12,15 @@ async def OAuth42AuthorizeView(request):
     state = secrets.token_urlsafe(32)
     client_id = settings.OAUTH_42_CLIENT_ID
     redirect_uri = f"{settings.SITE_URL}/api/authentication/oauth/42/callback"
+
     '''
     state_token = str(RefreshToken.for_user(
         {"state": state}
     ).access_token)
     '''
 
-    #auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state_token}"
-    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state_token}"
+    #auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
 
     return HttpResponseRedirectJD(
         message='Redirect to 42 API',
@@ -78,7 +79,7 @@ async def OAuth42CallbackView(request):
                 httponly=True,
                 secure=False,  # True for production
                 samesite='Strict',
-                max_age=60# * 60
+                max_age=60 * 60
             )
             response.set_cookie(
                 'refresh_token',

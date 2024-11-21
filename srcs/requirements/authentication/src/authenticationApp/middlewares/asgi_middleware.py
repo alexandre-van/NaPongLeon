@@ -182,9 +182,10 @@ class AsyncJWTAuthMiddleware:
 
         response = await self.inner(scope, receive, send_modifier)
         return response
+
+
+
 '''
-
-
 @sync_and_async_middleware
 class AsyncJWTAuthMiddleware:
     def __init__(self, inner):
@@ -193,6 +194,7 @@ class AsyncJWTAuthMiddleware:
         self.auth = CustomJWTAuthentication()
 
     async def __call__(self, scope, receive, send):
+        logger.debug('\n\nAsyncJWTAuthMiddleware\n\n')
         headers = dict(scope['headers'])
         if b'cookie' not in headers:
             scope['user'] = AnonymousUser()
@@ -210,8 +212,11 @@ class AsyncJWTAuthMiddleware:
             access_token = request.COOKIES.get('access_token')
             refresh_token = request.COOKIES.get('refresh_token')
 
+            logger.debug(f"access_token: {access_token}")
+            logger.debug(f"refresh_token: {refresh_token}")
+
             # D'abord essayer l'access_token existant
-            if access_token:
+            if access_token or refresh_token:
                 try:
                     user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                     scope['user'] = user
@@ -261,7 +266,6 @@ class AsyncJWTAuthMiddleware:
                 message['headers'] = headers
             await send(message)
         return send_wrapper
-    
 
 
 
