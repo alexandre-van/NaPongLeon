@@ -75,7 +75,19 @@ services:
       - redis
     networks:
       - backend
-    
+
+  hagarrio:
+    build: ./requirements/hagarrio
+    container_name: hagarrio
+    volumes:
+      - ./requirements/hagarrio/src:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+      - redis
+    networks:
+      - backend
+
   tournament:
     build: ./requirements/tournament
     container_name: tournament

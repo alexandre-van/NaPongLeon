@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Hagarr.io</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        canvas {
+            display: block;
+        }
+        #waitingRoomTitle {
+            position: fixed;
+            top: 7%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            text-align: center;
+            z-index: 1000;
+        }
+        #waitingRoomTitle h1 {
+            font-size: 4em;
+            margin: 0;
+            text-shadow: 0 0 10px #fff;
+            color: #fff;
+        }
+        #waitingRoom {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            border-radius: 0;
+        }
+        #createGameBtn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            outline: none;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #createGameBtn:hover {
+            background-color: #45a049;
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        #scoreboard, #minimap {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        #scoreboard {
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 14px;
+            max-width: 250px;
+        }
+        #minimap {
+            top: 10px;
+            left: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.774);
+        }
+        #gameInfoContainer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+            max-width: 600px;
+        }
+        .gameList {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background-color: rgba(46, 43, 43, 0.432);
+            border-radius: 10px;
+        }
+        .gameList thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .gameList tbody {
+            display: block;
+            max-height: calc(57px * 3);
+            overflow-y: auto;
+        }
+        .gameList thead tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .gameList tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .gameList th, .gameList td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            width: 33.33%;
+        }
+        .gameList th {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #4CAF50;
+        }
+        .gameList tr:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        .joinGameBtn, .watchGameBtn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        .joinGameBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .watchGameBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+        .joinGameBtn:hover, .watchGameBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        #gameInfoContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        #gameInfoContainer::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        #gameInfoContainer::-webkit-scrollbar-thumb {
+            background: rgba(76, 175, 80, 0.5);
+            border-radius: 4px;
+        }
+        #gameInfoContainer::-webkit-scrollbar-thumb:hover {
+            background: rgba(76, 175, 80, 0.7);
+        }
+        #speedometer {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="waitingRoom">
+        <div id="waitingRoomTitle">
+            <h1>Waiting Room</h1>
+        </div>
+        <button id="createGameBtn">Create New Game</button>
+        <div id="gameInfoContainer">
+            <table class="gameList">
+                <thead>
+                    <tr>
+                        <th>Game_id</th>
+                        <th>Players</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="gameList">
+                    <!-- Les lignes de jeu seront ajoutées dynamiquement ici -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="gameContainer" style="display: none;">
+        <div id="scoreboard"></div>
+        <canvas id="minimap"></canvas>
+        <div id="speedometer">Speed: 0</div>
+    </div>
+    <script>
+        window.ENV = {
+            BASE_URL: '{{ BASE_URL|safe }}',
+            WS_URL: '{{ WS_URL|safe }}',
+            DEBUG: {{ DEBUG|yesno:"true,false" }}
+        }
+    </script>
+    <script type="module" src="{% static 'main.js' %}"></script>
+</body>
+</html>
