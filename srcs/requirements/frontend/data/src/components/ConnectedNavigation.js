@@ -29,8 +29,8 @@ export default function ConnectedNavigation() {
     <div>
       <div className="topnav">
         <Link className="active" to="/"><img className="logo" src={logo}/></Link>
-        <Link to="/news">News</Link>
-        <Link to="/game-modes">Game Modes</Link>
+        <Link to="/pong">Pong</Link>
+        <Link to="/hagarrio">Hagarrio</Link>
         <Link to="/leaderboard">Learderboard</Link>
         <Link onClick={handleLogout}>Logout</Link>
         <div className="right-profile">

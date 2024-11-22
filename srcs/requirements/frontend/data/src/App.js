@@ -11,10 +11,10 @@ import SpecialLayout from './layouts/SpecialLayout.js';
 import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
-import GameModePage from './pages/GameModesPage.js';
+import PongPage from './pages/PongPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
-import NewsPage from './pages/NewsPage.js';
+import HagarrioPage from './pages/HagarrioPage.js';
 import Auth42Success from './components/Auth42Success.js';
 import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
 import { RegisterPage, RegisterSuccessPage } from './pages/RegisterPage.js';
@@ -42,9 +42,9 @@ function AppContent() {
         <Route element={isAuthenticated ? <ConnectedLayout /> : <LoginPage />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
-          <Route path="news" element={<NewsPage />} />
+          <Route path="pong" element={<PongPage />} />
+          <Route path="hagarrio" element={<HagarrioPage />} />
           <Route path="leaderboard" element={<Leaderboard />} />
-          <Route path="game-modes" element={<GameModePage />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>

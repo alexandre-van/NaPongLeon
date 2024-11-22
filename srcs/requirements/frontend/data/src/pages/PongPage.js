@@ -1,7 +1,7 @@
 import PlayButton from '../components/PlayButton.js';
 import { useState } from 'react';
 
-export default function GameModePage() {
+export default function PongPage() {
     const [modifiers, setModifiers] = useState([]);
 
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-export default function NewsPage() {
+export default function HagarrioPage() {
   useEffect(() => {
     // Construire l'URL de l'iframe
     const host = window.location.hostname;
@@ -35,8 +35,6 @@ export default function NewsPage() {
 
   return (
     <div>
-      <h1>News Page</h1>
-      <p>Contenu de la page ici...</p>
     </div>
   );
 }

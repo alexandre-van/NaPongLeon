@@ -24,7 +24,7 @@ function AuthenticatedHomePage() {
   return (
     <div className="backgroundpage">
       <h1 className="title-home">Welcome to Napongleon</h1>
-      <Link to="/game-modes"><button className="play-button btn btn-outline-warning" type="button">PLAY</button></Link>
+      <Link to="/pong"><button className="play-button btn btn-outline-warning" type="button">PLAY</button></Link>
     </div>
   );
 }
