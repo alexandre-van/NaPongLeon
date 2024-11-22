@@ -172,12 +172,7 @@
             border-radius: 4px;
         }
         #gameInfoContainer::-webkit-scrollbar-thumb {
-            background: rgba(76, 175, 80, 0.5);
-            border-radius: 4px;
-        }
-        #gameInfoContainer::-webkit-scrollbar-thumb:hover {
-            background: rgba(76, 175, 80, 0.7);
-        }
+            background: rgba(76, 175, 80, 0.5);main
         #speedometer {
             position: absolute;
             bottom: 10px;
@@ -216,13 +211,13 @@
         <canvas id="minimap"></canvas>
         <div id="speedometer">Speed: 0</div>
     </div>
-    <script>
+    {% comment %} <script>
         window.ENV = {
             BASE_URL: '{{ BASE_URL|safe }}',
             WS_URL: '{{ WS_URL|safe }}',
             DEBUG: {{ DEBUG|yesno:"true,false" }}
         }
-    </script>
+    </script> {% endcomment %}
     <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>

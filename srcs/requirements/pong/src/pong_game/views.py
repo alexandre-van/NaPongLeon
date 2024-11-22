@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
 from .game_managers.game_manager import game_manager
 from .utils.logger import logger
 import json

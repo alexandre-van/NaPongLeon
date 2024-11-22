@@ -11,11 +11,12 @@ export function initNetwork() {
 }
 
 function connectWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    //const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     
     // Use the WS_URL from environment
-    const envUrl = window.ENV.WS_URL;
-    const wsUrl = `${protocol}//${envUrl}/ws/game/`;
+    const host = window.location.hostname;
+    const port = window.location.port;
+    const wsUrl = `ws://${host}:${port}/ws/hagarrio/`;
     console.log('Attempting WebSocket connection to:', wsUrl);
     
     try {

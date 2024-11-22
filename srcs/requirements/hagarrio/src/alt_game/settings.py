@@ -28,13 +28,13 @@ SECRET_KEY = 'django-insecure-)5$(!#z0392-a%=0$hgc^k3h93adujpce_cwmxh$0m^r+#k*tb
 DEBUG = True
 
 # Obtenir l'adresse IP locale
-HOSTNAME = os.getenv("HOST_NAME")
-BASE_URL = os.getenv("BASE_URL")
-WS_URL = os.getenv("WS_URL")
-if BASE_URL:
-	BASE_URL = BASE_URL.replace("HOST_NAME", HOSTNAME)
-if WS_URL:
-	WS_URL = WS_URL.replace("HOST_NAME", HOSTNAME)
+#HOSTNAME = os.getenv("HOST_NAME")
+#BASE_URL = os.getenv("BASE_URL")
+#WS_URL = os.getenv("WS_URL")
+#if BASE_URL:
+#	BASE_URL = BASE_URL.replace("HOST_NAME", HOSTNAME)
+#if WS_URL:
+#	WS_URL = WS_URL.replace("HOST_NAME", HOSTNAME)
 
 ALLOWED_HOSTS = [
     '*'
@@ -51,8 +51,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
-	'corsheaders',
     'agario',
+	'csp',
+    'corsheaders',
 ]
 
 CACHES = {
@@ -75,11 +76,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-# Configuration des CORS si nécessaire
-CORS_ALLOWED_ORIGINS = [
-    BASE_URL
 ]
 
 ROOT_URLCONF = 'alt_game.urls'
@@ -144,13 +140,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'agario/static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = 'api/hagarrio/static/hagarrio/'
+STATICFILES_DIRS = [
+   os.path.join(BASE_DIR, "static/"),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -168,7 +164,11 @@ CHANNEL_LAYERS = {
     },
 }
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#CSP
+
+X_FRAME_OPTIONS = 'SAMEORIGIN' 
+CSP_FRAME_ANCESTORS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Configuration du logging
 LOGGING = {

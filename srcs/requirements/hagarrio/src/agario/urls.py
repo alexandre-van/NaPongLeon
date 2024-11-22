@@ -20,5 +20,5 @@ from . import views
 
 urlpatterns = [
     path('', views.game, name='game'),
-    path('state/', views.get_game_state, name='game_state'),
+    #path('state/', views.get_game_state, name='game_state'),
 ]
