@@ -71,11 +71,11 @@ services:
     networks:
       - backend
 
-  alt_game:
-    build: ./requirements/alt_game
-    container_name: alt_game
+  hagarrio:
+    build: ./requirements/hagarrio
+    container_name: hagarrio
     volumes:
-      - ./requirements/alt_game/src:/app
+      - ./requirements/hagarrio/src:/app
     restart: on-failure
     depends_on:
       - nginx
