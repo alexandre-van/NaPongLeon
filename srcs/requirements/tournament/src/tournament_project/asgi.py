@@ -15,7 +15,7 @@ django_http_server = get_asgi_application()
 
 from tournament_app.routing import websocket_urlpatterns
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pong_project.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tournament_project.settings')
 
 application = ProtocolTypeRouter({
 			"http": django_http_server,

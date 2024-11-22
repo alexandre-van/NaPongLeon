@@ -14,7 +14,8 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`, 3600000);
 			const gameId = response.data['data']['game_id'];
 			if (!gameId) throw new Error('Game ID is missing from the response.');
-
+			const gameServiceName = response.data['data']['service_name'];
+			if (!gameServiceName) throw new Error('Game service name is missing from the response.');
 			// Stocker le gameId dans window.gameInfo
 			if (!window.gameInfo) {
 				window.gameInfo = {};
@@ -24,7 +25,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			// Construire l'URL du jeu avec le gameId
 			const host = window.location.hostname;
 			const port = window.location.port;
-			const gameUrl = `http://${host}:${port}/api/pong?gameId=${gameId}`;
+			const gameUrl = `http://${host}:${port}/api/${gameServiceName}?gameId=${gameId}`;
 
 			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');

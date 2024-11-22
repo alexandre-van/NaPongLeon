@@ -13,6 +13,7 @@ class AdminManager:
 
 	def __init__(self):
 		self.threads = {}
+		self._threads_mutex = threading.Lock()
 
 	def connect_to_game(self, game_id, ws_url):
 		# Démarre un nouvel event loop pour chaque thread
@@ -25,30 +26,35 @@ class AdminManager:
 	   		self.cleanup_thread(game_id)
 
 	def cleanup_thread(self, game_id):
-		users = self.threads[game_id]['users']
-		logger.debug(f"Cleanup after game {game_id}. Closing resources...")
-		logger.debug(f"users change status : {users}")
-		self.upadte_game_status(game_id, users, 'aborted')
-		del self.threads[game_id]
+		with self._threads_mutex:
+			users = self.threads[game_id]['users']
+			logger.debug(f"Cleanup after game {game_id}. Closing resources...")
+			logger.debug(f"users change status : {users}")
+			self.upadte_game_status(game_id, users, 'aborted')
+			del self.threads[game_id]
 		logger.debug(f"Thread for game {game_id} cleaned up.")
 	
 	async def _handle_websocket(self, game_id, ws_url):
-		users = self.threads[game_id]['users']
+		with self._threads_mutex:
+			users = self.threads[game_id]['users']
 		logger.debug(f'thread in game : {game_id} is running...')
-		async with websockets.connect(ws_url) as websocket:
-			logger.debug(f"Websocket connected : {ws_url}")
-			try:
-				async for message in websocket:
-					if await self.game_is_aborted(game_id):
-						await websocket.close()
-					message_dict = json.loads(message)
-					await self.handle_message(game_id, message_dict, users)
-			except websockets.exceptions.ConnectionClosedOK:
-				logger.debug("WebSocket connection closed normally (1000 OK).")
-			except websockets.exceptions.ConnectionClosedError as e:
-				logger.error(f"WebSocket closed with error: {e}")
-			except json.JSONDecodeError as e:
-				logger.error(f"Failed to decode message: {e}")
+		try :
+			async with websockets.connect(ws_url) as websocket:
+				logger.debug(f"Websocket connected : {ws_url}")
+				try:
+					async for message in websocket:
+						if await self.game_is_aborted(game_id):
+							await websocket.close()
+						message_dict = json.loads(message)
+						await self.handle_message(game_id, message_dict, users)
+				except websockets.exceptions.ConnectionClosedOK:
+					logger.debug("WebSocket connection closed normally (1000 OK).")
+				except websockets.exceptions.ConnectionClosedError as e:
+					logger.error(f"WebSocket closed with error: {e}")
+				except json.JSONDecodeError as e:
+					logger.error(f"Failed to decode message: {e}")
+		except Exception as e:
+			logger.error(f"Unexpected error in WebSocket handler for game {game_id}: {e}")
 
 	@sync_to_async
 	def game_is_aborted(self, game_id):
@@ -170,21 +176,24 @@ class AdminManager:
 		thread = threading.Thread(target=self.connect_to_game, args=(game_id, ws_url))
 		thread.start()
 
-		self.threads[game_id] = {
-			'thread': thread,
-			'users': {
-				'players': [],
-				'spectators': []
+		with self._threads_mutex:
+			self.threads[game_id] = {
+				'thread': thread,
+				'users': {
+					'players': [],
+					'spectators': []
+				}
 			}
-		}
 
 	def force_close(self, game_id):
-		if self.threads[game_id]:
-			self.threads[game_id]['thread'].stop()
+		with self._threads_mutex:
+			if self.threads[game_id]:
+				self.threads[game_id]['thread'].stop()
 
 	def close_all(self):
-		for game_id in self.threads:
-			self.threads[game_id]['thread'].join()
+		with self._threads_mutex:
+			for game_id in self.threads:
+				self.threads[game_id]['thread'].join()
 		logger.debug("All threads are closed.")
 
 if AdminManager.admin_manager_instance is None:

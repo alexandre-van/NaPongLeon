@@ -138,7 +138,7 @@ class Matchmaking:
 		if game_connected and await self.check_futures(queue_selected):
 			game = await self.create_new_game(game_id, game_mode, players)
 		if game and await self.check_futures(queue_selected):
-			players_connected = await self.send_result(game_id, queue_selected)
+			players_connected = await self.send_result(game_id, queue_selected, game_mode)
 		await self.remove_disconnected_client(queue_selected, players_connected)
 		if players_connected:
 			return
@@ -179,14 +179,17 @@ class Matchmaking:
 			return None
 		return True
 
-	async def send_result(self, result, queue_selected):
+	async def send_result(self, result, queue_selected, game_mode):
 		for player_request in queue_selected:
 			username = player_request['username']
 			with self._futures_mutex:
 				if username in self._futures:
 					future = self._futures[username]
 					if not future.done() and not future.cancelled():
-						future.set_result({'game_id': result})
+						future.set_result({
+							'game_id': result,
+							'service_name': self.GAME_MODES[game_mode]['service_name']
+						})
 						continue
 			logger.debug(f"return none at {username}")
 			return None

@@ -105,6 +105,7 @@ class Game_manager:
 						for player in current_game['players']:
 							player_instance = Player.get_or_create_player(player)
 							player_instance.update_status('inactive')
+						game_instance.abort_game()
 						return game_id, game_instance.game_mode
 			else :
 				return None, None
@@ -121,7 +122,6 @@ class Game_manager:
 				result = await self._set_current_game_status(game_id)
 				if result:
 					game_id, game_mode = result
-					game_disconnected = False
 					if game_mode:
 						await self.game_abort_notify(game_id, game_mode)
 					if game_id:

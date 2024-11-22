@@ -1,12 +1,12 @@
 from .utils.logger import logger
 import json
 import asyncio
-from .tournament_manager import Tournament_manager
+from .tournament_manager import tournament_manager
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from .utils.decorators import auth_required
 
-class tournamentConsumer(AsyncWebsocketConsumer):
+class TournamentConsumer(AsyncWebsocketConsumer):
 	ready_queue = asyncio.Lock()
 
 	# CONNECT
@@ -30,7 +30,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 			logger.warning(f'An unauthorized connection has been received')
 			return
 		logger.debug(f'{self.username} tries to connect to the tournament: {self.tournament_id}')
-		if Tournament_manager.get_room(self.tournament_id) is not None:
+		if tournament_manager.get_room(self.tournament_id) is not None:
 			await self.new_users()
 		else:
 			logger.debug(f'{self.tournament_id} does not exist')
@@ -43,7 +43,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 		logger.debug("new_user")
 		self.ready = False
 		if self.admin_id:
-			self.room = Tournament_manager.add_admin(self.admin_id, self, self.tournament_id)
+			self.room = tournament_manager.add_admin(self.admin_id, self, self.tournament_id)
 			if self.room is None:
 				return
 			await self.accept()
@@ -53,7 +53,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 
 			return
 		else:
-			self.room = Tournament_manager.add_user(self.username, self, self.tournament_id)
+			self.room = tournament_manager.add_user(self.username, self, self.tournament_id)
 			if self.room is None:
 				return
 			await self.send_user_connection()
@@ -71,7 +71,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 
 	async def startup(self):
 		logger.debug("startup")
-		Tournament_manager.update_status('loading', self.tournament_id)
+		tournament_manager.update_status('loading', self.tournament_id)
 		admin = self.room['admin']
 		for player in self.room['players']:
 			logger.debug(f"add {player} to channel")
@@ -123,7 +123,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 		else:
 			if self.username in self.room['spectator']:
 				await self.send_user_disconnection()
-				Tournament_manager.remove_user(self.username, self.tournament_id)
+				tournament_manager.remove_user(self.username, self.tournament_id)
 
 	async def disconnect_all_users(self):
 		logger.debug('disconnect_all_user')
@@ -176,7 +176,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 		logger.debug("tournament_end")
 		await self.disconnect_all_users()
 		await self.disconnect_admin()
-		Tournament_manager.remove_room(self.tournament_id)
+		tournament_manager.remove_room(self.tournament_id)
 
 	# RECEIVE
 
@@ -194,7 +194,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 					tournament_room.input_players(self.username, data['input'])
 				elif data_type == 'ready':
 					if self.username in self.room['players']:
-						async with tournamentConsumer.ready_queue:
+						async with TournamentConsumer.ready_queue:
 							await self.tournament_start()
 					elif self.username in self.room['spectator']:
 						await self.tournament_start_spectator()
@@ -209,7 +209,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 			if self.room['players'][player].ready == False:
 				return
 		if self.room['status'] == 'loading':
-			Tournament_manager.update_status('running', self.tournament_id)
+			tournament_manager.update_status('running', self.tournament_id)
 			admin = self.room['admin']
 			await self.send_tournament_status(admin['id'], None, 'in_progress')
 			await self.channel_layer.group_send(self.tournament_id, {
@@ -238,7 +238,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 		if not self.room:
 			return
 		logger.debug("tournament loop is running")
-		while Tournament_manager.get_room(self.tournament_id):
+		while tournament_manager.get_room(self.tournament_id):
 			tournament = self.room['tournament_instance']
 			if tournament:
 				tournament_state = tournament.update()
@@ -253,7 +253,7 @@ class tournamentConsumer(AsyncWebsocketConsumer):
 					logger.debug('scored')
 					await self.send_update_score(tournament_state['team'], tournament_state['score'])
 				elif tournament_state['type'] == 'tournament_end':
-					Tournament_manager.update_status('finished', self.tournament_id)
+					tournament_manager.update_status('finished', self.tournament_id)
 					await self.send_tournament_finished(tournament_state['team'], tournament_state['score'])
 					await self.tournament_end()
 					return
