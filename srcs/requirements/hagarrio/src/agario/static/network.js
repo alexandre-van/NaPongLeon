@@ -11,9 +11,6 @@ export function initNetwork() {
 }
 
 function connectWebSocket() {
-    //const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    // Use the WS_URL from environment
     const host = window.location.hostname;
     const port = window.location.port;
     const wsUrl = `ws://${host}:${port}/ws/hagarrio/`;
