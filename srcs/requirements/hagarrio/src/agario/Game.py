@@ -21,7 +21,7 @@ class Game:
         self.max_food = 2500
         self.player_inputs = {}
         self.player_movements = {}
-        self.PLAYER_SPEED = 1200
+        self.PLAYER_SPEED = 900
         self.status = "custom"
         self.game_loop_task = None
         self.initialize_food()
@@ -198,10 +198,15 @@ class Game:
                 base_speed = self.PLAYER_SPEED
 
                 if player['score'] <= 400:
-                    speed_factor = max(0.4, 1 - (player['score'] / 500))
+                    speed_factor = max(0.5, 1 - (player['score'] / 1200))
                     speed = base_speed * speed_factor
-                else:
+                elif player['score'] <= 700:
+                    speed_factor = max(0.45, 1 - (player['score'] / 1200))
+                    speed = base_speed * speed_factor
+                elif player['score'] <= 1000:
                     speed = base_speed * 0.4
+                elif player['score'] <= 2000:
+                    speed = base_speed * 0.35
                 
                 new_x = player['x'] + dx * speed * delta_time
                 new_y = player['y'] + dy * speed * delta_time
