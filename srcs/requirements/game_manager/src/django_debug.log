@@ -1,5 +1,5 @@
-DEBUG 2024-11-22 06:45:37,895 matchmaking Matchmaking init...
-INFO 2024-11-22 06:45:37,897 cli Starting server at tcp:port=8000:interface=0.0.0.0
-INFO 2024-11-22 06:45:37,897 server HTTP/2 support enabled
-INFO 2024-11-22 06:45:37,897 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
-INFO 2024-11-22 06:45:37,898 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-11-25 08:05:59,408 matchmaking Matchmaking init...
+INFO 2024-11-25 08:05:59,409 cli Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2024-11-25 08:05:59,410 server HTTP/2 support enabled
+INFO 2024-11-25 08:05:59,410 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-11-25 08:05:59,410 server Listening on TCP address 0.0.0.0:8000

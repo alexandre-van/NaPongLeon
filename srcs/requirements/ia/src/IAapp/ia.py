@@ -22,6 +22,7 @@ class IA:
 
 		self.last_message_time = 0
 		self.message_cooldown = 1 # 1 seconde de délai
+		self.last_padel_contact = 0
 
 		self.time_reach_target = time.time()
 		self.time_start = time.time()
@@ -231,34 +232,39 @@ class IA:
 			game_id = data['game_id']
 			logger.debug("Jeu créé! ID du jeu :", game_id)
 		elif data['type'] == 'padel_contact':
-			logger.debug(f"Contact avec la raquette! {data}")
-			self.paddle_hit = True
-			self.ball_pos = data['bp']
-			self.paddle_pos = data['pp']
-			self.ball_velocity = data['bs']
-			self.predicted_y = self.predict_ball_intersection()
-			self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-			logger.debug(f"optimal_paddle_position : {self.optimal_paddle_position}")
-			self.time_reach_target = self.time_to_reach_target(self.paddle_pos[self.player], self.optimal_paddle_position)
-			self.time_start = time.time()
-			self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
-			#self.ft_move(ws, self.optimal_paddle_position, self.player)
+			if time.time() - self.last_padel_contact > self.message_cooldown:
+				self.last_padel_contact = time.time()
+				logger.debug(f"Contact avec la raquette! {data}")
+				self.paddle_hit = True
+				self.ball_pos = data['bp']
+				self.paddle_pos = data['pp']
+				self.ball_velocity = data['bs']
+				self.predicted_y = self.predict_ball_intersection()
+				self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
+				#logger.debug(f"optimal_paddle_position : {self.optimal_paddle_position}")
+				self.time_reach_target = self.time_to_reach_target(self.paddle_pos[self.player], self.optimal_paddle_position)
+				self.time_start = time.time()
+				self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
+				#self.ft_move(ws, self.optimal_paddle_position, self.player)
 
 		elif data['type'] == 'game_start':
 			logger.debug("Le jeu a commencé!")
 		elif data['type'] == 'gu':
 			current_time = time.time()
 			if current_time - self.last_message_time > self.message_cooldown:
+				#logger.debug(f"ICI : {data}")
 				self.last_message_time = current_time
-				self.ball_pos = data['bp']
-				self.paddle_pos = data['pp']
-				if (self.paddle_hit == False):
-					self.calculate_ball_velocity()	
+				if not self.paddle_hit and data['bp'] != {'x': 0, 'y': 0, 'z': 1}:
+					self.ball_pos = data['bp']
+					self.paddle_pos = data['pp']
+					self.ball_velocity = data['bs']
 					self.predicted_y = self.predict_ball_intersection()
 					self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
-					self.ft_move(ws, self.optimal_paddle_position, self.player)
-			if (self.paddle_hit == True):
-				self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
+					self.time_reach_target = self.time_to_reach_target(self.paddle_pos[self.player], self.optimal_paddle_position)
+					self.time_start = time.time()
+					self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
+			#if (self.paddle_hit == True):
+			self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
 			#logger.debug(f"FT_MOVE : predicted y : {self.optimal_paddle_position} et {data}")
 		elif data['type'] == 'scored':
 			logger.debug(data['msg'])
