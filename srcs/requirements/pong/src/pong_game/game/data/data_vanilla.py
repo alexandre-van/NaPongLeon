@@ -19,8 +19,8 @@ ball_data = {
         'z': 1
 	},
 	'spd': {
-        'x': 15, # speed
-        'y': 20
+        'x': 20, # speed
+        'y': 0
 	}
 }
 

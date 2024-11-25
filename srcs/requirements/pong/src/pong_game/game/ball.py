@@ -99,6 +99,8 @@ class Ball:
 		if segment == 'AB' or segment == 'CD':
 			self.direction['x'] *= -1
 			self.speed['x'] *= 1.075
+			if self.speed['x'] > 125:
+				self.speed['x'] = 125
 			if padel.direction == 0:
 				if self.speed['y'] > self.ball_data['spd']['y']:
 					self.decrased_y_speed(self.ball_data['spd']['y'] / 4)
@@ -114,6 +116,8 @@ class Ball:
 				self.direction['x'] *= -1
 			self.direction['y'] = 1 if segment == 'DA' else -1
 			self.speed['x'] *= 1.05
+			if self.speed['x'] > 125:
+				self.speed['x'] = 125
 			if self.speed['y'] < self.ball_data['spd']['y']:
 				self.speed['y'] = self.ball_data['spd']['y']
 			if padel.direction == 0:
