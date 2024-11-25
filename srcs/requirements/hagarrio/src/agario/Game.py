@@ -92,9 +92,9 @@ class Game:
                 food_changes.extend(changes)
         return len(food_changes) > 0
 
-    def is_game_active(self):
-        """Vérifie si la partie est active"""
-        return self.status == "in_progress"
+    # def is_game_active(self):
+    #     """Vérifie si la partie est active"""
+    #     return self.status == "in_progress"
 
     def add_player(self, player_id, player_name):
         """Ajoute un joueur à la partie"""
@@ -173,8 +173,8 @@ class Game:
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send only food changes to all players
-
                 await asyncio.sleep(1/60)
+
             if self.status == "finished":
                 """TODO: Send final state to all players"""
         except Exception as e:
@@ -196,7 +196,6 @@ class Game:
             if dx != 0 or dy != 0:
                 player = self.players[player_id]
                 base_speed = self.PLAYER_SPEED
-
                 if player['score'] <= 400:
                     speed_factor = max(0.5, 1 - (player['score'] / 1200))
                     speed = base_speed * speed_factor
@@ -218,9 +217,7 @@ class Game:
                     player['x'] = new_x
                     player['y'] = new_y
                     positions_updated = True
-                    
                 player['current_speed'] = round(speed)
-                    
         return positions_updated
 
     async def cleanup(self):
