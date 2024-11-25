@@ -52,6 +52,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 				logger.info(f"Game {self.current_game_id} is empty, cleaning up")
 				await game.cleanup()
 				del GameConsumer.active_games[self.current_game_id]
+				for player_id in GameConsumer.players:
+					games_info = []
+					for game_id, game in GameConsumer.active_games.items():
+						games_info.append({
+							'gameId': game_id,
+							'players': [{'name': p['name'], 'id': p['id']} for p in game.players.values()] ,
+							'status': game.status
+					})
+					await GameConsumer.players[player_id].send(text_data=json.dumps({
+						'type': 'player_disconnected',
+						'games': games_info,
+						'playerId': self.player_id
+					}))
 			else:
 				# Informer les autres joueurs de la déconnexion
 				logger.debug(f"Broadcasting updated game info after player disconnect")

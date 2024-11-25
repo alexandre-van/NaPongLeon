@@ -55,6 +55,7 @@ export function updateGameInfo(data) {
         gameList.appendChild(row);
     });
 
+    console.log('Apres Game Info');
     // Ajouter les écouteurs d'événements pour les boutons
     document.querySelectorAll('.joinGameBtn').forEach(button => {
         button.addEventListener('click', () => {

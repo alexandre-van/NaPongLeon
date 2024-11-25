@@ -73,6 +73,8 @@ function connectWebSocket() {
                     break;
                 case 'player_disconnected':
                     removePlayer(data.playerId);
+                    console.log('Game stopped');
+                    updateGameInfo(data);
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
