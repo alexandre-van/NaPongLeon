@@ -3,6 +3,9 @@ import { mapHeight, mapWidth } from './main.js';
 
 export let scene;
 
+let currentZoom = 1;
+let targetZoom = 1;
+const ZOOM_SMOOTHING = 0.1;
 
 export function initScene() {
     scene = new THREE.Scene();
@@ -48,17 +51,27 @@ export function createMapBorders(scene) {
 
 export function updateCameraPosition(camera, player) {
     if (player && player.x !== undefined && player.y !== undefined) {
-        //console.log('in updateCameraPosition, Updating camera position to:', player.x, player.y, camera.position.z);
         camera.position.set(player.x, player.y, camera.position.z);
         camera.lookAt(player.x, player.y, 0);
     }
-    const zoomFactor = 1 + (player.size / 100);
-    const frustumSize = 1000 * zoomFactor;
+    
+    targetZoom = 1 + (player.size / 100);
+    
+    // currentZoom += (targetZoom - currentZoom) * ZOOM_SMOOTHING;
+    // Limiter la vitesse maximale de changement de zoom
+    const maxZoomChange = 0.1;
+    const zoomDelta = (targetZoom - currentZoom) * ZOOM_SMOOTHING;
+    const clampedZoomDelta = Math.max(-maxZoomChange, Math.min(maxZoomChange, zoomDelta));
+    currentZoom += clampedZoomDelta;
+
+    const frustumSize = 1000 * currentZoom;
     const aspect = window.innerWidth / window.innerHeight;
+    
     camera.left = frustumSize * aspect / -2;
     camera.right = frustumSize * aspect / 2;
     camera.top = frustumSize / 2;
     camera.bottom = frustumSize / -2;
+    
     camera.updateProjectionMatrix();
 }
 
