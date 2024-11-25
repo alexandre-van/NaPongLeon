@@ -206,6 +206,8 @@ class Game:
                     speed = base_speed * 0.4
                 elif player['score'] <= 2000:
                     speed = base_speed * 0.35
+                else:
+                    speed = base_speed * 0.3
                 
                 new_x = player['x'] + dx * speed * delta_time
                 new_y = player['y'] + dy * speed * delta_time

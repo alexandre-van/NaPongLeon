@@ -57,12 +57,12 @@ export function updateCameraPosition(camera, player) {
     
     targetZoom = 1 + (player.size / 100);
     
-    // currentZoom += (targetZoom - currentZoom) * ZOOM_SMOOTHING;
+    currentZoom += (targetZoom - currentZoom) * ZOOM_SMOOTHING;
     // Limiter la vitesse maximale de changement de zoom
-    const maxZoomChange = 0.1;
-    const zoomDelta = (targetZoom - currentZoom) * ZOOM_SMOOTHING;
-    const clampedZoomDelta = Math.max(-maxZoomChange, Math.min(maxZoomChange, zoomDelta));
-    currentZoom += clampedZoomDelta;
+    // const maxZoomChange = 0.1;
+    // const zoomDelta = (targetZoom - currentZoom) * ZOOM_SMOOTHING;
+    // const clampedZoomDelta = Math.max(-maxZoomChange, Math.min(maxZoomChange, zoomDelta));
+    // currentZoom += clampedZoomDelta;
 
     const frustumSize = 1000 * currentZoom;
     const aspect = window.innerWidth / window.innerHeight;
