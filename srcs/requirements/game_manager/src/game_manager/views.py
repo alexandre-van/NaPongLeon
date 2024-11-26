@@ -52,7 +52,12 @@ async def get_out_matchmaking(username, matchmaking_instance):
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 @async_csrf_exempt
-async def create_game(request):
+@auth_required
+async def create_game(request, username=None):
+	return await create_game_api(request, username)
+
+@async_csrf_exempt
+async def create_game_api(request, username=None):
 	if request.method == 'POST':
 		try:
 			game_manager_instance = Game_manager.game_manager_instance
@@ -64,10 +69,10 @@ async def create_game(request):
 			teams_list = data.get('teamsList')
 			ia_authorizes = data.get('ia_authorizes')
 			logger.debug(f"Reçu: game_mode={game_mode}, modifiers={modifiers}, players_list={players_list}, teams={teams_list}, ai={ia_authorizes}")
-			game_id = await game_manager_instance.create_game(game_mode, modifiers, players_list, teams_list, ia_authorizes)
+			game_data = await game_manager_instance.create_game(game_mode, modifiers, players_list, teams_list, ia_authorizes)
 			# pars players
-			if game_id:
-				return JsonResponse({'status': 'success', 'game_id':game_id}, status=status.HTTP_201_CREATED)
+			if game_data:
+				return JsonResponse({'status': 'success', 'data': game_data}, status=status.HTTP_201_CREATED)
 			else:
 				return JsonResponse({'error': 'Invalid game information'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 

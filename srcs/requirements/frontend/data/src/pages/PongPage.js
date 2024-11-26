@@ -1,4 +1,5 @@
 import PlayButton from '../components/PlayButton.js';
+import CreateGameButton from '../components/CreateGameButton.js';
 import { useState } from 'react';
 
 export default function PongPage() {
@@ -34,6 +35,7 @@ export default function PongPage() {
             </ul>
 
             <h2>Join a matchmaking queue</h2>
+            <CreateGameButton gameMode="VS" modifiers={modifiers} />
             <PlayButton gameMode="PONG_CLASSIC" modifiers={modifiers} />
             <PlayButton gameMode="PONG_DUO" modifiers={modifiers} />
             <h2>TOURNAMENT</h2>

@@ -81,18 +81,34 @@ class Game_manager:
 			or (ia_authorizes is False and len(players_list) < game_mode_data['number_of_players']):
 			return None
 		# pars teams_list
-		if teams_list \
-			and (game_mode_data['team_names'] is None\
-				or len(teams_list) != len(game_mode_data['team_names'])):
+		if not teams_list:
+			teams_list = []
+		if game_mode_data['team_names'] is None\
+			or len(teams_list) != len(game_mode_data['team_names']):
+			return None
+		number_of_players = 0
+		for i, team_name in enumerate(game_mode_data['team_names']):
+			if i >= len(teams_list):
+				teams_list.append([])
+		for team in teams_list:
+			team_size = len(team)
+			if team_size > game_mode_data['team_size']:
+				return None
+			number_of_players += team_size
+		if number_of_players != len(players_list):
 			return None
 		if all(any(player in team for team in teams_list) for player in players_list) is False:
 			return None
 		# ai
-		#ai = []
-		#while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
-		#	ai_id = str(uuid.uuid4())
-		#	players_list.append(ai_id)
-		#	ai.append(ai_id)
+		all_ai = []
+		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
+			ai_id = str(uuid.uuid4())
+			all_ai.append(ai_id)
+			players_list.append(ai_id)
+			for team in teams_list:
+				if len(team) < game_mode_data['team_size']:
+					team.append(ai_id)
+					break
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		game = None
@@ -103,7 +119,28 @@ class Game_manager:
 				await self.disconnect_to_game(game_id, game_mode)
 		else:
 			return None
-		return game_id
+		ai_url = "http://ia:8000/api/ia/create_ia/"
+		for ai_id in all_ai:
+			try:
+				ids = {
+					'game_id': game_id,
+					'ai_id': ai_id
+				}
+				async with httpx.AsyncClient() as client:
+					response = await client.post(ai_url, json=ids)  # Utilisation du paramètre json
+
+				if response.status_code == 200:  # Succès explicite
+					continue
+				else:
+					logger.error(f"Failed to create AI {ai_id}: {response.status_code} - {response.text}")
+					return None
+			except httpx.RequestError as e:
+				logger.error(f"AI service error for AI {ai_id}: {str(e)}")
+				return None
+		return {
+			'game_id': game_id,
+			'service_name': game_mode_data['service_name']
+		}
 
 	# game notify
 

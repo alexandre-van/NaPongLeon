@@ -38,6 +38,7 @@ class Game:
 		self.players[username].move_padel(input)
 
 	def update(self):
+		type = "gu"
 		scoring_side = self.ball.is_scored()
 		if scoring_side != None:
 			return self.scored(scoring_side)
@@ -45,12 +46,16 @@ class Game:
 			self.players[username].padel.update_padel_position(self.ball)
 		if (self.timer.waiting(self.wait)):
 			self.wait = 0
-			self.ball.update_ball_position(self.get_players_in_side)
+			type = self.ball.update_ball_position(self.get_players_in_side)
 		else:
 			self.ball.timer.reset()
 		return {
-			'type': "gu", #game update
+			'type': type, #game update
 			'bp': self.ball.position,
+			'bs': {
+				'x': self.ball.speed['x'] * self.ball.direction['x'],
+				'y': self.ball.speed['y'] * self.ball.direction['y']
+			},
 			'pp': self.export_padels_position()
 		}
 

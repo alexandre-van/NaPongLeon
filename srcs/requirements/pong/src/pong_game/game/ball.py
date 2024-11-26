@@ -26,7 +26,7 @@ class Ball:
 			if padel.ball_contact:
 				self.updateSpeedAndDir(padel, padel.ball_contact, \
 					'DA' if padel.direction == 1 else 'BC')
-				return
+				return 'padel_contact'
 			padel_hitbox = padel.get_hitbox()
 			physic_position = get_position_physic(self.position, destination, self.ball_data['rad'],\
 						padel_hitbox)
@@ -34,7 +34,7 @@ class Ball:
 			if physic_position:
 				self.padel_contact(physic_position, padel)
 				self.priority = True
-				return
+				return 'padel_contact'
 		border_collider = self.get_border_collider()
 		for axis in ['x', 'y']:
 			if destination_collider[axis] <= border_collider[axis] \
@@ -45,7 +45,8 @@ class Ball:
 					= self.direction[axis] * self.arena_data['size'][axis] / 2 \
 					- self.direction[axis] * self.ball_data['rad']
 				self.direction[axis] *= -1
-	
+		return 'gu'
+		
 	def get_destination(self):
 		normalized_speed = self.normalize_speed()
 		logger.debug(f"speed:{self.speed}")
