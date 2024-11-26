@@ -226,16 +226,18 @@ class Game_manager:
 					else:
 						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
 						for player in current_game['players']:
-							player_instance = Player.get_or_create_player(player)
-							player_instance.update_status('inactive')
+							player_instance = Player.get_player(player)
+							if player_instance:
+								player_instance.update_status('inactive')
 						game_instance.abort_game()
 						return game_id, game_instance.game_mode
 			else :
 				return None, None
 		else:
 			for player in current_game['players']:
-				player_instance = Player.get_or_create_player(player)
-				player_instance.update_status('inactive')
+				player_instance = Player.get_player(player)
+				if player_instance:
+					player_instance.update_status('inactive')
 			return game_id, None
 
 	async def _game_manager_logic(self):
@@ -289,6 +291,9 @@ class Game_manager:
 			return game
 		else:
 			return None
+		
+	async def create_new_player_instance(self, username):
+		await self.create_player_instance(username)
 
 	@sync_to_async
 	def create_game_instance(self, game_id, game_mode, players):
@@ -301,20 +306,27 @@ class Game_manager:
 	@sync_to_async
 	def get_player_status(self, username):
 		with transaction.atomic():
-			player = Player.get_or_create_player(username)
-			return player.status
+			player = Player.get_player(username)
+			if player:
+				return player.status
 		return None
 
 	@sync_to_async
 	def update_player_status(self, username, status):
 		with transaction.atomic():
-			player = Player.get_or_create_player(username)
-			player.update_status(status)
+			player = Player.get_player(username)
+			if player:
+				player.update_status(status)
 
 	@sync_to_async
 	def abord_game_instance(self, game):
 		with transaction.atomic():
 			game.abort_game()
+
+	@sync_to_async
+	def create_player_instance(self, username):
+		with transaction.atomic():
+			Player.get_or_create_player(username)
 
 	#utils
 

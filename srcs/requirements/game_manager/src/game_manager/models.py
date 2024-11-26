@@ -1,6 +1,6 @@
 from django.db import models
 from django.db import IntegrityError, DatabaseError
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError,ObjectDoesNotExist
 from django.utils import timezone
 from .utils.logger import logger
 
@@ -27,13 +27,28 @@ class Player(models.Model):
 		try:
 			player, created = cls.objects.get_or_create(username=username)
 			if created:
-				logger.debug(f'{player.username} game account created')
+				logger.info(f'Player account "{username}" successfully created.')
 			return player
 		except IntegrityError as e:
-			logger.error(f"Integrity error while creating player: {e}")
+			logger.error(f"Integrity error while creating player '{username}': {e}")
 			return None
 		except DatabaseError as e:
-			logger.error(f"Database error while creating player: {e}")
+			logger.exception(f"Unexpected database error while creating player '{username}': {e}")
+			return None
+
+	@classmethod
+	def get_player(cls, username):
+		try:
+			player = cls.objects.get(username=username)
+			return player
+		except ObjectDoesNotExist:
+			logger.warning(f"Player account '{username}' does not exist.")
+			return None
+		except IntegrityError as e:
+			logger.error(f"Integrity error while fetching player '{username}': {e}")
+			return None
+		except DatabaseError as e:
+			logger.exception(f"Unexpected database error while fetching player '{username}': {e}")
 			return None
 
 	def update_status(self, new_status):
@@ -136,7 +151,7 @@ class GameInstance(models.Model):
 
 			# Ajouter chaque joueur au jeu et à l'historique
 			for username in usernames:
-				player = Player.get_or_create_player(username)
+				player = Player.get_player(username)
 				if player:
 					PlayerGameHistory.objects.get_or_create(player=player, game=new_game)
 

@@ -17,6 +17,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
 	if matchmaking_instance is None:
 		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_200_OK)
+	await game_manager_instance.create_new_player_instance(username)
 	if game_mode is "":
 		return await get_out_matchmaking(username, matchmaking_instance)
 	if settings.GAME_MODES.get(game_mode) is None:
@@ -54,6 +55,10 @@ async def get_out_matchmaking(username, matchmaking_instance):
 @async_csrf_exempt
 @auth_required
 async def create_game(request, username=None):
+	game_manager_instance = Game_manager.game_manager_instance
+	if game_manager_instance is None:
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+	await game_manager_instance.create_new_player_instance(username)
 	return await create_game_api(request, username)
 
 @async_csrf_exempt
@@ -61,6 +66,8 @@ async def create_game_api(request, username=None):
 	if request.method == 'POST':
 		try:
 			game_manager_instance = Game_manager.game_manager_instance
+			if game_manager_instance is None:
+				return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
 			# json LOADS
 			data = json.loads(request.body)
 			game_mode = data.get('gameMode')

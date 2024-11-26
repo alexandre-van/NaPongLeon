@@ -13,19 +13,21 @@ DEBUG thread Initializing matchmaking thread...
 DEBUG thread Starting matchmaking thread...
 DEBUG apps set admin_manager atexit...
 DEBUG matchmaking matchmaking loop started
+INFO models Player account "ai" successfully created.
 DEBUG views Reçu: game_mode=PONG_CLASSIC, modifiers=, players_list=['ai'], teams=[['ai'], []], ai=True
-DEBUG game_manager send to http://pong:8000/api/pong/newgame/: {'gameId': 'c15610ff-c987-4d16-9750-221630f85a90', 'adminId': 'e60a4642-efd7-411c-aba4-14c5368fe119', 'gameMode': 'PONG_CLASSIC', 'playersList': ['ai', '5739a741-73c7-46f8-96f4-bbd3d4b8a3f8']}
-DEBUG game_manager Game service c15610ff-c987-4d16-9750-221630f85a90 created with players: ['ai', '5739a741-73c7-46f8-96f4-bbd3d4b8a3f8']
-DEBUG admin_manager start_new_connection ws - game_id = c15610ff-c987-4d16-9750-221630f85a90, admin_id = e60a4642-efd7-411c-aba4-14c5368fe119, ws_url = ws://pong:8000/ws/pong/c15610ff-c987-4d16-9750-221630f85a90/e60a4642-efd7-411c-aba4-14c5368fe119/
-DEBUG admin_manager new thread created to ws://pong:8000/ws/pong/c15610ff-c987-4d16-9750-221630f85a90/e60a4642-efd7-411c-aba4-14c5368fe119/ !
-DEBUG admin_manager thread in game : c15610ff-c987-4d16-9750-221630f85a90 is running...
-DEBUG models 5739a741-73c7-46f8-96f4-bbd3d4b8a3f8 game account created
-DEBUG game_manager Raw PlayerGameHistory queryset for game c15610ff-c987-4d16-9750-221630f85a90: <QuerySet [<PlayerGameHistory: PlayerGameHistory object (23)>, <PlayerGameHistory: PlayerGameHistory object (24)>]>
-DEBUG game_manager Player usernames for game c15610ff-c987-4d16-9750-221630f85a90: ['ai', '5739a741-73c7-46f8-96f4-bbd3d4b8a3f8']
-DEBUG admin_manager Websocket connected : ws://pong:8000/ws/pong/c15610ff-c987-4d16-9750-221630f85a90/e60a4642-efd7-411c-aba4-14c5368fe119/
-DEBUG admin_manager Game c15610ff-c987-4d16-9750-221630f85a90: Received message: {'type': 'player_connection', 'username': 'ai'}
-DEBUG game_manager 20.97724986076355s abort game : waiting
-DEBUG game_manager send to http://pong:8000/api/pong/abortgame/: {'gameId': 'c15610ff-c987-4d16-9750-221630f85a90'}
-DEBUG admin_manager Cleanup after game c15610ff-c987-4d16-9750-221630f85a90. Closing resources...
+DEBUG game_manager send to http://pong:8000/api/pong/newgame/: {'gameId': 'e5a47187-2f72-4da0-a24d-d14b6f5538fc', 'adminId': '623b1c3d-0764-4306-952f-7fa94aba3bd1', 'gameMode': 'PONG_CLASSIC', 'playersList': ['ai', '762728fa-925d-43f3-afa3-26bae7f6761a']}
+DEBUG game_manager Game service e5a47187-2f72-4da0-a24d-d14b6f5538fc created with players: ['ai', '762728fa-925d-43f3-afa3-26bae7f6761a']
+DEBUG admin_manager start_new_connection ws - game_id = e5a47187-2f72-4da0-a24d-d14b6f5538fc, admin_id = 623b1c3d-0764-4306-952f-7fa94aba3bd1, ws_url = ws://pong:8000/ws/pong/e5a47187-2f72-4da0-a24d-d14b6f5538fc/623b1c3d-0764-4306-952f-7fa94aba3bd1/
+DEBUG admin_manager new thread created to ws://pong:8000/ws/pong/e5a47187-2f72-4da0-a24d-d14b6f5538fc/623b1c3d-0764-4306-952f-7fa94aba3bd1/ !
+DEBUG admin_manager thread in game : e5a47187-2f72-4da0-a24d-d14b6f5538fc is running...
+WARNING models Player account '762728fa-925d-43f3-afa3-26bae7f6761a' does not exist.
+DEBUG game_manager Raw PlayerGameHistory queryset for game e5a47187-2f72-4da0-a24d-d14b6f5538fc: <QuerySet [<PlayerGameHistory: PlayerGameHistory object (1)>]>
+DEBUG game_manager Player usernames for game e5a47187-2f72-4da0-a24d-d14b6f5538fc: ['ai']
+WARNING models Player account '762728fa-925d-43f3-afa3-26bae7f6761a' does not exist.
+DEBUG admin_manager Websocket connected : ws://pong:8000/ws/pong/e5a47187-2f72-4da0-a24d-d14b6f5538fc/623b1c3d-0764-4306-952f-7fa94aba3bd1/
+DEBUG admin_manager Game e5a47187-2f72-4da0-a24d-d14b6f5538fc: Received message: {'type': 'player_connection', 'username': 'ai'}
+DEBUG game_manager 20.073805332183838s abort game : waiting
+DEBUG game_manager send to http://pong:8000/api/pong/abortgame/: {'gameId': 'e5a47187-2f72-4da0-a24d-d14b6f5538fc'}
+DEBUG admin_manager Cleanup after game e5a47187-2f72-4da0-a24d-d14b6f5538fc. Closing resources...
 DEBUG admin_manager users change status : {'players': ['ai'], 'spectators': []}
-DEBUG admin_manager Thread for game c15610ff-c987-4d16-9750-221630f85a90 cleaned up.
+DEBUG admin_manager Thread for game e5a47187-2f72-4da0-a24d-d14b6f5538fc cleaned up.
