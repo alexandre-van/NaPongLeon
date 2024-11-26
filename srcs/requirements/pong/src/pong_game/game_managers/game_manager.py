@@ -39,6 +39,8 @@ class game_manager:
 		if game_id not in self.games_room:
 			return None
 		room = self.games_room[game_id]
+		if not room['special_id']:
+			return None
 		for ids in room['special_id']:
 			private_id = ids.get('private')
 			if private_id == special_id:
