@@ -12,7 +12,7 @@ def run_ia(data):
     websocket_url = f"ws://{host}:{port}/ws/pong/{game_id}/{ai_id}/"
     logger.debug(f"WS URL : {websocket_url}")
     
-    ia = IA()
+    ia = IA(ai_id)
     
 
 
