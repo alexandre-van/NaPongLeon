@@ -12,7 +12,7 @@ class game_manager:
 		]
 		logger.debug("\ngame_manager initialised\n")
 
-	def add_games_room(self, game_id, admin_id, game_mode, modifiers, players_list):
+	def add_games_room(self, game_id, admin_id, game_mode, modifiers, players_list, special_id=None):
 		if (game_mode not in game_modes):
 			logger.debug(f"Error: Wrong game_mode: {game_mode}")
 			return None
@@ -30,6 +30,7 @@ class game_manager:
 			'expected_players': players_list,
 			'players': {},
 			'spectator': {},
+			'special_id': special_id,
 			'game_instance': None
 		}
 		return self.games_room[game_id]

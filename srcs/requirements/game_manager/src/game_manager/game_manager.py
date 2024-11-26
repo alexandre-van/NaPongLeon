@@ -101,18 +101,23 @@ class Game_manager:
 			return None
 		# ai
 		all_ai = []
+		special_id = []
 		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
-			ai_id = str(uuid.uuid4())
+			ai_id = {
+				'private': str(uuid.uuid4()),
+				'public': str(uuid.uuid4())
+			}
 			all_ai.append(ai_id)
-			players_list.append(ai_id)
+			special_id.append(ai_id['private'])
+			players_list.append(ai_id['public'])
 			for team in teams_list:
 				if len(team) < game_mode_data['team_size']:
-					team.append(ai_id)
+					team.append(ai_id['public'])
 					break
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		game = None
-		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list)
+		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list, special_id)
 		if game_connected:
 			game = await self.create_new_game_instance(game_id, game_mode, players_list)
 			if not game:
@@ -124,7 +129,7 @@ class Game_manager:
 			try:
 				ids = {
 					'game_id': game_id,
-					'ai_id': ai_id
+					'ai_id': ai_id,
 				}
 				async with httpx.AsyncClient() as client:
 					response = await client.post(ai_url, json=ids)  # Utilisation du paramètre json
@@ -144,7 +149,7 @@ class Game_manager:
 
 	# game notify
 
-	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players):
+	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
 		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
 		logger.debug(f"send to {game_service_url}: {send}")
@@ -155,7 +160,8 @@ class Game_manager:
 					'adminId': admin_id,
 					'gameMode': game_mode,
 					'modifiers': modifiers,
-					'playersList': players
+					'playersList': players,
+					'special_id': special_id
 				})
 			if response and response.status_code == 201 :
 				return True
@@ -184,8 +190,8 @@ class Game_manager:
 
 	# game connection
 
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players):
-		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players)
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
+		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
