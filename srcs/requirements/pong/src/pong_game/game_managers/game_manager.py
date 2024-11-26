@@ -34,6 +34,14 @@ class game_manager:
 		}
 		return self.games_room[game_id]
 
+	def is_player(self, username, game_id):
+		if game_id not in self.games_room:
+			return False
+		room = self.games_room[game_id]
+		if username not in room['expected_players']:
+			return False
+		return True
+
 	def add_user(self, username, consumer, game_id):
 		if game_id not in self.games_room:
 			return None
