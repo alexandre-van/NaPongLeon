@@ -12,7 +12,7 @@ class Tournament_manager:
 		]
 		logger.debug("\ntournament_manager initialised\n")
 
-	def add_tournaments_room(self, tournament_id, admin_id, game_mode, modifiers, players_list):
+	def add_tournaments_room(self, tournament_id, admin_id, game_mode, modifiers, players_list, special_id):
 		if (game_mode not in game_modes):
 			logger.debug(f"Error: Wrong tournament_mode: {game_mode}")
 			return None
@@ -30,9 +30,26 @@ class Tournament_manager:
 			'expected_players': players_list,
 			'players': {},
 			'spectator': {},
+			'special_id': special_id,
 			'tournament_instance': None
 		}
 		return self.tournaments_room[tournament_id]
+
+	def special_connection(self, special_id, tournament_id):
+		if tournament_id not in self.tournaments_room:
+			return None
+		room = self.tournaments_room[tournament_id]
+		if not room['special_id']:
+			return None
+		for ids in room['special_id']:
+			private_id = ids.get('private')
+			if private_id == special_id:
+				public_id = ids.get('public')
+				if public_id:
+					return public_id
+				else:
+					return None
+		return None
 
 	def add_user(self, username, consumer, tournament_id):
 		if tournament_id not in self.tournaments_room:
