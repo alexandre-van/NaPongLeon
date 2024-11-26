@@ -5,6 +5,7 @@ from .logger import logger
 
 class IA:
 	def __init__(self):
+		# info sur la balle
 		self.ball_pos = {'x': 0, 'y': 0, 'z': 1}
 		self.previous_ball_pos = None
 		self.paddle_pos = {'p1': 0.0, 'p2': 0.0}
@@ -14,12 +15,15 @@ class IA:
 		self.ball_velocity = {'x': 0, 'y': 0}
 		self.previous_velocity = {'x': 0, 'y': 0}
 
+		# prediction et position optimale du paddle
 		self.predicted_y = 0
 		self.optimal_paddle_position = 0
 
+		# info sur joueur droit ou gauche
 		self.paddle_hit = False
 		self.player = 'p2'
 
+		# delai de 1 seconde a respecter
 		self.last_message_time = 0
 		self.message_cooldown = 1 # 1 seconde de délai
 		self.last_padel_contact = 0
@@ -38,10 +42,11 @@ class IA:
 
 		# Initialisation de votre IA
 		logger.debug("IA instantiated.")
-#'arena': {'size': {'x': 86, 'y': 64, 'z': 2}, 'wallWidth': 1}, 'padel': {'pos': {'x': 39, 'y': 0, 'z': 1.25}, 'spd': 30, 'size': {'x': 4, 'y': 12, 'z': 4}}, 
-#'ball': {'pos': {'x': 0, 'y': 0, 'z': 1}, 'spd': {'x': 20, 'y': 15}, 'rad': 1}, 'left_player': 'p1', 'right_player': 'p2'}}
-
+  
 	def parsing(self, data):
+		"""
+		Rentre toutes les constantes du terrain
+		"""
 		logger.debug(data['padel'])
 		padel = data['padel']
   
@@ -126,9 +131,17 @@ class IA:
 		return self.optimal_paddle_position
 
 	def ft_move_by_timer(self, timer, timer_to_reach, target, pos_actuel, ws):
+		""" Deplace le paddle a la position souhaite (target) tout en prenant en compte le temps pour savoir a quelle moment s'arreter de monter
+
+		Args:
+			timer : le moment ou la fonction est appele_
+			timer_to_reach : le temps necessaire pour faire le deplacement
+			target : la pos y cible du paddle
+			pos_actuel : la derniere pos connu du paddle y avant l'actualisation
+			ws : websocket
+		"""
 		
-		TOLERANCE = 1.5
-		#logger.debug(f"timer : {time.time() - timer} et timer_to_reach : {timer_to_reach}")
+		TOLERANCE = 2
 		if (pos_actuel + TOLERANCE < target):
 			if (timer_to_reach < time.time() - timer):
 				if self.is_moving_up:
@@ -180,10 +193,18 @@ class IA:
 			game_id = data['game_id']
 			logger.debug("Jeu créé! ID du jeu :", game_id)
 		elif data['type'] == 'padel_contact':
+			logger.debug(f"TYPE : {data['bp']}")
 			current_time = time.time()
+			# if data[QUETRU] != self.player:
+			# else:
+			# self.optimal_paddle_position = 0
+			# self.time_start = time.time()
+			# self.ft_move_by_timer(self.time_start, self.time_reach_target, self.optimal_paddle_position, self.paddle_pos[self.player], ws)
 			if current_time - self.last_padel_contact > self.message_cooldown:
 				self.last_padel_contact = current_time
 				logger.debug(f"Contact avec la raquette! {data}")
+    # {'type': 'padel_contact', 'bp': {'x': 36.94063198566437, 'y': 14.824042147310093, 'z': 1}, 
+    # 'bs': {'x': -52.5, 'y': 20}, 'pp': {'p1': 1.6901135444641113, 'p2': 15.954616069793701}}
 				self.paddle_hit = True
 				self.ball_pos = data['bp']
 				self.paddle_pos = data['pp']
