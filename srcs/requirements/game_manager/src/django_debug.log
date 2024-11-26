@@ -70,3 +70,77 @@ DEBUG admin_manager Game 951dcbaa-61d2-4471-a036-fdd365a18c01: Received message:
 DEBUG admin_manager Game 951dcbaa-61d2-4471-a036-fdd365a18c01: Received message: {'type': 'export_status', 'status': 'loading'}
 DEBUG admin_manager Game 951dcbaa-61d2-4471-a036-fdd365a18c01: Received message: {'type': 'export_teams', 'teams': {'left': ['ai'], 'right': ['3e41ac4c-d522-455e-9049-5936bf044449']}}
 DEBUG game_manager 20.149874210357666s elapsed with status : waiting
+DEBUG game_manager 60.22274851799011s abort game : loading
+DEBUG game_manager send to http://pong:8000/api/pong/abortgame/: {'gameId': '951dcbaa-61d2-4471-a036-fdd365a18c01'}
+DEBUG admin_manager Cleanup after game 951dcbaa-61d2-4471-a036-fdd365a18c01. Closing resources...
+DEBUG admin_manager users change status : {'players': ['3e41ac4c-d522-455e-9049-5936bf044449', 'ai'], 'spectators': []}
+DEBUG admin_manager Thread for game 951dcbaa-61d2-4471-a036-fdd365a18c01 cleaned up.
+DEBUG views Reçu: game_mode=PONG_CLASSIC, modifiers=, players_list=['ai'], teams=[['ai'], []], ai=True
+DEBUG game_manager send to http://pong:8000/api/pong/newgame/: {'gameId': 'f9860f20-0b1b-4130-b7a6-6cbe48ed57c0', 'adminId': '0ec81c30-3e41-424c-bf01-87d19286f2d1', 'gameMode': 'PONG_CLASSIC', 'playersList': ['ai', 'a39ae953-e680-43cf-af71-2a0acc3aee6d']}
+DEBUG game_manager Game service f9860f20-0b1b-4130-b7a6-6cbe48ed57c0 created with players: ['ai', 'a39ae953-e680-43cf-af71-2a0acc3aee6d']
+DEBUG admin_manager start_new_connection ws - game_id = f9860f20-0b1b-4130-b7a6-6cbe48ed57c0, admin_id = 0ec81c30-3e41-424c-bf01-87d19286f2d1, ws_url = ws://pong:8000/ws/pong/f9860f20-0b1b-4130-b7a6-6cbe48ed57c0/0ec81c30-3e41-424c-bf01-87d19286f2d1/
+DEBUG admin_manager new thread created to ws://pong:8000/ws/pong/f9860f20-0b1b-4130-b7a6-6cbe48ed57c0/0ec81c30-3e41-424c-bf01-87d19286f2d1/ !
+DEBUG admin_manager thread in game : f9860f20-0b1b-4130-b7a6-6cbe48ed57c0 is running...
+DEBUG admin_manager Websocket connected : ws://pong:8000/ws/pong/f9860f20-0b1b-4130-b7a6-6cbe48ed57c0/0ec81c30-3e41-424c-bf01-87d19286f2d1/
+DEBUG models a39ae953-e680-43cf-af71-2a0acc3aee6d game account created
+DEBUG game_manager Raw PlayerGameHistory queryset for game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: <QuerySet [<PlayerGameHistory: PlayerGameHistory object (49)>, <PlayerGameHistory: PlayerGameHistory object (50)>]>
+DEBUG game_manager Player usernames for game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: ['ai', 'a39ae953-e680-43cf-af71-2a0acc3aee6d']
+DEBUG admin_manager Game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: Received message: {'type': 'player_connection', 'username': 'a39ae953-e680-43cf-af71-2a0acc3aee6d'}
+ERROR game_manager AI service error for AI a39ae953-e680-43cf-af71-2a0acc3aee6d: 
+DEBUG admin_manager Game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: Received message: {'type': 'player_connection', 'username': 'ai'}
+DEBUG admin_manager Game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: Received message: {'type': 'export_status', 'status': 'loading'}
+DEBUG admin_manager Game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: Received message: {'type': 'export_teams', 'teams': {'left': ['ai'], 'right': ['a39ae953-e680-43cf-af71-2a0acc3aee6d']}}
+DEBUG game_manager 20.302115440368652s elapsed with status : waiting
+DEBUG admin_manager Game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0: Received message: {'type': 'export_status', 'status': 'aborted'}
+DEBUG admin_manager Cleanup after game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0. Closing resources...
+DEBUG admin_manager users change status : {'players': ['ai'], 'spectators': []}
+DEBUG admin_manager Thread for game f9860f20-0b1b-4130-b7a6-6cbe48ed57c0 cleaned up.
+DEBUG views Reçu: game_mode=PONG_CLASSIC, modifiers=, players_list=['ai'], teams=[['ai'], []], ai=True
+DEBUG game_manager send to http://pong:8000/api/pong/newgame/: {'gameId': 'd7459d1e-c4e4-43c4-bd22-be8569693fb8', 'adminId': 'b2422b47-6b35-4d5c-ac3b-8600af27171c', 'gameMode': 'PONG_CLASSIC', 'playersList': ['ai', '9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c']}
+DEBUG game_manager Game service d7459d1e-c4e4-43c4-bd22-be8569693fb8 created with players: ['ai', '9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c']
+DEBUG admin_manager start_new_connection ws - game_id = d7459d1e-c4e4-43c4-bd22-be8569693fb8, admin_id = b2422b47-6b35-4d5c-ac3b-8600af27171c, ws_url = ws://pong:8000/ws/pong/d7459d1e-c4e4-43c4-bd22-be8569693fb8/b2422b47-6b35-4d5c-ac3b-8600af27171c/
+DEBUG admin_manager new thread created to ws://pong:8000/ws/pong/d7459d1e-c4e4-43c4-bd22-be8569693fb8/b2422b47-6b35-4d5c-ac3b-8600af27171c/ !
+DEBUG admin_manager thread in game : d7459d1e-c4e4-43c4-bd22-be8569693fb8 is running...
+DEBUG admin_manager Websocket connected : ws://pong:8000/ws/pong/d7459d1e-c4e4-43c4-bd22-be8569693fb8/b2422b47-6b35-4d5c-ac3b-8600af27171c/
+DEBUG models 9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c game account created
+DEBUG game_manager Raw PlayerGameHistory queryset for game d7459d1e-c4e4-43c4-bd22-be8569693fb8: <QuerySet [<PlayerGameHistory: PlayerGameHistory object (51)>, <PlayerGameHistory: PlayerGameHistory object (52)>]>
+DEBUG game_manager Player usernames for game d7459d1e-c4e4-43c4-bd22-be8569693fb8: ['9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c', 'ai']
+DEBUG admin_manager Game d7459d1e-c4e4-43c4-bd22-be8569693fb8: Received message: {'type': 'player_connection', 'username': '9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c'}
+ERROR game_manager AI service error for AI 9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c: 
+DEBUG admin_manager Game d7459d1e-c4e4-43c4-bd22-be8569693fb8: Received message: {'type': 'player_connection', 'username': 'ai'}
+DEBUG admin_manager Game d7459d1e-c4e4-43c4-bd22-be8569693fb8: Received message: {'type': 'export_status', 'status': 'loading'}
+DEBUG admin_manager Game d7459d1e-c4e4-43c4-bd22-be8569693fb8: Received message: {'type': 'export_teams', 'teams': {'left': ['ai'], 'right': ['9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c']}}
+DEBUG game_manager 20.161553144454956s elapsed with status : waiting
+DEBUG game_manager 60.19565486907959s abort game : loading
+DEBUG game_manager send to http://pong:8000/api/pong/abortgame/: {'gameId': 'd7459d1e-c4e4-43c4-bd22-be8569693fb8'}
+DEBUG admin_manager Cleanup after game d7459d1e-c4e4-43c4-bd22-be8569693fb8. Closing resources...
+DEBUG admin_manager users change status : {'players': ['9fd2ab54-f2f7-44e0-a119-453ad5bf5b9c', 'ai'], 'spectators': []}
+DEBUG admin_manager Thread for game d7459d1e-c4e4-43c4-bd22-be8569693fb8 cleaned up.
+DEBUG views Reçu: game_mode=PONG_CLASSIC, modifiers=, players_list=['ai'], teams=[['ai'], []], ai=True
+DEBUG game_manager send to http://pong:8000/api/pong/newgame/: {'gameId': '655d408a-0338-4f75-a348-652b713be4b7', 'adminId': '4c44bde8-85d7-4ff1-af15-5522848b4bd2', 'gameMode': 'PONG_CLASSIC', 'playersList': ['ai', 'ae87a0fc-8c55-41b1-bb83-375039a9f09a']}
+DEBUG game_manager Game service 655d408a-0338-4f75-a348-652b713be4b7 created with players: ['ai', 'ae87a0fc-8c55-41b1-bb83-375039a9f09a']
+DEBUG admin_manager start_new_connection ws - game_id = 655d408a-0338-4f75-a348-652b713be4b7, admin_id = 4c44bde8-85d7-4ff1-af15-5522848b4bd2, ws_url = ws://pong:8000/ws/pong/655d408a-0338-4f75-a348-652b713be4b7/4c44bde8-85d7-4ff1-af15-5522848b4bd2/
+DEBUG admin_manager new thread created to ws://pong:8000/ws/pong/655d408a-0338-4f75-a348-652b713be4b7/4c44bde8-85d7-4ff1-af15-5522848b4bd2/ !
+DEBUG admin_manager thread in game : 655d408a-0338-4f75-a348-652b713be4b7 is running...
+DEBUG admin_manager Websocket connected : ws://pong:8000/ws/pong/655d408a-0338-4f75-a348-652b713be4b7/4c44bde8-85d7-4ff1-af15-5522848b4bd2/
+DEBUG models ae87a0fc-8c55-41b1-bb83-375039a9f09a game account created
+DEBUG game_manager Raw PlayerGameHistory queryset for game 655d408a-0338-4f75-a348-652b713be4b7: <QuerySet [<PlayerGameHistory: PlayerGameHistory object (53)>, <PlayerGameHistory: PlayerGameHistory object (54)>]>
+DEBUG game_manager Player usernames for game 655d408a-0338-4f75-a348-652b713be4b7: ['ai', 'ae87a0fc-8c55-41b1-bb83-375039a9f09a']
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'player_connection', 'username': 'ae87a0fc-8c55-41b1-bb83-375039a9f09a'}
+ERROR game_manager AI service error for AI ae87a0fc-8c55-41b1-bb83-375039a9f09a: 
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'player_connection', 'username': 'ai'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'export_status', 'status': 'loading'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'export_teams', 'teams': {'left': ['ae87a0fc-8c55-41b1-bb83-375039a9f09a'], 'right': ['ai']}}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'export_status', 'status': 'in_progress'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'left', 'score': '1'}
+DEBUG game_manager 20.527856588363647s elapsed with status : waiting
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'right', 'score': '1'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'right', 'score': '2'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'right', 'score': '3'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'right', 'score': '4'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'right', 'score': '5'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'update_score', 'team': 'left', 'score': '2'}
+DEBUG admin_manager Game 655d408a-0338-4f75-a348-652b713be4b7: Received message: {'type': 'export_status', 'status': 'aborted'}
+DEBUG admin_manager Cleanup after game 655d408a-0338-4f75-a348-652b713be4b7. Closing resources...
+DEBUG admin_manager users change status : {'players': ['ai'], 'spectators': []}
+DEBUG admin_manager Thread for game 655d408a-0338-4f75-a348-652b713be4b7 cleaned up.

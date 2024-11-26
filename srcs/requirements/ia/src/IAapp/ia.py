@@ -184,11 +184,14 @@ class IA:
 		elif data['type'] == 'export_data':
 			logger.debug(f":::{data}")
 			data = data['data']
-			if data['left_player'] == self.player:
-				self.player = 'p1'
-			else:
-				self.player = 'p2'
+			#if data['left_player'] == self.player:
+			#	self.player = 'p1'
+			#else:
+			#	self.player = 'p2'
 			self.parsing(data)
+			ws.send(json.dumps({
+			'type': 'ready',
+			}))
 		elif data['type'] == 'export_data':
 			game_id = data['game_id']
 			logger.debug("Jeu créé! ID du jeu :", game_id)
