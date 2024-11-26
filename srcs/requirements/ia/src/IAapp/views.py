@@ -1,4 +1,5 @@
 # Create your views here.
+import json
 from threading import Thread
 from django.http import JsonResponse
 from .logger import logger
@@ -14,7 +15,9 @@ def create_ia(request):
 	 # Démarre une nouvelle IA dans un thread séparé
 	logger.debug("Test message - within create_ia view.")
 
-	thread = Thread(target=run_ia)
+	petitchat = json.loads(request.body)
+	logger.debug(f"lo petitchat {petitchat}")
+	thread = Thread(target=run_ia(petitchat))
 	thread.start()
 	threads.append(thread)  # Ajoute le thread à la liste pour éventuellement le gérer plus tard
 	return JsonResponse({'message': 'connected to the server IA'}, status=200)

@@ -250,7 +250,7 @@ class IA:
 		#logger.debug(f"Commande envoyée: {command}")
 
 	def on_error(self, ws, error):
-		logger.debug(f"Erreur: {error}")
+		logger.debug(f"Erreur BELLLE: {error}")
 
 	def on_close(self, ws):
 		logger.debug("Connexion WebSocket fermée.")
