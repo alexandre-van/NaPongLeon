@@ -13,6 +13,7 @@ def run_ia(data):
     logger.debug(f"WS URL : {websocket_url}")
     
     ia = IA()
+    
 
 
     ws = websocket.WebSocketApp(websocket_url,
