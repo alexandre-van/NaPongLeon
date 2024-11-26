@@ -26,11 +26,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if len(segments) >= 6:
 			special_id = segments[4]
 			logger.debug(f'special_id = {special_id}')
-		if special_id and game_manager.is_player(special_id, self.game_id):
-			self.username = special_id
-			special_id = None
-		elif special_id:
-			self.admin_id = special_id
+		if special_id:
+			self.username = game_manager.special_connection(special_id, self.game_id)
+			if not self.username:
+				self.username = 'admin'
+				self.admin_id = special_id
 		if not self.username and not self.admin_id:
 			logger.warning(f'An unauthorized connection has been received')
 			return

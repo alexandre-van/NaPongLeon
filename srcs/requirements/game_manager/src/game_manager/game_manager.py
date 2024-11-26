@@ -108,7 +108,7 @@ class Game_manager:
 				'public': str(uuid.uuid4())
 			}
 			all_ai.append(ai_id)
-			special_id.append(ai_id['private'])
+			special_id.append(ai_id)
 			players_list.append(ai_id['public'])
 			for team in teams_list:
 				if len(team) < game_mode_data['team_size']:
