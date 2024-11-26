@@ -4,7 +4,7 @@ import time
 from .logger import logger
 
 class IA:
-	def __init__(self):
+	def __init__(self, ia_id):
 		# info sur la balle
 		self.ball_pos = {'x': 0, 'y': 0, 'z': 1}
 		self.previous_ball_pos = None
@@ -21,7 +21,7 @@ class IA:
 
 		# info sur joueur droit ou gauche
 		self.paddle_hit = False
-		self.player = 'p2'
+		self.player = ia_id
 
 		# delai de 1 seconde a respecter
 		self.last_message_time = 0
@@ -174,7 +174,8 @@ class IA:
 				self.send_command(ws, 4)
 				self.is_moving_down = False
 		return
-	 
+	 #type': 'export_data', 'data':, 'spd': {'x': 30, 'y': 30}}, 'padel': {'pos': {'x': 39, 'y': 0, 'z': 1.25}, 'spd': 45, 'size': {'x': 4, 'y': 12, 'z': 4}},
+  #'teams': {'left': ['7cfcaf9f-4372-4e62-aa72-4443f1639471'], 'right': ['ai']}, 'map': 'mountain', 'game_mode': 'PONG_CLASSIC'}}
 		
 	def on_message(self, ws, message):
 		data = json.loads(message)
@@ -184,10 +185,10 @@ class IA:
 		elif data['type'] == 'export_data':
 			logger.debug(f":::{data}")
 			data = data['data']
-			#if data['left_player'] == self.player:
-			#	self.player = 'p1'
-			#else:
-			#	self.player = 'p2'
+			if self.player in data['teams']['left']:
+				self.player = 'p1'
+			else:
+				self.player = 'p2'
 			self.parsing(data)
 			ws.send(json.dumps({
 			'type': 'ready',
