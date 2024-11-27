@@ -41,28 +41,28 @@ class ASGIUserMiddleware:
     '''
     async def __call__(self, scope, receive, send):
         if 'user' in scope:
-            logger.debug(f"ASGIUserMiddleware: path={scope['path']}\n user={scope['user']}")
+            (f"ASGIUserMiddleware: path={scope['path']}\n user={scope['user']}")
         else:
-            logger.debug(f"ASGIUserMiddleware: path={scope['path']}\n user not in scope")
+            (f"ASGIUserMiddleware: path={scope['path']}\n user not in scope")
 
         async def wrapped_receive():
             message = await receive()
-            logger.debug(f"message[type]={message['type']} with scope[user]={scope['user']}")
+            (f"message[type]={message['type']} with scope[user]={scope['user']}")
             if message['type'] == 'http.request':
                 message['_user'] = scope.get('user', AnonymousUser())
             return message
             
         async def user_send(response):
-            logger.debug(f"response[type]={response['type']}")
+            (f"response[type]={response['type']}")
             if response['type'] == 'http.response.start':
                 if 'user' in scope:
                     response.setdefault('headers', []).append(
                         (b'X-User', str(scope['user']).encode())
                     )
-                logger.debug(f"ASGIUserMiddleware.user_send: scope[user]={scope['user']}")
+                (f"ASGIUserMiddleware.user_send: scope[user]={scope['user']}")
             await send(response)
 
-        logger.debug("Before result")
+        ("Before result")
 #        result = await self.inner(dict(scope, user=scope.get('user', AnonymousUser())), receive, user_send)
         result = await self.inner(scope, wrapped_receive, user_send)
         logger.debug("After result")
@@ -215,7 +215,6 @@ class AsyncJWTAuthMiddleware:
                 try:
                     user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                     scope['user'] = user
-                    logger.debug(f"Successfully authenticated with access token")
                     return await self.inner(scope, receive, send)
                 except Exception as e:
                     logger.warning(f"Access token validation failed: {str(e)}")
@@ -228,7 +227,6 @@ class AsyncJWTAuthMiddleware:
                             request.COOKIES['access_token'] = scope['access_token']
                             user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                             scope['user'] = user
-                            logger.debug(f"Successfully refreshed token for user {user}")
                         except Exception as refresh_error:
                             logger.warning(f"Refresh token validation failed: {str(refresh_error)}")
                             scope['user'] = AnonymousUser()
@@ -251,7 +249,7 @@ class AsyncJWTAuthMiddleware:
                 if 'access_token' in scope:
                     headers.append((
                         b'set-cookie',
-                        f"access_token={scope['access_token']}; HttpOnly; SameSite=Strict; Max-Age=3600; Path=/".encode()
+                        f"access_token={scope['access_token']}; HttpOnly; SameSite=Strict; Max-Age=7200; Path=/".encode()
                     ))
                 elif scope.get('clear_tokens'):
                     headers.extend([
@@ -341,7 +339,6 @@ class CsrfExemptMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        logger.debug('CsrfExemptMiddleware')
         if getattr(request, 'csrf_exempt', False):
             setattr(request, '_dont_enforce_csrf_checks', True)
         return self.get_response(request)

@@ -120,10 +120,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.is_closed = True
 		await self.channel_layer.group_discard(self.game_id, self.channel_name)
 		if self.admin_id == self.room['admin']['id']:
+			logger.debug(f"admin as been disconnected")
 			await self.game_end()
 			return
 		if self.username in self.room['players']:
 			admin = self.room['admin']
+			logger.debug(f"{self.username} as been disconnected")
 			await self.send_game_status(admin['id'], self.game_id, 'aborted')
 			await self.game_end()
 		else:

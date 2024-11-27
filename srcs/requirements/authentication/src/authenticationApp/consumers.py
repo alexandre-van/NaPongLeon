@@ -14,16 +14,11 @@ logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        logger.debug(f'Connection attempt, scope[user]={self.scope["user"]}')
 #        self.user = await self.get_user_from_token()
         self.user = self.scope["user"]
-        logger.debug(f'\n-------------------------------------CONNECTION WEBSOCKET\n\n\nself.user: {self.user}\n')
         if not self.user:
-            logger.debug('No user, no connection')
             await self.close()
         else:
-            logger.debug('channel_layer user_')
-            logger.debug(self.user.id)
 
             await self.channel_layer.group_add(
                 f"user_{self.user.id}",
@@ -32,7 +27,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             await self.accept()
             await self.user.update_user_status(True)
             await self.send_status_friends(True)
-            logger.debug('Connection accepted')
+
 
     '''
     @database_sync_to_async
@@ -67,12 +62,10 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             return False
         
         result = await delete_unconfirmed_2fa_auth(self.user)
-        logger.debug(f"\n\nconsumers delete_unconfirmed_2fa_auth : {result}\n")
 
 
 
     async def receive(self, text_data):
-        logger.debug('receive debut')
         data = json.loads(text_data)
         action = data.get('action')
 
@@ -95,14 +88,13 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': f'Unknown action: {action}'
             }))
-        logger.debug('receive end')
 
 
         
     async def send_status_friends(self, status):
         friends = await self.user.aget_friends()
         for friend in friends:
-            logger.debug(f"friend = {friend}")
+
             await self.channel_layer.group_send(
                 f"user_{friend['id']}",
                 {
@@ -117,8 +109,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             target_user, notification = await self._send_friend_request_and_create_notification(target_user_id)
 
             # Send notification to target user
-            logger.debug(notification.user.id)
-            logger.debug('hello')
             await self.channel_layer.group_send(
                 f"user_{notification.user.id}",
                 notification.to_group_send_format()
@@ -130,7 +120,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 'message': f'Friend request sent to {target_user.username}',
                 'success': True
             }))
-            logger.debug('send_friend_request end')
 
         except ObjectDoesNotExist as e:
             await self.send(text_data=json.dumps({
@@ -147,7 +136,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _send_friend_request_and_create_notification(self, target_user_id):
-        logger.debug('_send_friend_request_and_create_notification debut')
         target_user = CustomUser.objects.get(id=target_user_id)
         if target_user is None:
             raise ObjectDoesNotExist("Target user does not exist")

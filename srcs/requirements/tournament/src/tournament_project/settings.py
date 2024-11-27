@@ -211,10 +211,10 @@ LOGGING = {
             'level': 'WARNING',  # Change to 'ERROR' or 'CRITICAL' if needed
             'propagate': False,
         },
-        'http_protocol': {
-            'handlers': ['console'],
-            'level': 'WARNING',  # Suppress detailed HTTP request logs
-            'propagate': False,
-        },
+        #'http_protocol': {
+        #    'handlers': ['console'],
+        #    'level': 'WARNING',  # Suppress detailed HTTP request logs
+        #    'propagate': False,
+        #},
     },
 }

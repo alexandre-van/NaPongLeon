@@ -34,7 +34,7 @@ async def OAuth42CallbackView(request):
         code = request.GET.get('code')
         '''
         state_token = request.GET.get('state')
-        logger.debug(f"OAuth42CallBack\ncode: {code}\n")
+        (f"OAuth42CallBack\ncode: {code}\n")
         if not code or not state_token:
             return HttpResponseJD('No code or state token provided', 400)
 
@@ -54,19 +54,14 @@ async def OAuth42CallbackView(request):
             from django.middleware.csrf import get_token
             from rest_framework_simplejwt.tokens import RefreshToken
 
-            logger.debug('0\n')
             access_token = await service.exchange_code_for_token(code)
 
-            logger.debug(f'1 access_token: {access_token}\n')
             user_data = await service.get_user_data(access_token)
 
-            logger.debug('2\n')
             user = await service.get_or_create_user(user_data)
 
-            logger.debug('3\n')
             refresh = await database_sync_to_async(RefreshToken.for_user)(user)
 
-            logger.debug('4\n')
             response = HttpResponseRedirectJD(
                 message='Login successful',
                 redirect_url='/login/success',
@@ -78,7 +73,7 @@ async def OAuth42CallbackView(request):
                 httponly=True,
                 secure=False,  # True for production
                 samesite='Strict',
-                max_age=60 * 60
+                max_age=2 * 60 * 60
             )
             response.set_cookie(
                 'refresh_token',
@@ -101,6 +96,6 @@ async def OAuth42CallbackView(request):
             return response
 
     except Exception as e:
-        logger.debug(f"Could not get or create user via 42: {str(e)}")
+        (f"Could not get or create user via 42: {str(e)}")
         return HttpResponseJDexception('Could not get or create user via 42')
 

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const CreateGameButton = ({ gameMode, modifiers }) => {
 	const [loading, setLoading] = useState(false);
 	const [errorMessage, setErrorMessage] = useState(null);
+	const { user, getAvatarUrl } = useUser();
 
 	const handlePlayButton = async () => {
 		try {
@@ -14,8 +16,8 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
 			const game_params = {
 				'gameMode': 'PONG_CLASSIC',
 				'modifiers': mods,
-				'playersList': ['ai'],
-				'teamsList': [['ai'],[]],
+				'playersList': [user.username],
+				'teamsList': [[user.username],[]],
 				'ia_authorizes': true
 			};
 			const response = await api.post('/game_manager/create_game/', game_params)
@@ -44,7 +46,6 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
 			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
 			iframe.style.border = "none";           // Supprimer les bordures
 			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
-			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
 
 			// Supprimer l'ancienne iframe s'il en existe une
 			const existingIframe = document.querySelector('#gameFrame');

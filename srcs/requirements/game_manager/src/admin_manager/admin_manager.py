@@ -139,6 +139,7 @@ class AdminManager:
 		with transaction.atomic():
 			for team in teams:
 				for player in teams[team]:
+					logger.debug(f"{player}")
 					game_instance.add_player_to_team(player, team)
 
 	def update_score(self, game_id, team, score):

@@ -18,7 +18,7 @@ async def create_login_response(user, request):
         httponly=True,
         secure=False,  # True for production
         samesite='Strict',
-        max_age=60 * 60
+        max_age=2 * 60 * 60
     )
     response.set_cookie(
         'refresh_token',
@@ -37,7 +37,7 @@ async def create_login_response(user, request):
         samesite='Strict'
     )
     response['X-CSRFToken'] = csrf_token
-    logger.debug(f"\n\n\n\n\nCREATE_LOGIN_RESPONSE\nresponse={response}")
+    (f"\n\n\n\n\nCREATE_LOGIN_RESPONSE\nresponse={response}")
     return response
 
 

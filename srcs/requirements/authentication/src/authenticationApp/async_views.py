@@ -23,7 +23,6 @@ async def LoginView(request):
         username = data.get('username')
         password = data.get('password')
         totp_token = data.get('totpToken') # Optional 2FA token
-        logger.debug(f'data:{data}')
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
 
@@ -37,10 +36,8 @@ async def LoginView(request):
     if not has_2fa:
         return await create_login_response(user, request)
 
-    logger.debug(f'totp_token={totp_token}')
     # If 2FA enabled but no token provided
     if not totp_token:
-        logger.debug('not totp_token')
         return HttpResponseJD('2FA token required', 403, {'requires_2fa': True})
 
     is_valid = await validate_totp(user, totp_token)
@@ -124,8 +121,6 @@ async def LogoutView(request):
 
 
 async def UserNicknameView(request):
-    logger.debug(f"request:{request}")
-    logger.debug(f"request.user:{request.user}")
     if request.method != 'PATCH':
         return HttpResponseJD('Method not allowed', 405)
 
@@ -136,8 +131,6 @@ async def UserNicknameView(request):
         return HttpResponseBadRequestJD('Invalid JSON')
 
     user = request.user
-    logger.debug(f"user:{user}")
-    logger.debug(f"user.is_authenticated ={user.is_authenticated}")
     if user.is_authenticated:
         await user.update_nickname(nickname)
         data = {
@@ -153,13 +146,11 @@ async def UserAvatarView(request):
     user = request.user
     if request.method == 'GET':
         if user.avatar:
-            logger.debug(f"Avatar_url: {user.avatar.url}")
             data = {
                 'avatar_url': user.avatar.url
             }
             return HttpResponseJD('Avatar found', 200, data)
         else:
-            logger.debug("No avatar found")
             return HttpResponseJD('No avatar found', 404)
     elif request.method == 'POST':
         if 'avatar' not in request.FILES:
@@ -318,7 +309,6 @@ async def FriendsView(request):
 async def NotificationsView(request):
     from .models import Notification
 
-    logger.debug(f"request.method: {request.method}")
     user = await sync_to_async(lambda: request.user)()
     if request.method == "GET":
         notifications = await Notification.get_all_received_notifications(user)
@@ -326,7 +316,6 @@ async def NotificationsView(request):
         for notification in notifications:
             notification['created_at'] = notification['created_at'].isoformat()
 
-        logger.debug(f"notifications={notifications}")
         response = HttpResponseJD('Notifications', 200, notifications)
         return response
 
@@ -357,7 +346,6 @@ async def WebSocketTokenView(request):
     from rest_framework_simplejwt.tokens import AccessToken
 
     if request.method == "GET":
-        logger.debug(f"\n\n\n WEBSOCKETTOKENVIEW request.user={request.user}")
         token = AccessToken.for_user(request.user)
         #return Response({'token': str(token)})
         return HttpResponseJD('Access Token provided', 200, { 'token': str(token) })

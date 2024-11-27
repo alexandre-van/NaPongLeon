@@ -40,7 +40,7 @@ class AsyncOAuth42Service:
 
     async def _ensure_session(self):
         if not self._session:
-            logger.debug("Creating session in _ensure_session")
+            ("Creating session in _ensure_session")
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=30)
             )
@@ -57,7 +57,7 @@ class AsyncOAuth42Service:
         for attempt in range(max_retries):
             try:
                 async with self._semaphore:
-                    logger.debug(f"Making {method} request to {url} (attempt {attempt + 1})")
+                    (f"Making {method} request to {url} (attempt {attempt + 1})")
                     async with self._session.request(method, url, **kwargs) as response:
                         if response.status == 429:  # Rate limit
                             retry_after = int(response.headers.get('Retry_After', 5))
@@ -71,7 +71,7 @@ class AsyncOAuth42Service:
                             
                         response.raise_for_status()
                         data = await response.json()
-                        logger.debug(f"Request successful")
+                        (f"Request successful")
                         return data
             
             except aiohttp.ClientError as e:
@@ -98,9 +98,9 @@ class AsyncOAuth42Service:
                 
                 for key, value in data.items():
                     if key in ['code', 'client_id', 'client_secret']:
-                        logger.debug(f"{key}: {value[:10]}...")
+                        (f"{key}: {value[:10]}...")
                     else:
-                        logger.debug(f"{key}: {value}")
+                        (f"{key}: {value}")
 
                 return await self._make_42_api_request(
                     'POST',
@@ -131,7 +131,7 @@ class AsyncOAuth42Service:
                 'https://api.intra.42.fr/v2/me',
                 headers=headers
             )
-            logger.debug(f'get_user_data result= {result}')
+            (f'get_user_data result= {result}')
             if not result:
                 raise ValueError('No data received from API')
             
@@ -165,20 +165,20 @@ class AsyncOAuth42Service:
             user = await CustomUser.objects.filter(username=new_username).afirst()
 
             if user:
-                logger.debug(f"existing user: {user}")
+                (f"existing user: {user}")
             else:
                 user = await CustomUser.objects.acreate(
                     username=new_username,
                     password=make_password(uuid.uuid4().hex),
                     email=user_data['email']
                 )
-                logger.debug('CustomUser created')
+                ('CustomUser created')
 
                 if avatar_url := user_data.get('image', {}).get('link'):
                     avatar_content = await self.download_avatar(avatar_url)
                     filename = f"avatar_{user.id}.jpg"
                     filepath = f"users/{user.id}/avatar/{filename}"
-                    logger.debug('after avatar_url')
+                    ('after avatar_url')
                     new_path = await sync_to_async(default_storage.save)(filepath, avatar_content)
                     await user.update_avatar_url(new_path)
 
