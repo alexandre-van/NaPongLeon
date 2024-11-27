@@ -16,8 +16,8 @@ class Game:
         self.game_id = game_id
         self.players = {}
         self.food = []
-        self.map_width = 30000
-        self.map_height = 30000
+        self.map_width = 35000
+        self.map_height = 35000
         self.max_food = 2500
         self.player_inputs = {}
         self.player_movements = {}
