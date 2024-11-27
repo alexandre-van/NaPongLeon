@@ -20,12 +20,17 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		self.admin_id = None
 		self.username = username
 		self.can_be_disconnected = True
+		special_id = None
 		if len(segments) >= 4:
 			self.tournament_id = segments[3]
 		if len(segments) >= 6:
-			self.admin_id = segments[4]
-			logger.debug(f'admin_id = {self.admin_id}')
-			self.username = 'admin'
+			special_id = segments[4]
+			logger.debug(f'special_id = {special_id}')
+		if special_id:
+			self.username = tournament_manager.special_connection(special_id, self.tournament_id)
+			if not self.username:
+				self.username = 'admin'
+				self.admin_id = special_id
 		if not self.username and not self.admin_id:
 			logger.warning(f'An unauthorized connection has been received')
 			return

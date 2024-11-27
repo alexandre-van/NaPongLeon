@@ -5,14 +5,11 @@ from game_manager.game_manager import Game_manager
 from game_manager.models import GameInstance, Player
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
-from admin_manager.admin_manager import AdminManager
 from asgiref.sync import sync_to_async
 import uuid
 import asyncio
 import threading
 import copy
-import httpx
-import json
 
 class Matchmaking:
 	matchmaking_instance = None
@@ -30,18 +27,18 @@ class Matchmaking:
 
 	async def remove_player_request(self, username):
 		with self._queue_mutex:
-			await self.update_player_status(username, 'inactive')
+			await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 			future = await self._remove_player_request_in_queue(username)
 			future.set_result({'game_id': None})
 
 	async def add_player_request(self, username, game_mode, modifiers):
 		future = asyncio.Future()
-		status = await self.get_player_status(username)
+		status = await Game_manager.game_manager_instance.get_player_status(username)
 		if (status != 'inactive'):
 			logger.debug(f"Player {username} cannot join the matchmaking queue because their current status is '{status}'. Status must be 'inactive' to join.")
 			future.set_result({'game_id': None})
 			return future
-		await self.update_player_status(username, 'in_queue')
+		await Game_manager.game_manager_instance.update_player_status(username, 'in_queue')
 		with self._futures_mutex:
 				self._futures[username] = future
 		queue_name = self.generate_queue_name(game_mode, modifiers)
@@ -86,44 +83,6 @@ class Matchmaking:
 							del self._queue[queue]
 						break
 
-	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players):
-		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
-		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
-		logger.debug(f"send to {game_service_url}: {send}")
-		try:
-			async with httpx.AsyncClient() as client:
-				response = await client.post(game_service_url, json={
-					'gameId': game_id,
-					'adminId': admin_id,
-					'gameMode': game_mode,
-					'modifiers': modifiers,
-					'playersList': players
-				})
-			if response and response.status_code == 201 :
-				return True
-			else:
-				logger.debug(f'Error api request Game, response: {response}')
-		except httpx.RequestError as e:
-			logger.error(f"Authentication service error: {str(e)}")
-		return False
-
-	async def game_abort_notify(self, game_id, game_mode):
-		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_abort_game')
-		send = {'gameId': game_id}
-		logger.debug(f"send to {game_service_url}: {send}")
-		try:
-			async with httpx.AsyncClient() as client:
-				response = await client.post(game_service_url, json={
-					'gameId': game_id
-				})
-			if response and response.status_code == 204 :
-				return True
-			else:
-				logger.debug(f'Error api request Game, response: {response}')
-		except httpx.RequestError as e:
-			logger.error(f"Authentication service error: {str(e)}")
-		return False
-
 	async def notify(self, game_mode, modifiers, queue_selected):
 		logger.debug(f'New group for game_mode {game_mode}!')
 		game_id = str(uuid.uuid4())
@@ -134,9 +93,9 @@ class Matchmaking:
 		players_connected = False
 		# new game
 		if await self.check_futures(queue_selected):
-			game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players)
+			game_connected = await Game_manager.game_manager_instance.connect_to_game(game_id, admin_id, game_mode, modifiers, players)
 		if game_connected and await self.check_futures(queue_selected):
-			game = await self.create_new_game(game_id, game_mode, players)
+			game = await Game_manager.game_manager_instance.create_new_game_instance(game_id, game_mode, players)
 		if game and await self.check_futures(queue_selected):
 			players_connected = await self.send_result(game_id, queue_selected, game_mode)
 		await self.remove_disconnected_client(queue_selected, players_connected)
@@ -144,29 +103,11 @@ class Matchmaking:
 			return
 		# aborting
 		if game_connected:
-			await self.disconnect_to_game(game_id, game_mode)
+			await Game_manager.game_manager_instance.disconnect_to_game(game_id, game_mode)
 			logger.debug(f'Game service {game_id} aborted')
 		if game:
-			await self.abord_game_instance(game)
+			await Game_manager.game_manager_instance.abord_game_instance(game)
 			logger.debug(f'Game {game_id} aborted')
-
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players):
-		is_game_notified = await self.game_notify(game_id, admin_id, game_mode, modifiers, players)
-		if is_game_notified:
-			logger.debug(f'Game service {game_id} created with players: {players}')
-			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
-			return True
-		else:
-			return False
-
-	async def disconnect_to_game(self, game_id, game_mode):
-		is_game_notified = await self.game_abort_notify(game_id, game_mode)
-		if is_game_notified:
-			logger.debug(f'Game service {game_id} aborted')
-			return True
-		else:
-			logger.debug(f'Game serice {game_id} was not aborted')
-			return False
 
 	async def check_futures(self, queue_selected):
 		for player_request in queue_selected:
@@ -208,48 +149,7 @@ class Matchmaking:
 			await self._remove_player_request_in_queue(username)
 			logger.debug(f"{username} is removed")
 
-	async def create_new_game(self, game_id, game_mode, players):
-		game = await self.create_game_instance(game_id, game_mode, players)
-		if game:
-			for username in players:
-				await self.update_player_status(username, 'pending')
-			return game
-		else:
-			return None
-	
-	async def change_all_players_status(self, players, status):
-		for username in players:
-			await self.update_player_status(username, status)
-
-	@sync_to_async
-	def create_game_instance(self, game_id, game_mode, players):
-		with transaction.atomic():
-			game_instance = GameInstance.create_game(game_id, game_mode, players)
-			Game_manager.game_manager_instance.add_new_game(game_id)
-			return game_instance
-		return None
-
-	@sync_to_async
-	def get_player_status(self, username):
-		with transaction.atomic():
-			player = Player.get_or_create_player(username)
-			return player.status
-		return None
-
-	@sync_to_async
-	def update_player_status(self, username, status):
-		with transaction.atomic():
-			player = Player.get_or_create_player(username)
-			player.update_status(status)
-
-	@sync_to_async
-	def abord_game_instance(self, game):
-		with transaction.atomic():
-			game.abort_game()
-
-
 	# LOOP
-
 
 	async def matchmaking_loop(self):
 		logger.debug("matchmaking loop started")

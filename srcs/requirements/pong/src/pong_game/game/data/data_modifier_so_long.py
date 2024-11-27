@@ -30,7 +30,7 @@ arena_data = {
 	'wallWidth': 1,
 	'size': {
 		'x': 1,
-		'y': 1,
+		'y': 1.25,
         'z': 1
 	}
 }

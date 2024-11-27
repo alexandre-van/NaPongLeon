@@ -12,7 +12,7 @@ class Padel:
 		self.size = self.padel_data['size']
 		self.speed = self.padel_data['spd']
 		if game_mode == 'PONG_DUO':
-			self.size['y'] *= 0.5
+			self.size['y'] *= 0.625
 			self.speed *= 0.75
 		self.position['x'] *= 1 if self.player.side == 'right' else -1
 		self.destination = None

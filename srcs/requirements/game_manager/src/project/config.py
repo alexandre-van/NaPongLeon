@@ -51,11 +51,15 @@ for mode in game_mode_config.sections():
 		service_url_new_game = service_config['GAME_SERVICES_URL_NEW_GAME'][service_name]
 		service_url_abort_game = service_config['GAME_SERVICES_URL_ABORT_GAME'][service_name]
 		service_ws = service_config['GAME_SERVICES_WS'][service_name]
+		service_ai = None
+		if service_name in service_config['AI_SERVICES']:
+			service_ai = service_config['AI_SERVICES'][service_name]
 		GAME_MODES[mode] = {
 			'service_name': service_name,
 			'service_url_new_game': service_url_new_game,
 			'service_url_abort_game': service_url_abort_game,
 			'service_ws': service_ws,
+			'service_ai': service_ws,
 			'number_of_players': number_of_players,
 			'team_names': team_names,
 			'team_size': team_size,

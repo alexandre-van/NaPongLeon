@@ -20,7 +20,8 @@ def newtournament(request):
 			game_mode = game_mode.removesuffix("_TOURNAMENT")
 			modifiers = data.get('modifiers')
 			players_list = data.get('playersList')
-			if tournament_manager.add_tournaments_room(tournament_id, admin_id, game_mode, modifiers, players_list) is None:
+			special_id = data.get('special_id')
+			if tournament_manager.add_tournaments_room(tournament_id, admin_id, game_mode, modifiers, players_list, special_id) is None:
 				return JsonResponse({'error': 'Invalid tournament mode'}, status=406)
 			logger.debug(f"Reçu: tournamentId={tournament_id}, adminId={admin_id}, game_mode={game_mode}, playersList={players_list}")
 			return JsonResponse({'status': 'success'}, status=201)

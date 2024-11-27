@@ -12,7 +12,7 @@ class game_manager:
 		]
 		logger.debug("\ngame_manager initialised\n")
 
-	def add_games_room(self, game_id, admin_id, game_mode, modifiers, players_list):
+	def add_games_room(self, game_id, admin_id, game_mode, modifiers, players_list, special_id=None):
 		if (game_mode not in game_modes):
 			logger.debug(f"Error: Wrong game_mode: {game_mode}")
 			return None
@@ -30,9 +30,26 @@ class game_manager:
 			'expected_players': players_list,
 			'players': {},
 			'spectator': {},
+			'special_id': special_id,
 			'game_instance': None
 		}
 		return self.games_room[game_id]
+
+	def special_connection(self, special_id, game_id):
+		if game_id not in self.games_room:
+			return None
+		room = self.games_room[game_id]
+		if not room['special_id']:
+			return None
+		for ids in room['special_id']:
+			private_id = ids.get('private')
+			if private_id == special_id:
+				public_id = ids.get('public')
+				if public_id:
+					return public_id
+				else:
+					return None
+		return None
 
 	def add_user(self, username, consumer, game_id):
 		if game_id not in self.games_room:

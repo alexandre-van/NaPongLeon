@@ -1,45 +1,14 @@
-import PlayButton from '../components/PlayButton.js';
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import CreateGameButton from '../components/CreateGameButton';
 
 export default function PongPage() {
-    const [modifiers, setModifiers] = useState([]);
-
-    const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
-
-    // Gérer la sélection des modificateurs
-    const handleModifierChange = (modifier) => {
-        setModifiers((prevModifiers) =>
-            prevModifiers.includes(modifier)
-                ? prevModifiers.filter((mod) => mod !== modifier)
-                : [...prevModifiers, modifier]
-        );
-    };
-
     return (
-        <div style={{ textAlign: "center" }}>
-            <h2>Choose Modifiers:</h2>
-            <ul style={{ listStyleType: "none", padding: 0 }}>
-                {availableModifiers.map((modifier) => (
-                    <li key={modifier}>
-                        <label>
-                            <input
-                                type="checkbox"
-                                value={modifier}
-                                onChange={() => handleModifierChange(modifier)}
-                            />
-                            {modifier}
-                        </label>
-                    </li>
-                ))}
-            </ul>
-
-            <h2>Join a matchmaking queue</h2>
-            <PlayButton gameMode="PONG_CLASSIC" modifiers={modifiers} />
-            <PlayButton gameMode="PONG_DUO" modifiers={modifiers} />
-            <h2>TOURNAMENT</h2>
-            <h2>Join a matchmaking queue</h2>
-            <PlayButton gameMode="PONG_CLASSIC_TOURNAMENT" modifiers={modifiers} />
-            <PlayButton gameMode="PONG_DUO_TOURNAMENT" modifiers={modifiers} />
-        </div>
+      <div>
+        <Link to="/ai-pong"><button className="play-button-mode btn btn-outline-warning" type="button">SOLO-AI</button></Link>
+        <Link to="/solo-mode"><button className="play-button-mode btn btn-outline-warning" type="button">1 VS 1</button></Link>
+        <Link to="/duo-mode"><button className="play-button-mode btn btn-outline-warning" type="button">2 VS 2</button></Link>
+        <Link to="/classic-tournament"><button className="play-button-mode btn btn-outline-warning" type="button">Solo Tournament</button></Link>
+        <Link to="/duo-tournament"><button className="play-button-mode btn btn-outline-warning" type="button">Duo Tournament</button></Link>
+      </div>
     );
 }

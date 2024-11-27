@@ -164,7 +164,7 @@ class AdminManager:
 
 	def update_user_status(self, username, status):
 		with transaction.atomic():
-			player = Player.get_or_create_player(username)
+			player = Player.get_player(username)
 			if player:
 				player.update_status(status)		
 
