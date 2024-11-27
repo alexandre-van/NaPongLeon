@@ -19,20 +19,35 @@ export function initScene() {
         frustumSize / -2,
         0.1,
         1000
-    );
-    // const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 20000);
+        );
+        // const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 20000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        createMapBorders(scene);
+        createGrid();
+        camera.position.set(0, 0, 200);
+        camera.lookAt(0, 0, 0);
+        return { scene, camera, renderer };
+    }
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    createMapBorders(scene);
-    createGrid();
-    camera.position.set(0, 0, 500);
-    camera.lookAt(0, 0, 0);
-    return { scene, camera, renderer };
-}
-
-export function render(scene, camera, renderer) {
+    export function createGrid() {
+        const gridSize = mapHeight; // Taille totale de la grille
+        const divisions = mapHeight / 200; // Nombre de divisions
+        const gridHelper = new THREE.GridHelper(gridSize, divisions, 0x444444, 0x222222);
+        
+        // Rotation pour que la grille soit horizontale (X-Z plane)
+        gridHelper.rotation.x = Math.PI / 2;
+        
+        // Position de la grille au centre de la scène
+        gridHelper.position.set(gridSize/2, gridSize/2, -1);
+        gridHelper.renderOrder = 0;
+        
+        scene.add(gridHelper);
+    }
+    
+    export function render(scene, camera, renderer) {
     renderer.render(scene, camera);
 }
 
@@ -51,12 +66,11 @@ export function createMapBorders(scene) {
 
 export function updateCameraPosition(camera, player) {
     if (player && player.x !== undefined && player.y !== undefined) {
-        camera.position.set(player.x, player.y, camera.position.z);
+        camera.position.set(player.x, player.y, 200);
         camera.lookAt(player.x, player.y, 0);
     }
-    
     targetZoom = 1 + (player.size / 100);
-    
+
     // currentZoom += (targetZoom - currentZoom) * ZOOM_SMOOTHING;
     // Limiter la vitesse maximale de changement de zoom
     const maxZoomChange = 0.1;
@@ -64,7 +78,7 @@ export function updateCameraPosition(camera, player) {
     const clampedZoomDelta = Math.max(-maxZoomChange, Math.min(maxZoomChange, zoomDelta));
     currentZoom += clampedZoomDelta;
 
-    const frustumSize = 1000 * currentZoom;
+    const frustumSize = 800 * currentZoom;
     const aspect = window.innerWidth / window.innerHeight;
     
     camera.left = frustumSize * aspect / -2;
@@ -77,19 +91,4 @@ export function updateCameraPosition(camera, player) {
 
 export function getScene() {
     return scene;
-}
-
-export function createGrid() {
-    const gridSize = mapHeight; // Taille totale de la grille
-    const divisions = mapHeight / 200; // Nombre de divisions
-    const gridHelper = new THREE.GridHelper(gridSize, divisions, 0x444444, 0x222222);
-    
-    // Rotation pour que la grille soit horizontale (X-Z plane)
-    gridHelper.rotation.x = Math.PI / 2;
-    
-    // Position de la grille au centre de la scène
-    gridHelper.position.set(gridSize/2, gridSize/2, -1);
-    gridHelper.renderOrder = 0;
-    
-    scene.add(gridHelper);
 }
