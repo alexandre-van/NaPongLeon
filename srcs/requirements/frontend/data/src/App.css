@@ -89,3 +89,44 @@ Form {
   margin-top: 200px;
   margin-left: 30px;
 }
+
+.arrow {
+  width: 150px;
+  transform: rotate(180deg);
+  margin-bottom: 1px;
+  position: relative;
+  margin: 0px;
+  padding: 0px;
+  position: fixed; /* Garde l'image à la même position même quand on scrolle */
+  bottom: 0;       /* Positionne l'image à 0 pixels du bas */
+  left: 0;         /* Positionne l'image à 0 pixels de la gauche */
+  margin-left: 80px;
+  margin-bottom: 5px;
+  height: auto;
+}
+
+.vid {
+  width:400px;
+  padding-top: 20px;
+}
+
+li{
+  display: inline-block;
+  padding-left: 30px;
+  font-size: 25px;
+  padding-top: 50px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.play-button{
+  font-size: 60px;
+  
+}
+
+.title-modes{
+  text-shadow: #FC0 1px 0 3px;
+  letter-spacing: 1px;
+  font-size: 70px;
+  font-weight: bold;
+}
