@@ -120,12 +120,11 @@ class GameInstance(models.Model):
 		game_score.save()
 
 	def add_player_to_team(self, player_username, team_name):
-		player = Player.objects.get(username=player_username)  # Fetch the player instance by username
-		game_player, created = GamePlayer.objects.get_or_create(game=self, player=player, team_name=team_name)
-		if not created:
-			logger.debug(f"Player {player.username} is already part of the game {self.game_id}.")
-
-
+		player = Player.get_player(player_username)
+		if player:
+			game_player, created = GamePlayer.objects.get_or_create(game=self, player=player, team_name=team_name)
+			if not created:
+				logger.debug(f"Player {player.username} is already part of the game {self.game_id}.")
 
 	def clean(self):
 		"""Validation pour l'unicité des usernames."""
