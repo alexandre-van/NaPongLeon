@@ -16,12 +16,12 @@ class Game:
         self.game_id = game_id
         self.players = {}
         self.food = []
-        self.map_width = 20000
-        self.map_height = 20000
+        self.map_width = 30000
+        self.map_height = 30000
         self.max_food = 2500
         self.player_inputs = {}
         self.player_movements = {}
-        self.PLAYER_SPEED = 900
+        self.PLAYER_SPEED = 700
         self.status = "custom"
         self.game_loop_task = None
         self.initialize_food()

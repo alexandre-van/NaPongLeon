@@ -57,7 +57,7 @@ export function updateMinimap() {
         const y = ((mapHeight - player.y) / mapHeight) * minimapSize;//Inverser l'axe Y
         minimapCtx.fillStyle = 'red';
         minimapCtx.beginPath();
-        minimapCtx.arc(x, y, 3, 0, 2 * Math.PI);
+        minimapCtx.arc(x, y, 4, 0, 2 * Math.PI);
         minimapCtx.fill();
     }
 
@@ -69,7 +69,7 @@ export function updateMinimap() {
             if (f.type === 'epic') {
                 minimapCtx.fillStyle = f.color;
                 minimapCtx.beginPath();
-                minimapCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                minimapCtx.arc(x, y, 2, 0, 2 * Math.PI);
                 minimapCtx.fill();
             } else {
                 minimapCtx.fillStyle = f.type === 'rare' ? f.color : 'green';

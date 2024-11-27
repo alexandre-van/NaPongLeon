@@ -9,7 +9,7 @@ logger = setup_logger()
 
 class GameConsumer(AsyncWebsocketConsumer):
 	players = {}  # {player_id: websocket}
-	active_games = {}  # {game_id: Game}
+	active_games = {}  # {game_id: Game()}
 	player_count = 0
 
 	def __init__(self, *args, **kwargs):
