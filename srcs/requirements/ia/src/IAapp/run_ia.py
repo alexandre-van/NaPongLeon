@@ -5,8 +5,10 @@ from .logger import logger
 
 def run_ia(data):
     game_id = data['game_id']
-    ai_id = data['ai_id']
+    ai_id = data['ai_id']['private']
+    
     logger.debug(f"RUN IA : {data}")
+    logger.debug(f"ai_id : {ai_id}")
     host = 'pong'  # Ou l'adresse IP de votre serveur
     port = '8000'       # Changez le port si nécessaire
     websocket_url = f"ws://{host}:{port}/ws/pong/{game_id}/{ai_id}/"
