@@ -207,8 +207,8 @@ class IA:
 			if current_time - self.last_padel_contact > self.message_cooldown:
 				self.last_padel_contact = current_time
 				logger.debug(f"Contact avec la raquette! {data}")
-    # {'type': 'padel_contact', 'bp': {'x': 36.94063198566437, 'y': 14.824042147310093, 'z': 1}, 
-    # 'bs': {'x': -52.5, 'y': 20}, 'pp': {'p1': 1.6901135444641113, 'p2': 15.954616069793701}}
+	# {'type': 'padel_contact', 'bp': {'x': 36.94063198566437, 'y': 14.824042147310093, 'z': 1}, 
+	# 'bs': {'x': -52.5, 'y': 20}, 'pp': {'p1': 1.6901135444641113, 'p2': 15.954616069793701}}
 				self.paddle_hit = True
 				self.ball_pos = data['bp']
 				self.paddle_pos = data['pp']
@@ -256,8 +256,11 @@ class IA:
 	def on_error(self, ws, error):
 		logger.debug(f"Erreur BELLLE: {error}")
 
-	def on_close(self, ws):
-		logger.debug("Connexion WebSocket fermée.")
+	def on_close(self, ws, close_status_code, close_msg):
+		logger.debug(
+			f"Connexion WebSocket fermée. "
+			f"Code : {close_status_code}, Message : {close_msg}"
+		)
 
 	def on_open(self, ws):
 		logger.debug("Connexion WebSocket établie.")
