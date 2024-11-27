@@ -47,7 +47,7 @@ class IA:
 		"""
 		Rentre toutes les constantes du terrain
 		"""
-		logger.debug(data['padel'])
+		logger.debug(f"PADEL{data['padel']}")
 		padel = data['padel']
   
 		self.paddle_speed = padel['spd']
@@ -181,7 +181,6 @@ class IA:
 		data = json.loads(message)
 		if data['type'] == 'waiting_room':
 			logger.debug("En attente d'un adversaire...")
-			self.player = 'p1'
 		elif data['type'] == 'export_data':
 			logger.debug(f":::{data}")
 			data = data['data']
@@ -189,6 +188,7 @@ class IA:
 				self.player = 'p1'
 			else:
 				self.player = 'p2'
+			logger.debug(f"Joueur : {self.player}")
 			self.parsing(data)
 			ws.send(json.dumps({
 			'type': 'ready',
