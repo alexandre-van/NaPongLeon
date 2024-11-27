@@ -17,7 +17,6 @@ export default function HomePage({ isAuthenticated }) {
 
 function AuthenticatedHomePage() {
 
-
   return (
     <div className="backgroundpage">
       <h1 className="title-home">Welcome to Napongleon</h1>
