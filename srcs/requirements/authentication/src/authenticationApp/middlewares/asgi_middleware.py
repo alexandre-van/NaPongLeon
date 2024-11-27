@@ -194,7 +194,6 @@ class AsyncJWTAuthMiddleware:
         self.auth = CustomJWTAuthentication()
 
     async def __call__(self, scope, receive, send):
-        logger.debug('\n\nAsyncJWTAuthMiddleware\n\n')
         headers = dict(scope['headers'])
         if b'cookie' not in headers:
             scope['user'] = AnonymousUser()
@@ -211,9 +210,6 @@ class AsyncJWTAuthMiddleware:
 
             access_token = request.COOKIES.get('access_token')
             refresh_token = request.COOKIES.get('refresh_token')
-
-            logger.debug(f"access_token: {access_token}")
-            logger.debug(f"refresh_token: {refresh_token}")
 
             # D'abord essayer l'access_token existant
             if access_token or refresh_token:
@@ -233,7 +229,6 @@ class AsyncJWTAuthMiddleware:
                             request.COOKIES['access_token'] = scope['access_token']
                             user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                             scope['user'] = user
-                            logger.debug(f"Successfully refreshed token for user {user}")
                         except Exception as refresh_error:
                             logger.warning(f"Refresh token validation failed: {str(refresh_error)}")
                             scope['user'] = AnonymousUser()

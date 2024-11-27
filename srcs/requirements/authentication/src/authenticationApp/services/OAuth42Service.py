@@ -131,7 +131,6 @@ class AsyncOAuth42Service:
                 'https://api.intra.42.fr/v2/me',
                 headers=headers
             )
-            logger.debug(f'get_user_data result= {result}')
             if not result:
                 raise ValueError('No data received from API')
             
