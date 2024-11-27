@@ -1,7 +1,7 @@
 
 const host = window.location.hostname;
 const port = window.location.port;
-const gameId = new URLSearchParams(window.location.search).get('gameId');
+const tournamentId = new URLSearchParams(window.location.search).get('gameId');
 const socket = new WebSocket(`ws://${host}:${port}/ws/tournament/${gameId}/`);
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
@@ -22,9 +22,10 @@ socket.onmessage = function(event) {
 			console.log("Waiting for an opponent to join...");
 			break;
 		case "export_data":
-			console.log("Game created! \nGame ID :", gameId);
+			console.log("Game created! \Tournament ID :", tournamentId);
+			ws.send(JSON.stringify({type: 'ready'}));
 			break;
-		case "tournament_end":
+		case "tournament_start":
 			console.log("Tournament started!");
 			break;
 		case "tournament_end":

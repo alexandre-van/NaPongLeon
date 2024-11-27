@@ -1,6 +1,6 @@
 from .utils.logger import logger
 from .data import game_modes
-from .tournament import Tournament
+from .tournament.tournament import Tournament
 import uuid
 import copy
 
