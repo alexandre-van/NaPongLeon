@@ -25,7 +25,7 @@ class Game_manager:
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 20,
+			'waiting': 60,
 			'loading' : 60,
 			'in_progress': 3600
 		}
@@ -168,7 +168,7 @@ class Game_manager:
 			else:
 				logger.debug(f'Error api request Game, response: {response}')
 		except httpx.RequestError as e:
-			logger.error(f"Authentication service error: {str(e)}")
+			logger.error(f"Game service error: {str(e)}")
 		return False
 
 	async def game_abort_notify(self, game_id, game_mode):
@@ -185,7 +185,7 @@ class Game_manager:
 			else:
 				logger.debug(f'Error api request Game, response: {response}')
 		except httpx.RequestError as e:
-			logger.error(f"Authentication service error: {str(e)}")
+			logger.error(f"Game service error: {str(e)}")
 		return False
 
 	# game connection

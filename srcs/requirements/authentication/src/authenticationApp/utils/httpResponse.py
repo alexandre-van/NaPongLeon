@@ -20,7 +20,7 @@ def HttpResponseJD(message, status, additionnal_data=None):
         status=status,
         content_type='application/json'
     )
-    logger.debug(f"HttpResponseJD = {response}")
+    (f"HttpResponseJD = {response}")
     return response
 
 
@@ -37,7 +37,7 @@ def HttpResponseRedirectJD(message, status, redirect_url, additionnal_data=None)
         httponly=True,
         samesite='Strict'
     )
-    logger.debug(f"HttpResponseRedirectJD = {response}")
+    (f"HttpResponseRedirectJD = {response}")
     return response
 
 def HttpResponseBadRequestJD(errorMessage):

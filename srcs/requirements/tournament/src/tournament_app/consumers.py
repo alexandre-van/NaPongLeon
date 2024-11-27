@@ -85,7 +85,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			await self.channel_layer.group_add(self.tournament_id, self.room['spectator'][spectator].channel_name)
 		await self.send_tournament_status(admin['id'], self.tournament_id, 'loading')
 		tournament_data = self.room['tournament_instance'].export_data()
-		await self.send_export_teams(admin['id'], tournament_data['teams'])
+		#await self.send_export_teams(admin['id'], tournament_data['teams'])
 		await self.send_export_data(self.tournament_id, tournament_data)
 		logger.debug(f'Export data')
 
@@ -334,7 +334,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		for group in groups:
 			if group:  # S'assurer que le nom du groupe est valide
 				try:
-					logger.debug(f"Sending message to group: {group}\nmessage: {message}")
+					logger.debug(f"Sending message to group: {group} || message: {message}")
 					await self.channel_layer.group_send(
 						group, {
 							'type': 'send_state',

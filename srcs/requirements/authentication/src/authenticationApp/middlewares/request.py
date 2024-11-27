@@ -8,15 +8,15 @@ class DjangoUserMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-#        logger.debug(f"DjangoUserMiddleware: request={request}")
+#        (f"DjangoUserMiddleware: request={request}")
         asgi_user = request.META.get('HTTP_ASGI_USER')
- #       logger.debug(f"DjangoUserMiddleware: request.META={request.META}\nasgi_user={asgi_user}")
+ #       (f"DjangoUserMiddleware: request.META={request.META}\nasgi_user={asgi_user}")
         if asgi_user:
             try:
                 request.user = CustomUser.objects.get(username=asgi_user)
-                logger.debug(f"request.user={request.user}")
+                (f"request.user={request.user}")
             except CustomUser.DoesNotExist:
                 pass
         response = self.get_response(request)
-  #      logger.debug(f"DjangoUserMiddleware: response={response}")
+  #      (f"DjangoUserMiddleware: response={response}")
         return response

@@ -59,7 +59,7 @@ class TokenRefreshView(APIView):
                 httponly=True,
                 secure=False,
                 samesite='Strict',
-                max_age=60 * 60
+                max_age=2 * 60 * 60
             )
             return response
         except TokenError:

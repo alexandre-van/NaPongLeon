@@ -10,7 +10,7 @@ class Tournament_manager:
 		self.status_list = [
 			'waiting', 'startup', 'loading', 'running', 'aborted', 'finished'
 		]
-		logger.debug("\ntournament_manager initialised\n")
+		logger.debug("\n\ntournament_manager initialised\n\n")
 
 	def add_tournaments_room(self, tournament_id, admin_id, game_mode, modifiers, players_list, special_id):
 		if (game_mode not in game_modes):
@@ -68,7 +68,7 @@ class Tournament_manager:
 		game_mode = room['game_mode']
 		modifiers = room['modifiers']
 		if room['status'] == 'waiting'\
-			and len(room['players']) is game_modes[game_mode]['players']:
+			and len(room['players']) is game_modes[game_mode]['players'] * 4:
 			logger.debug('player start the tournament')
 			room['status'] = 'startup'
 			new_tournament = Tournament(room['players'], game_mode, modifiers)
