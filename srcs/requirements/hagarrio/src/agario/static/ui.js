@@ -24,13 +24,20 @@ export function updateUI() {
 export function updateScoreboard() {
     const scoreboard = document.getElementById('scoreboard');
     const players = getPlayers();
+    const myPlayerId = getMyPlayerId();
     const sortedPlayers = Object.values(players).sort((a, b) => b.score - a.score);
+    
     let scoreboardHTML = '<h3>Scoreboard</h3>';
     scoreboardHTML += '<table><tr><th>Name</th><th>Score</th></tr>';
+    
     sortedPlayers.forEach(player => {
         const displayName = player.name.length > 10 ? player.name.substring(0, 10) + '...' : player.name;
-        scoreboardHTML += `<tr><td> ${displayName} </td><td> ${player.score} </td></tr>`;
+        const isCurrentPlayer = player.id === myPlayerId;
+        const rowStyle = isCurrentPlayer ? 'style="color: #00BFFF;"' : 'style="color: white;"';
+        
+        scoreboardHTML += `<tr ${rowStyle}><td>${displayName}</td><td>${player.score}</td></tr>`;
     });
+    
     scoreboardHTML += '</table>';
     scoreboard.innerHTML = scoreboardHTML;
 }
