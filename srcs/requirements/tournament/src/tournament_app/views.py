@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from .tournament_manager import tournament_manager
+from .tournament_manager.tournament_manager import tournament_manager
 from .utils.logger import logger
 import json
 
