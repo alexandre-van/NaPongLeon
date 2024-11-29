@@ -1,11 +1,12 @@
-from ..utils.logger import logger
-from ..tournament_manager.data import game_modes_data
-from .data import modifiers_data
-from .team import Team
-from .tree import Tree
-from .player import Player
+#from ..utils.logger import logger
+#from ..tournament_manager.data import game_modes_data
+from data import modifiers_data
+from team import Team
+from tree import Tree
+from player import Player
 import random
-import copy
+#todoremove
+from data import game_modes_data
 
 class Tournament:
 	def __init__(self, players_dict, game_mode, modifiers_list):
@@ -35,7 +36,7 @@ class Tournament:
 	# init
 
 	def init_players(self, players_dict):
-		logger.debug("Player init")
+		print("Player init")
 		usernames = list(players_dict.keys())
 		random.shuffle(usernames)
 		players = {username: players_dict[username] for username in usernames}
@@ -44,7 +45,7 @@ class Tournament:
 		return players
 
 	def init_teams(self):
-		logger.debug("Team distrib")
+		print("Team distrib")
 		teams = []
 		teams_distrib = []
 		i_distrib = 0
@@ -54,7 +55,6 @@ class Tournament:
 			if i_distrib >= nb_of_players / team_size:
 				i_distrib = 0
 			if len(teams_distrib) <= i_distrib:
-				logger.debug(f"{username} -> {i_distrib}")
 				teams_distrib.append([])
 			if len (teams_distrib[i_distrib]) < team_size:
 				teams_distrib[i_distrib].append(self.players[username])
@@ -63,11 +63,13 @@ class Tournament:
 			teams.append(Team(team_distrib))
 		return teams
 	
-	def init_modifers(modifiers_list):
+	def init_modifers(self, modifiers_list):
 		modifiers = {
 			'tournament': [],
 			'game': []
 		}
+		if not modifiers_list:
+			return modifiers
 		for mod in modifiers_list:
 			if mod in modifiers_data:
 				modifiers_data['tournament'].append(mod)
