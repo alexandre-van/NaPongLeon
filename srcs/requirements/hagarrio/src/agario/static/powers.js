@@ -76,3 +76,7 @@ export function displayPowerUpEffect(powerUp) {
         effectDiv.remove();
     }, 2000);
 }
+
+export function getPowerUps() {
+    return Array.from(powerUps.values());
+}
