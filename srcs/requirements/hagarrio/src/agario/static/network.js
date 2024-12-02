@@ -66,7 +66,7 @@ function connectWebSocket() {
                 case 'food_update':
                     // console.log('FOOD_UPDATE:', data);
                     updateFood(data.food);
-                    // updatePlayers(data.players, data.yourPlayerId);
+                    updatePlayers(data.players, data.yourPlayerId);
                     break;
                 case 'players_update':
                     // console.log('PLAYERS_UPDATE:', data);
