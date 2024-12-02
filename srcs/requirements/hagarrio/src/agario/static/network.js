@@ -2,7 +2,7 @@ import { updatePlayers, removePlayer } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
 import { updateGameInfo } from './utils.js';
-import { updatePowerUps } from './powers.js';
+import { updatePowerUps, displayPowerUpEffect } from './powers.js';
 
 let socket;
 
