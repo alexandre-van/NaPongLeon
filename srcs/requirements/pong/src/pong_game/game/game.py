@@ -53,8 +53,8 @@ class Game:
 			'type': type, #game update
 			'bp': self.ball.position,
 			'bs': {
-				'x': self.ball.speed['x'] * self.ball.direction['x'],
-				'y': self.ball.speed['y'] * self.ball.direction['y']
+				'x': self.ball.normalize_speed()['x'] * self.ball.direction['x'],
+				'y': self.ball.normalize_speed()['y'] * self.ball.direction['y']
 			},
 			'pp': self.export_padels_position()
 		}
