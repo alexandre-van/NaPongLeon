@@ -7,7 +7,6 @@ class IA:
 	def __init__(self, ia_id):
 		# info sur la balle
 		self.ball_pos = {'x': 0, 'y': 0, 'z': 1}
-		self.previous_ball_pos = None
 		self.paddle_pos = {'p1': 0.0, 'p2': 0.0}
 		self.is_moving_up = False
 		self.is_moving_down = False
@@ -229,7 +228,6 @@ class IA:
 		elif data['type'] == 'scored':
 			logger.debug(data['msg'])
 			# Réinitialiser les données de prédiction après un point
-			self.previous_ball_pos = None
 			self.ball_velocity = {'x': 0, 'y': 0}
 			self.optimal_paddle_position = 0
 			self.paddle_hit = False
