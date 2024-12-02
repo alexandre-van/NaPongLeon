@@ -4,7 +4,7 @@ import { updatePlayers, getMyPlayerId, getPlayers } from './player.js';
 import { initFood } from './food.js';
 import { initNetwork, startGame } from './network.js';
 import { initInput } from './input.js';
-import { updateUI } from './ui.js';
+import { initUI, updateUI } from './ui.js';
 import { throttle } from './utils.js';
 
 let scene, camera, renderer;
@@ -29,10 +29,9 @@ export function startGameLoop(initialGameState) {
     max_food = initialGameState.maxFood;
     ({ scene, camera, renderer } = initScene());
     initFood(initialGameState.food);
-    updateUI();
+    initUI();
     initInput();
     updatePlayers(initialGameState.players, initialGameState.yourPlayerId);
-
     function gameLoop() {
         requestAnimationFrame(gameLoop);
         const myPlayer = getPlayers()[getMyPlayerId()];
