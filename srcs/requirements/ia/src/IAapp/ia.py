@@ -13,7 +13,6 @@ class IA:
 		self.is_moving_down = False
 
 		self.ball_velocity = {'x': 0, 'y': 0}
-		self.previous_velocity = {'x': 0, 'y': 0}
 
 		# prediction et position optimale du paddle
 		self.predicted_y = 0
@@ -70,7 +69,7 @@ class IA:
 		self.PADDLE_MAX_Y = self.COURT_HEIGHT - self.PADDLE_HEIGHT / 2
 		self.PADDLE_MIN_Y = -self.PADDLE_MAX_Y
   
-		logger.debug(f"Base : PADDLE_MAX_Y :{self.PADDLE_MAX_Y} et PADDLE_MIN_Y{self.PADDLE_MIN_Y}\npos paddle x = {self.paddle_x}")
+		logger.debug(f"Base : PADDLE_MAX_Y :{self.PADDLE_MAX_Y} et PADDLE_MIN_Y{self.PADDLE_MIN_Y}\npos paddle x = {self.paddle_x}\n court height = {self.COURT_HEIGHT}")
   
 	def time_to_reach_target(self, current_y, target_y):
 		"""
@@ -139,8 +138,7 @@ class IA:
 			target : la pos y cible du paddle
 			pos_actuel : la derniere pos connu du paddle y avant l'actualisation
 			ws : websocket
-		"""
-		
+		"""	
 		TOLERANCE = 2
 		if (pos_actuel + TOLERANCE < target):
 			if (timer_to_reach < time.time() - timer):
@@ -174,8 +172,6 @@ class IA:
 				self.send_command(ws, 4)
 				self.is_moving_down = False
 		return
-	 #type': 'export_data', 'data':, 'spd': {'x': 30, 'y': 30}}, 'padel': {'pos': {'x': 39, 'y': 0, 'z': 1.25}, 'spd': 45, 'size': {'x': 4, 'y': 12, 'z': 4}},
-  #'teams': {'left': ['7cfcaf9f-4372-4e62-aa72-4443f1639471'], 'right': ['ai']}, 'map': 'mountain', 'game_mode': 'PONG_CLASSIC'}}
 		
 	def on_message(self, ws, message):
 		data = json.loads(message)
@@ -197,7 +193,6 @@ class IA:
 			game_id = data['game_id']
 			logger.debug("Jeu créé! ID du jeu :", game_id)
 		elif data['type'] == 'padel_contact':
-			logger.debug(f"TYPE : {data['bp']}")
 			current_time = time.time()
 			# if data[QUETRU] != self.player:
 			# else:
@@ -207,8 +202,6 @@ class IA:
 			if current_time - self.last_padel_contact > self.message_cooldown:
 				self.last_padel_contact = current_time
 				logger.debug(f"Contact avec la raquette! {data}")
-	# {'type': 'padel_contact', 'bp': {'x': 36.94063198566437, 'y': 14.824042147310093, 'z': 1}, 
-	# 'bs': {'x': -52.5, 'y': 20}, 'pp': {'p1': 1.6901135444641113, 'p2': 15.954616069793701}}
 				self.paddle_hit = True
 				self.ball_pos = data['bp']
 				self.paddle_pos = data['pp']
@@ -227,7 +220,6 @@ class IA:
 				self.ball_pos = data['bp']
 				self.paddle_pos = data['pp']
 				if not self.paddle_hit:
-					#time.sleep(0.4)
 					self.ball_velocity = data['bs']
 					self.predicted_y = self.predict_ball_intersection()
 					self.optimal_paddle_position = self.get_optimal_paddle_position(self.predicted_y)
@@ -239,7 +231,6 @@ class IA:
 			# Réinitialiser les données de prédiction après un point
 			self.previous_ball_pos = None
 			self.ball_velocity = {'x': 0, 'y': 0}
-			self.previous_velocity = {'x': 0, 'y': 0}
 			self.optimal_paddle_position = 0
 			self.paddle_hit = False
 		elif data['type'] == 'game_end':
@@ -251,7 +242,7 @@ class IA:
 			'type': 'move',
 			'input': command
 		}))
-		#logger.debug(f"Commande envoyée: {command}")
+		logger.debug(f"Commande envoyée: {command}")
 
 	def on_error(self, ws, error):
 		logger.debug(f"Erreur BELLLE: {error}")
