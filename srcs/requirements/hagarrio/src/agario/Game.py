@@ -11,6 +11,37 @@ FOOD_TYPES = {
     'epic': {'value': 10, 'probability': 0.05, 'color': '#FF00FF'}
 }
 
+POWER_UPS = {
+    'speed_boost': {
+        'duration': 5,
+        'probability': 0.1,
+        'color': '#FFD700',
+        'effect': 'speed_multiplier',
+        'value': 1.5
+    },
+    'slow_zone': {
+        'duration': 8,
+        'probability': 0.1,
+        'color': '#800080',
+        'effect': 'speed_multiplier',
+        'value': 0.7
+    },
+    'shield': {
+        'duration': 4,
+        'probability': 0.05,
+        'color': '#0000FF',
+        'effect': 'invulnerable',
+        'value': True
+    },
+    'point_multiplier': {
+        'duration': 6,
+        'probability': 0.08,
+        'color': '#FFA500',
+        'effect': 'score_multiplier',
+        'value': 2
+    }
+}
+
 class Game:
     def __init__(self, game_id):
         self.game_id = game_id
@@ -25,6 +56,9 @@ class Game:
         self.status = "custom"
         self.game_loop_task = None
         self.initialize_food()
+        self.power_ups = []
+        self.power_up_spawn_timer = 0
+        self.power_up_spawn_interval = 10  # secondes
 
     def initialize_food(self):
         """Initialise la nourriture sur la carte"""
@@ -172,7 +206,25 @@ class Game:
 
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
-                    await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send only food changes to all players
+                    await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
+                # Gestion des power-ups
+                # Vérifier les collisions avec les power-ups
+                for player_id in self.players:
+                    if self.check_power_up_collision(player_id):
+                        await broadcast_callback(self.game_id, {
+                            'type': 'power_up_collected',
+                            'player_id': player_id,
+                            'power_ups': self.power_ups
+                        })
+                self.power_up_spawn_timer += delta_time
+                if self.power_up_spawn_timer >= self.power_up_spawn_interval:
+                    self.power_up_spawn_timer = 0
+                    new_power_up = self.spawn_power_up()
+                    if new_power_up:
+                        await broadcast_callback(self.game_id, {
+                            'type': 'power_up_spawned',
+                            'power_up': new_power_up
+                        })
                 await asyncio.sleep(1/60)
 
             if self.status == "finished":
@@ -222,6 +274,57 @@ class Game:
                     positions_updated = True
                 player['current_speed'] = round(speed)
         return positions_updated
+
+    def spawn_power_up(self):
+        power_up_type = random.choice(list(POWER_UPS.keys()))
+        power_up = {
+            'id': str(uuid.uuid4()),
+            'type': power_up_type,
+            'x': random.randint(0, self.map_width),
+            'y': random.randint(0, self.map_height),
+            'properties': POWER_UPS[power_up_type]
+        }
+        self.power_ups.append(power_up)
+        return power_up
+
+    def check_power_up_collision(self, player_id):
+        player = self.players.get(player_id)
+        if not player:
+            return False
+        
+        for power_up in self.power_ups[:]:
+            if self.distance(player, power_up) < player['size']:
+                self.apply_power_up(player_id, power_up)
+                self.power_ups.remove(power_up)
+                return True
+        return False
+
+    def apply_power_up(self, player_id, power_up):
+        player = self.players[player_id]
+        effect = power_up['properties']['effect']
+        value = power_up['properties']['value']
+        duration = power_up['properties']['duration']
+        
+        if effect == 'speed_multiplier':
+            player['speed_multiplier'] = value
+        elif effect == 'invulnerable':
+            player['invulnerable'] = value
+        elif effect == 'score_multiplier':
+            player['score_multiplier'] = value
+        
+        # Planifier la fin de l'effet
+        asyncio.create_task(self.remove_power_up_effect(player_id, effect, duration))
+
+    async def remove_power_up_effect(self, player_id, effect, duration):
+        await asyncio.sleep(duration)
+        if player_id in self.players:
+            player = self.players[player_id]
+            if effect == 'speed_multiplier':
+                player['speed_multiplier'] = 1
+            elif effect == 'invulnerable':
+                player['invulnerable'] = False
+            elif effect == 'score_multiplier':
+                player['score_multiplier'] = 1
 
     async def cleanup(self):
         """Nettoie les ressources de la partie"""

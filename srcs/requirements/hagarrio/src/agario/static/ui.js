@@ -153,6 +153,23 @@ export function updateMinimap() {
             }
         });
     }
+
+    // Dessiner les power-ups sur la minimap
+    if (Array.isArray(powerUps) && powerUps.length > 0) {
+        powerUps.forEach(powerUp => {
+            const x = (powerUp.x / mapWidth) * minimapSize;
+            const y = ((mapHeight - powerUp.y) / mapHeight) * minimapSize;
+            minimapCtx.fillStyle = powerUp.properties.color;
+            minimapCtx.beginPath();
+            minimapCtx.arc(x, y, 3, 0, 2 * Math.PI);
+            minimapCtx.fill();
+            
+            // Ajouter un effet de brillance
+            minimapCtx.strokeStyle = 'white';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.stroke();
+        });
+    }
 }
 
 function updateSpeedometer() {

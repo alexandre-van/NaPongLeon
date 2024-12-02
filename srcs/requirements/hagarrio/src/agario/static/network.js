@@ -2,6 +2,7 @@ import { updatePlayers, removePlayer } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
 import { updateGameInfo } from './utils.js';
+import { updatePowerUps } from './powers.js';
 
 let socket;
 
@@ -65,7 +66,7 @@ function connectWebSocket() {
                 case 'food_update':
                     // console.log('FOOD_UPDATE:', data);
                     updateFood(data.food);
-                    updatePlayers(data.players, data.yourPlayerId);
+                    // updatePlayers(data.players, data.yourPlayerId);
                     break;
                 case 'players_update':
                     // console.log('PLAYERS_UPDATE:', data);
@@ -75,6 +76,17 @@ function connectWebSocket() {
                     removePlayer(data.playerId);
                     console.log('Game stopped');
                     updateGameInfo(data);
+                    break;
+                case 'power_up_spawned':
+                    console.log('Power-up spawned:', data);
+                    updatePowerUps(data.power_up);
+                    break;
+                case 'power_up_collected':
+                    console.log('Power-up collected:', data);
+                    updatePowerUps(data.power_ups);
+                    if (data.player_id === data.yourPlayerId) {
+                        displayPowerUpEffect(data.power_up);
+                    }
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
