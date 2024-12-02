@@ -1,5 +1,5 @@
-from match import Match
-#from ..utils.logger import logger
+from .match import Match
+from ..utils.logger import logger
 
 class Branch:
 	def __init__(self, level_max, level, prev_branch):
@@ -12,13 +12,13 @@ class Branch:
 			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self))
 		self.match = None
 		self.bench = None
-		print(f"create branch || level : {level}")
+		logger.debug(f"create branch || level : {level}")
 
 	def init_match(self, team1, team2):
 		self.match = Match(team1, team2)
 
 	def init_bench(self, team):
-		print(f"Create bench || team : {team.name}")
+		logger.debug(f"Create bench || team : {team.name}")
 		self.bench = team
 
 	def get_current_level(self):

@@ -1,10 +1,10 @@
-from root import Root
-#from ..utils.logger import logger
+from .root import Root
+from ..utils.logger import logger
 import math
 
 class Tree:
 	def __init__(self, teams):
-		print(f"create tree")
+		logger.debug(f"create tree")
 		leaf_number = math.ceil(len(teams) / 2)
 		if len(teams) == 1:
 			leaf_number = 0
@@ -18,7 +18,7 @@ class Tree:
 			if prev_team:
 				branch = self.root.get_free_branch(self.root.level_max)
 				if branch:
-					print(f"level : {branch.level}")
+					logger.debug(f"level : {branch.level}")
 					branch.init_match(prev_team, team)
 				prev_team = None
 			else:
@@ -28,7 +28,7 @@ class Tree:
 			if branch:
 				if branch.prev_branch:
 					branch = branch.prev_branch
-				print(f"level : {branch.level}")
+				logger.debug(f"level : {branch.level}")
 				branch.init_bench(team)
 
 	def export(self):
@@ -43,16 +43,16 @@ class Tree:
 		i = 0
 		for level in tree:
 			if i == 0:
-				print("Winner")
+				logger.debug("Winner")
 			elif i == 1:
-				print("Final")
+				logger.debug("Final")
 			elif i == 2:
-				print("Demi-final")
+				logger.debug("Demi-final")
 			elif i == 3:
-				print("Quart-final")
+				logger.debug("Quart-final")
 			else:
-				print(f"level {i}")
+				logger.debug(f"level {i}")
 			for branch in level:
-				print(branch)
+				logger.debug(branch)
 			i += 1
 

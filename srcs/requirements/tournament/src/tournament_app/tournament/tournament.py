@@ -1,12 +1,12 @@
-#from ..utils.logger import logger
-#from ..tournament_manager.data import game_modes_data
-from data import modifiers_data
-from team import Team
-from tree import Tree
-from player import Player
+from ..utils.logger import logger
+from ..tournament_manager.data import game_modes_data
+from .data import modifiers_data
+from .team import Team
+from .tree import Tree
+from .player import Player
 import random
 #todoremove
-from data import game_modes_data
+#from data import game_modes_data
 
 class Tournament:
 	def __init__(self, players_dict, game_mode, modifiers_list):
@@ -30,13 +30,14 @@ class Tournament:
 	def export_data(self):
 		return {
 			'game_mode': self.game_mode,
-			'modifers': self.modifers,
+			'modifers': self.modifiers,
+			'tree': self.tree.export()
 		}
 
 	# init
 
 	def init_players(self, players_dict):
-		print("Player init")
+		logger.debug("Player init")
 		usernames = list(players_dict.keys())
 		random.shuffle(usernames)
 		players = {username: players_dict[username] for username in usernames}
@@ -45,7 +46,7 @@ class Tournament:
 		return players
 
 	def init_teams(self):
-		print("Team distrib")
+		logger.debug("Team distrib")
 		teams = []
 		teams_distrib = []
 		i_distrib = 0

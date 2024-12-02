@@ -71,19 +71,19 @@ class Tournament_manager:
 			and len(room['players']) * 8 is game_modes_data[game_mode]['players'] * 4:
 			logger.debug('player start the tournament')
 			room['status'] = 'startup'
-			players_test = {
-				username: room['players'][username],
-				'fake_user_1': None,
-				'fake_user_2': None,
-				'fake_user_3': None,
-				'fake_user_4': None,
-				'fake_user_5': None,
-				'fake_user_6': None,
-				'fake_user_7': None,
-			}
+			players_test = self.generatePlayers(5)
+			logger.debug(f"players_test: {players_test}")
 			new_tournament = Tournament(players_test, game_mode, modifiers)
 			room['tournament_instance'] = new_tournament
 		return room
+
+	def generatePlayers(self, n):
+		players_test = {}
+		i = 1
+		while i < n + 1:
+			players_test[f"{str(i)}"] = None
+			i += 1
+		return players_test
 
 	def add_admin(self, admin_id, consumer, tournament_id):
 		if tournament_id not in self.tournaments_room:

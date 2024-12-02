@@ -1,4 +1,4 @@
-#from ..utils.logger import logger
+from ..utils.logger import logger
 
 class Match:
 	def __init__(self, team1, team2):
@@ -10,7 +10,7 @@ class Match:
 			team2: 0,
 		}
 		self.winner = None
-		print(f"create match || team : {team1.name} vs {team2.name}")
+		logger.debug(f"create match || team : {team1.name} vs {team2.name}")
 	
 	def print(self):
 		return self.team1.name + "vs" + self.team2.name

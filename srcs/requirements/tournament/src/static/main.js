@@ -1,3 +1,7 @@
+import { init } from './srcs/init.js';
+import { startTournament, updateTournament, stopAnimation } from './srcs/animate.js';
+import {scene, cleanup} from './srcs/scene.js';
+import './srcs/object/camera.js';
 
 const host = window.location.hostname;
 const port = window.location.port;
@@ -23,13 +27,16 @@ socket.onmessage = function(event) {
 			break;
 		case "export_data":
 			console.log("Game created! \Tournament ID :", tournamentId);
-			socket.send(JSON.stringify({type: 'ready'}));
+			console.log("export_data : ", data)
+			init(data.data, socket)
 			break;
 		case "tournament_update":
 			console.log("Tournament update");
+			updateTournament()
 			break;
 		case "tournament_start":
 			console.log("Tournament started!");
+			startTournament()
 			break;
 		case "tournament_end":
 			//socket.close();
@@ -54,6 +61,7 @@ socket.onerror = function(error) {
 function stopTournament() {
 	console.log("Tournament removed.");
 	socket.close();
-	
+	stopAnimation();
+	cleanup();
 	window.parent.postMessage('tournament_end', '*');
 }

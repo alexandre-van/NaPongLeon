@@ -1,7 +1,7 @@
 from tournament import Tournament
 
 def main():
-    print("Hello World !")
+    logger.debug("Hello World !")
     players_test = generatePlayers(256)
 
     Tournament(players_test, "PONG_CLASSIC", None)

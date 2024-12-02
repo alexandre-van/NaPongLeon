@@ -1,10 +1,10 @@
-#from ..utils.logger import logger
-from branch import Branch
+from ..utils.logger import logger
+from .branch import Branch
 
 class Root:
 	def __init__(self, leaf_number):
 		self.level_max = self.init_level_max(leaf_number)
-		print(f"create root || levelmax : {self.level_max}")
+		logger.debug(f"create root || levelmax : {self.level_max}")
 		self.level = 0
 		self.prev_branch = None
 		self.next_branch = None
@@ -52,5 +52,5 @@ class Root:
 		return []
 	
 	def init_bench(self, team):
-		print(f"Create bench || team : {team.name}")
+		logger.debug(f"Create bench || team : {team.name}")
 		self.bench = team
