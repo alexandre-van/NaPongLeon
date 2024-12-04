@@ -71,7 +71,7 @@ class Tournament_manager:
 			and len(room['players']) * 8 is game_modes_data[game_mode]['players'] * 4:
 			logger.debug('player start the tournament')
 			room['status'] = 'startup'
-			players_test = self.generatePlayers(4)
+			players_test = self.generatePlayers(8)
 			logger.debug(f"players_test: {players_test}")
 			new_tournament = Tournament(players_test, game_mode, modifiers)
 			room['tournament_instance'] = new_tournament

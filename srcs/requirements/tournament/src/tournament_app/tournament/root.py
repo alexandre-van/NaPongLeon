@@ -39,8 +39,8 @@ class Root:
 	def get_branches(self, level):
 		branches = []
 		if level == self.level:
-			if self.bench:
-				branches.append(self)
+			branches.append(self)
+			return branches
 		elif not self.next_branch or level > self.level_max:
 			return None
 		else :

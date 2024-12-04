@@ -6,8 +6,9 @@ async function createPlateau(tree) {
     try {
         // Calculer la largeur et la hauteur du plateau en fonction de la taille de l'arbre
         const boxWidth = 8; // Largeur des rectangles (matches)
-        const horizontalSpacing = 6; // Espacement horizontal
-        const verticalSpacing = 6; // Espacement vertical
+        const boxHeight = 4;
+        const horizontalSpacing = 8; // Espacement horizontal
+        const verticalSpacing = 8; // Espacement vertical
 
         // Calculer la largeur du plateau : en fonction du plus large niveau d'arbre
         let maxWidth = 0;
@@ -20,14 +21,14 @@ async function createPlateau(tree) {
         }
 
         // Calculer la hauteur du plateau : en fonction du nombre de niveaux
-        const maxHeight = tree.length * verticalSpacing;
+        const maxHeight = tree.length * verticalSpacing + boxHeight / 2;
 
         // Charger la texture et créer le plateau
         const texture = await loadTexture('Napoleon.jpg');
         const plateauGeometry = new THREE.BoxGeometry(maxWidth, maxHeight, 2); // Adapter la taille en fonction de l'arbre
         const plateauMaterial = new THREE.MeshStandardMaterial({ map: texture });
         const plateau = new THREE.Mesh(plateauGeometry, plateauMaterial);
-        plateau.position.set(-boxWidth/2, -maxHeight/2, -1); // Placer le plateau juste en dessous de l'arbre
+        plateau.position.set(-boxWidth/2, -maxHeight/2 + boxHeight, -1.5); // Placer le plateau juste en dessous de l'arbre
         scene.add(plateau);
 
         // Ajouter une lumière directionnelle
