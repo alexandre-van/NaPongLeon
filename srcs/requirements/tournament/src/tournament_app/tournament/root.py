@@ -37,13 +37,14 @@ class Root:
 		return self.next_branch.get_free_branch(level)
 	
 	def get_branches(self, level):
+		branches = []
 		if level == self.level:
 			if self.bench:
-				return [self]
-		if not self.next_branch or level > self.level_max:
+				branches.append(self)
+		elif not self.next_branch or level > self.level_max:
 			return None
-		branches = []
-		self.next_branch.get_branches(branches, level)
+		else :
+			self.next_branch.get_branches(branches, level)
 		return branches
 	
 	def print(self):
