@@ -13,28 +13,28 @@ FOOD_TYPES = {
 
 POWER_UPS = {
     'speed_boost': {
-        'duration': 5,
+        'duration': 10,
         'probability': 0.1,
         'color': '#FFD700',
         'effect': 'speed_multiplier',
-        'value': 1.5
+        'value': 1.25
     },
     'slow_zone': {
-        'duration': 8,
+        'duration': 10,
         'probability': 0.1,
         'color': '#800080',
         'effect': 'speed_multiplier',
         'value': 0.7
     },
     'shield': {
-        'duration': 4,
+        'duration': 8,
         'probability': 0.05,
         'color': '#0000FF',
         'effect': 'invulnerable',
         'value': True
     },
     'point_multiplier': {
-        'duration': 6,
+        'duration': 10,
         'probability': 0.08,
         'color': '#FFA500',
         'effect': 'score_multiplier',
@@ -103,8 +103,8 @@ class Game:
         
         for food in self.food[:]:
             if self.distance(player, food) < player['size'] * 0.9:
-                player['size'] += food['value']
-                player['score'] += food['value']
+                player['size'] += food['value'] * player['score_multiplier']
+                player['score'] += food['value'] * player['score_multiplier']
                 self.food.remove(food)
                 new_food = self.add_food()
                 if new_food:
@@ -139,7 +139,10 @@ class Game:
             'y': random.randint(0, self.map_height),
             'size': 30,
             'score': 0,
-            'color': f'#{random.randint(0, 0xFFFFFF):06x}'
+            'color': f'#{random.randint(0, 0xFFFFFF):06x}',
+            'speed_multiplier': 1,
+            'invulnerable': False,
+            'score_multiplier': 1
         }
         if len(self.players) > 4:
             self.status = "in_progress"
@@ -207,15 +210,17 @@ class Game:
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
-                # Gestion des power-ups
                 # Vérifier les collisions avec les power-ups
                 for player_id in self.players:
                     if self.check_power_up_collision(player_id):
                         await broadcast_callback(self.game_id, {
                             'type': 'power_up_collected',
+                            'game_id': self.game_id,
+                            'players': self.players,
                             'player_id': player_id,
                             'power_ups': self.power_ups
                         })
+                # Gestion des power-ups
                 self.power_up_spawn_timer += delta_time
                 if self.power_up_spawn_timer >= self.power_up_spawn_interval:
                     self.power_up_spawn_timer = 0
@@ -223,7 +228,10 @@ class Game:
                     if new_power_up:
                         await broadcast_callback(self.game_id, {
                             'type': 'power_up_spawned',
-                            'power_up': new_power_up
+                            'game_id': self.game_id,
+                            'players': self.players,
+                            'power_up': new_power_up,
+                            'power_ups': self.power_ups
                         })
                 await asyncio.sleep(1/60)
 
@@ -247,7 +255,7 @@ class Game:
 
             if dx != 0 or dy != 0:
                 player = self.players[player_id]
-                base_speed = self.PLAYER_SPEED
+                base_speed = self.PLAYER_SPEED * player['speed_multiplier']
                 if player['score'] <= 200:
                     speed_factor = max(0.9, 1 - (player['score'] / 2300))
                     speed = base_speed * speed_factor
@@ -268,7 +276,7 @@ class Game:
                 new_x = max(0, min(new_x, self.map_width))
                 new_y = max(0, min(new_y, self.map_height))
                 
-                if abs(new_x - player['x']) > 0.1 or abs(new_y - player['y']) > 0.1:
+                if abs(new_x - player['x']) > 0.01 or abs(new_y - player['y']) > 0.01:
                     player['x'] = new_x
                     player['y'] = new_y
                     positions_updated = True

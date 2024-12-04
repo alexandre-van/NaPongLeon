@@ -84,12 +84,12 @@ export function updateCameraPosition(camera, player) {
         camera.lookAt(player.x, player.y, 0);
     }
 
-    const maxZoom = 3; // Limite maximale du zoom
+    const maxZoom = 4; // Limite maximale du zoom
     // Calculer le zoom cible avec une limite maximale
     targetZoom = Math.min(maxZoom, 1 + (player.size / 100));
 
     // Limiter la vitesse maximale de changement de zoom
-    const maxZoomChange = 0.001;
+    const maxZoomChange = 0.01;
     const zoomDelta = (targetZoom - currentZoom) * ZOOM_SMOOTHING;
     const clampedZoomDelta = Math.max(-maxZoomChange, Math.min(maxZoomChange, zoomDelta));
     currentZoom += clampedZoomDelta;

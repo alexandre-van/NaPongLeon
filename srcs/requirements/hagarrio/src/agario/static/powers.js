@@ -4,7 +4,7 @@ import { scene } from './scene.js';
 const powerUps = new Map();
 
 export function createPowerUpSprite(powerUp) {
-    const size = 40;
+    const size = 80;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -45,17 +45,9 @@ export function createPowerUpSprite(powerUp) {
     return sprite;
 }
 
-export function updatePowerUps(newPowerUps) {
-    // Mise à jour des power-ups existants
-    powerUps.forEach((sprite, id) => {
-        if (!newPowerUps.find(p => p.id === id)) {
-            sprite.removeFromParent();
-            powerUps.delete(id);
-        }
-    });
-
-    // Ajout des nouveaux power-ups
-    newPowerUps.forEach(powerUp => {
+export function createNewPowerUp(newPowerUp) {
+    const powerUpArray = Array.isArray(newPowerUp) ? newPowerUp : [newPowerUp];
+    powerUpArray.forEach(powerUp => {
         if (!powerUps.has(powerUp.id)) {
             const sprite = createPowerUpSprite(powerUp);
             scene.add(sprite);
@@ -64,19 +56,64 @@ export function updatePowerUps(newPowerUps) {
     });
 }
 
+export function updatePowerUps(newPowerUps) {
+    // S'assurer que newPowerUps est un tableau
+    const powerUpArray = Array.isArray(newPowerUps) ? newPowerUps : [newPowerUps];
+    
+    // Mise à jour des power-ups existants
+    powerUps.forEach((sprite, id) => {
+        if (!powerUpArray.find(p => p.id === id)) {
+            sprite.removeFromParent();
+            powerUps.delete(id);
+        }
+    });
+}
+
 export function displayPowerUpEffect(powerUp) {
     const effectDiv = document.createElement('div');
     effectDiv.className = 'power-up-effect';
-    effectDiv.textContent = `${powerUp.type} activated!`;
+    
+    // Créer le texte avec une description appropriée selon le type
+    let effectText;
+    switch (powerUp.type) {
+        case 'speed_boost':
+            effectText = '🚀 Vitesse augmentée !';
+            break;
+        case 'slow_zone':
+            effectText = '🐌 Zone ralentie !';
+            break;
+        case 'shield':
+            effectText = '🛡️ Bouclier activé !';
+            break;
+        case 'point_multiplier':
+            effectText = '✨ Multiplicateur de points !';
+            break;
+        default:
+            effectText = `${powerUp.type} activé !`;
+    }
+    
+    effectDiv.textContent = effectText;
     effectDiv.style.color = powerUp.properties.color;
     
     document.body.appendChild(effectDiv);
     
+    // Supprimer l'élément après l'animation
     setTimeout(() => {
         effectDiv.remove();
     }, 2000);
 }
 
 export function getPowerUps() {
-    return Array.from(powerUps.values());
+    const powerUpArray = [];
+    powerUps.forEach((sprite, id) => {
+        powerUpArray.push({
+            id: id,
+            x: sprite.position.x,
+            y: sprite.position.y,
+            properties: {
+                color: sprite.material.color.getStyle()
+            }
+        });
+    });
+    return powerUpArray;
 }

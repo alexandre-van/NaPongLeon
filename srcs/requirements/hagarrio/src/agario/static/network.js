@@ -2,7 +2,7 @@ import { updatePlayers, removePlayer } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
 import { updateGameInfo } from './utils.js';
-import { updatePowerUps, displayPowerUpEffect } from './powers.js';
+import { updatePowerUps, displayPowerUpEffect, createNewPowerUp } from './powers.js';
 
 let socket;
 
@@ -79,7 +79,8 @@ function connectWebSocket() {
                     break;
                 case 'power_up_spawned':
                     console.log('Power-up spawned:', data);
-                    updatePowerUps(data.power_up);
+                    createNewPowerUp(data.power_up);
+                    updatePowerUps(data.power_ups);
                     break;
                 case 'power_up_collected':
                     console.log('Power-up collected:', data);
