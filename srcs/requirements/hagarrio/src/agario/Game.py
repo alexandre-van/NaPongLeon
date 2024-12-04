@@ -212,12 +212,14 @@ class Game:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
                 # Vérifier les collisions avec les power-ups
                 for player_id in self.players:
-                    if self.check_power_up_collision(player_id):
+                    collected_power_up = self.check_power_up_collision(player_id)
+                    if collected_power_up:
                         await broadcast_callback(self.game_id, {
                             'type': 'power_up_collected',
                             'game_id': self.game_id,
                             'players': self.players,
                             'player_id': player_id,
+                            'power_up': collected_power_up,
                             'power_ups': self.power_ups
                         })
                 # Gestion des power-ups
@@ -303,8 +305,9 @@ class Game:
         for power_up in self.power_ups[:]:
             if self.distance(player, power_up) < player['size']:
                 self.apply_power_up(player_id, power_up)
+                collected_power_up = power_up  # Sauvegarder le power-up avant de le supprimer
                 self.power_ups.remove(power_up)
-                return True
+                return collected_power_up  # Retourner le power-up collecté
         return False
 
     def apply_power_up(self, player_id, power_up):
