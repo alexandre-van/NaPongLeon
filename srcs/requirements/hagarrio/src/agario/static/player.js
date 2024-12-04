@@ -47,6 +47,16 @@ export function createPlayerSprite(player) {
     const size = player.size * 2;
     playerCanvas.width = size;
     playerCanvas.height = size;
+    function shadeColor(color, percent) {
+        const f = parseInt(color.slice(1), 16);
+        const t = percent < 0 ? 0 : 255;
+        const p = percent < 0 ? percent * -1 : percent;
+        const R = f >> 16;
+        const G = f >> 8 & 0x00FF;
+        const B = f & 0x0000FF;
+        const newColor = `#${(0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1)}`;
+        return newColor;
+    }
     
     // Gradient de fond
     const gradient = playerContext.createRadialGradient(
@@ -54,8 +64,7 @@ export function createPlayerSprite(player) {
         size/2, size/2, size/2
     );
     gradient.addColorStop(0, player.color);
-    gradient.addColorStop(0.8, player.color);
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+    gradient.addColorStop(1, shadeColor(player.color, 0.3));
 
     // Cercle principal
     playerContext.beginPath();
@@ -63,24 +72,11 @@ export function createPlayerSprite(player) {
     playerContext.fillStyle = gradient;
     playerContext.fill();
 
-    // // Effet de brillance
-    // const highlight = playerContext.createRadialGradient(
-    //     size/4, size/4, 0,
-    //     size/4, size/4, size/4
-    // );
-    // highlight.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-    // highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    
-    // playerContext.beginPath();
-    // playerContext.arc(size/3, size/3, size/3, 0, 2 * Math.PI);
-    // playerContext.fillStyle = highlight;
-    // playerContext.fill();
-
     // Bordure
-    playerContext.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    playerContext.lineWidth = size/50;
+    playerContext.strokeStyle = shadeColor(player.color, -0.9);
+    playerContext.lineWidth = size/30;
     playerContext.beginPath();
-    playerContext.arc(size/2, size/2, size/2 - (size/100), 0, 2 * Math.PI); // Réduit le rayon pour coller la bordure plus près du joueur
+    playerContext.arc(size/2, size/2, size/2 - (size/200), 0, 2 * Math.PI); // Réduit le rayon pour coller la bordure plus près du joueur
     playerContext.stroke();
 
     const playerTexture = new THREE.CanvasTexture(playerCanvas);
