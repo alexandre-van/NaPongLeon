@@ -9,3 +9,13 @@ class Team:
 
 	def update_name(self):
 		self.name = ",".join(player.username for player in self.players)
+
+	def set_level(self, level):
+		self.level = level
+
+	def export(self):
+		return {
+			'name': self.name,
+			'players': list(player.export() for player in self.players),
+			'level': self.level
+		}

@@ -48,8 +48,13 @@ class Root:
 			self.next_branch.get_branches(branches, level)
 		return branches
 	
-	def get_id(self):
-		return self.id
+	def export(self):
+		return {
+			'id': self.id,
+			'level': self.level,
+			'match': None,
+			'bench': self.bench.export() if self.bench else None
+		}
 	
 	def init_bench(self, team):
 		logger.debug(f"Create bench || team : {team.name}")

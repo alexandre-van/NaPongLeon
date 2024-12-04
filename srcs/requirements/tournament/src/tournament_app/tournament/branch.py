@@ -56,5 +56,10 @@ class Branch:
 			return
 		list(next_branch.get_branches(branches, level) for next_branch in self.next_branches)
 
-	def get_id(self):
-		return self.id
+	def export(self):
+		return {
+			'id': self.id,
+			'level': self.level,
+			'match': self.match.export() if self.match else None,
+			'bench': self.bench.export() if self.bench else None
+		}

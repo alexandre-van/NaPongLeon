@@ -6,6 +6,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Optionnel, pour des ombres plus douces
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;

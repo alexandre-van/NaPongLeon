@@ -34,7 +34,7 @@ class Tree:
 		tree = []
 		i = 0
 		while i <= self.root.level_max:
-			tree.append(list(branch.get_id() for branch in self.root.get_branches(i)))
+			tree.append(list(branch.export() for branch in self.root.get_branches(i)))
 			i += 1
 		return tree
 	

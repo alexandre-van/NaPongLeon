@@ -51,7 +51,7 @@ class Tournament_manager:
 					return None
 		return None
 
-	def add_user(self, username, consumer, tournament_id):
+	def add_user(self, username, nickname, consumer, tournament_id):
 		if tournament_id not in self.tournaments_room:
 			return None
 		room = self.tournaments_room[tournament_id]
@@ -63,7 +63,10 @@ class Tournament_manager:
 			users = room['spectator']
 			log_user = 'Spectator'
 		logger.debug(f"{log_user}: {username} is in waiting room !")
-		users[username] = consumer
+		users[username] = {
+			'consumer': consumer,
+			'nickname': nickname
+		}
 		logger.debug(f"players: {room['players']}")
 		game_mode = room['game_mode']
 		modifiers = room['modifiers']
@@ -71,9 +74,9 @@ class Tournament_manager:
 			and len(room['players']) * 8 is game_modes_data[game_mode]['players'] * 4:
 			logger.debug('player start the tournament')
 			room['status'] = 'startup'
-			players_test = self.generatePlayers(32)
+			players_test = self.generatePlayers(29)
 			logger.debug(f"players_test: {players_test}")
-			new_tournament = Tournament(players_test, game_mode, modifiers)
+			new_tournament = Tournament(players_test, "PONG_DUO", modifiers)
 			room['tournament_instance'] = new_tournament
 		return room
 
@@ -81,7 +84,10 @@ class Tournament_manager:
 		players_test = {}
 		i = 1
 		while i < n + 1:
-			players_test[f"{str(i)}"] = None
+			players_test[f"un_{str(i)}"] = {
+				'consumer': None,
+				'nickname': f"nn_{str(i)}"
+			}
 			i += 1
 		return players_test
 

@@ -17,7 +17,7 @@ class Tournament:
 		self.players = self.init_players(players_dict)
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
-		self.matchs = self.tree.get_all_()
+		#self.matchs = self.tree.get_all_()
 
 	#tournament update
 
@@ -30,7 +30,7 @@ class Tournament:
 
 	def export_data(self):
 		return {
-			'game_mode': self.game_mode,
+			'game_mode': game_modes_data[self.game_mode],
 			'modifers': self.modifiers,
 			'tree': self.tree.export()
 		}
@@ -43,7 +43,9 @@ class Tournament:
 		random.shuffle(usernames)
 		players = {username: players_dict[username] for username in usernames}
 		for username in players_dict:
-			players[username] = Player(username, players_dict[username])
+			nickname = players_dict[username]['nickname']
+			consumer = players_dict[username]['consumer']
+			players[username] = Player(username, nickname, consumer)
 		return players
 
 	def init_teams(self):

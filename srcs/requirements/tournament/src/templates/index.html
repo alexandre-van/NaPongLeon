@@ -7,5 +7,24 @@
 </head>
 <body>
     <script type="module" src="{% static 'main.js' %}"></script>
+    <div id="parchment" style="display: none; position: fixed; top: 10%; right: 0%; z-index: 10000; overflow: hidden; padding: 0; border: none;">
+        <!-- Image positionnée à droite, ajustée à la taille de la fenêtre -->
+        <img id="parchmentImage" src="{% static 'texture/parchment.png' %}" style="width: auto; height: 90vh; display: block; margin: 0; object-fit: contain;"/>
+    
+        <!-- Texte centré par rapport à l'image -->
+        <div id="branchInfo" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; color: #333; padding: 10px; max-width: 80%; white-space: pre-line;">
+            <!-- Informations de branche ici -->
+        </div>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 </body>
 </html>
