@@ -13,6 +13,8 @@ services:
   nginx:
     build: ./nginx
     container_name: nginx
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       - init_media
     restart: on-failure

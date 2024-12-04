@@ -27,24 +27,9 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             await self.accept()
             await self.user.update_user_status(True)
             await self.send_status_friends(True)
+            logger.debug('Connection accepted')
 
 
-    '''
-    @database_sync_to_async
-    def get_user_from_token(self):
-        token = self.scope['cookies'].get('access_token')
-        if not token:
-            return None
-        try:
-            UntypedToken(token)
-        except (InvalidToken, TokenError):
-            return None
-
-        decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id = decoded_data['user_id']
-        CustomUser = get_user_model()
-        return CustomUser.objects.get(id=user_id)
-    '''
 
     async def disconnect(self, close_code):
         from django_otp import devices_for_user
