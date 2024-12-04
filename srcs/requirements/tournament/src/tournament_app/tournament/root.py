@@ -6,11 +6,12 @@ class Root:
 		self.level_max = self.init_level_max(leaf_number)
 		logger.debug(f"create root || levelmax : {self.level_max}")
 		self.level = 0
+		self.id = 0
 		self.prev_branch = None
 		self.next_branch = None
 		self.bench = None
 		if self.level < self.level_max:
-			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self)
+			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1)
 
 	def init_level_max(self, leaf_number):
 		level_max = 1
@@ -47,10 +48,8 @@ class Root:
 			self.next_branch.get_branches(branches, level)
 		return branches
 	
-	def print(self):
-		if self.bench:
-			return [self.bench.name]
-		return []
+	def get_id(self):
+		return self.id
 	
 	def init_bench(self, team):
 		logger.debug(f"Create bench || team : {team.name}")

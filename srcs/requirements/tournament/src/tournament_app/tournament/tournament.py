@@ -17,6 +17,7 @@ class Tournament:
 		self.players = self.init_players(players_dict)
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
+		self.matchs = self.tree.get_all_()
 
 	#tournament update
 

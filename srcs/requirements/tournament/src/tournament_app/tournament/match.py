@@ -1,7 +1,8 @@
 from ..utils.logger import logger
 
 class Match:
-	def __init__(self, team1, team2):
+	def __init__(self, id, team1, team2):
+		self.id = id
 		self.team1 = team1
 		self.team2 = team2
 		self.status = 'Waiting'

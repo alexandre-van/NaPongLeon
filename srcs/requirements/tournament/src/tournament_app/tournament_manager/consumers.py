@@ -11,7 +11,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 	# CONNECT
 	@auth_required
-	async def connect(self, username=None):
+	async def connect(self, username=None, nickname=None):
 		path = self.scope['path']
 		segments = path.split('/')
 		self.room = None

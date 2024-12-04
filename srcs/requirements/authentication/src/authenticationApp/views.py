@@ -78,6 +78,10 @@ class VerifyTokenView(APIView):
         logger.debug('\n\n\n\n\nVerifyTokenView\n\n\n\n\n')
         logger.debug(f"user={user}")
         logger.debug(f"username={user.username}")
-        return Response({'user': user.username}, status=status.HTTP_200_OK)
+        logger.debug(f"nickname: {user.nickname}")
+        return Response({
+            'user': user.username,
+            'nickname': user.nickname
+        }, status=status.HTTP_200_OK)
         #token = request.token
         #access_ authenticate(request.token.get('access_token'))

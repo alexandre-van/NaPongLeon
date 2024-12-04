@@ -9,6 +9,7 @@ class Tree:
 		if len(teams) == 1:
 			leaf_number = 0
 		self.root = Root(leaf_number=leaf_number)
+		self.level = self.root.level_max
 		self.init_matchs(teams)
 		self.print(self.export())
 
@@ -26,8 +27,6 @@ class Tree:
 		if prev_team:
 			branch = self.root.get_free_branch(self.root.level_max)
 			if branch:
-				if branch.prev_branch:
-					branch = branch.prev_branch
 				logger.debug(f"level : {branch.level}")
 				branch.init_bench(team)
 
@@ -35,7 +34,7 @@ class Tree:
 		tree = []
 		i = 0
 		while i <= self.root.level_max:
-			tree.append(list(branch.print() for branch in self.root.get_branches(i)))
+			tree.append(list(branch.get_id() for branch in self.root.get_branches(i)))
 			i += 1
 		return tree
 	

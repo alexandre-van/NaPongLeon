@@ -2,20 +2,34 @@ from .match import Match
 from ..utils.logger import logger
 
 class Branch:
-	def __init__(self, level_max, level, prev_branch):
+	id_set = set()  # Pour garder la trace des ID utilisés
+
+	def __init__(self, level_max, level, prev_branch, id):
 		self.level = level
+		self.id = id
 		self.prev_branch = prev_branch
 		self.next_branches = None
 		if level < level_max:
 			self.next_branches = []
-			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self))
-			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self))
+			left_id = id + 1
+			# Vérification de l'unicité de left_id
+			while left_id in Branch.id_set:
+				left_id += 1
+			Branch.id_set.add(left_id)
+			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=left_id))
+
+			right_id = left_id + pow(2, level_max - level - 1)
+			# Vérification de l'unicité de right_id
+			while right_id in Branch.id_set:
+				right_id += 1
+			Branch.id_set.add(right_id)
+			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=right_id))
 		self.match = None
 		self.bench = None
 		logger.debug(f"create branch || level : {level}")
 
 	def init_match(self, team1, team2):
-		self.match = Match(team1, team2)
+		self.match = Match(self.id, team1, team2)
 
 	def init_bench(self, team):
 		logger.debug(f"Create bench || team : {team.name}")
@@ -42,9 +56,5 @@ class Branch:
 			return
 		list(next_branch.get_branches(branches, level) for next_branch in self.next_branches)
 
-	def print(self):
-		if self.match:
-			return [self.match.print()]
-		if self.bench:
-			return [self.bench.name]
-		return []
+	def get_id(self):
+		return self.id

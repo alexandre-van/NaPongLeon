@@ -33,10 +33,10 @@ function generateTree(tree) {
     }
 }
 
-function createMatchBox(match, x, y, boxWidth, boxHeight, boxDepth) {
+function createMatchBox(id, x, y, boxWidth, boxHeight, boxDepth) {
     const boxGeometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
     const boxMaterial = new THREE.MeshBasicMaterial({
-        color: match?.length > 0 ? 0xffffff : 0xA9A9A9, // Blanc si le match existe, gris sinon
+        color: 0xA9A9A9,
         side: THREE.DoubleSide,
     });
     const box = new THREE.Mesh(boxGeometry, boxMaterial);
@@ -44,24 +44,21 @@ function createMatchBox(match, x, y, boxWidth, boxHeight, boxDepth) {
     scene.add(box);
 
     // Ajouter du texte si nécessaire
-    if (match?.length > 0) {
-        const textCanvas = document.createElement('canvas');
-        const ctx = textCanvas.getContext('2d');
-        textCanvas.width = 256;
-        textCanvas.height = 128;
-        ctx.font = '45px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'black';
-        ctx.fillText(match[0], textCanvas.width / 2, textCanvas.height / 2);
-
-        const textTexture = new THREE.CanvasTexture(textCanvas);
-        const textGeometry = new THREE.PlaneGeometry(boxWidth, boxHeight);
-        const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true, side: THREE.DoubleSide });
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(x, y, boxDepth / 2); // Légèrement au-dessus du rectangle
-        scene.add(textMesh);
-    }
+    const textCanvas = document.createElement('canvas');
+    const ctx = textCanvas.getContext('2d');
+    textCanvas.width = 256;
+    textCanvas.height = 128;
+    ctx.font = '45px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'black';
+    ctx.fillText(id, textCanvas.width / 2, textCanvas.height / 2);
+    const textTexture = new THREE.CanvasTexture(textCanvas);
+    const textGeometry = new THREE.PlaneGeometry(boxWidth, boxHeight);
+    const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true, side: THREE.DoubleSide });
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+    textMesh.position.set(x, y, boxDepth / 2); // Légèrement au-dessus du rectangle
+    scene.add(textMesh);
 }
 
 function drawConnection(x1, y1, x2, y2) {
