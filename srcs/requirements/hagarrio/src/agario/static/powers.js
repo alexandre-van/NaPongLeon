@@ -75,32 +75,44 @@ export function displayPowerUpEffect(powerUp) {
     
     // Créer le texte avec une description appropriée selon le type
     let effectText;
+    let emoji;
     switch (powerUp.type) {
         case 'speed_boost':
-            effectText = '🚀 Vitesse augmentée !';
+            emoji = '🚀';
+            effectText = 'Vitesse augmentée !';
             break;
         case 'slow_zone':
-            effectText = '🐌 Zone ralentie !';
+            emoji = '🐌';
+            effectText = 'Zone ralentie !';
             break;
         case 'shield':
-            effectText = '🛡️ Bouclier activé !';
+            emoji = '🛡️';
+            effectText = 'Bouclier activé !';
             break;
         case 'point_multiplier':
-            effectText = '✨ Multiplicateur de points !';
+            emoji = '✨';
+            effectText = 'Multiplicateur de points !';
             break;
         default:
+            emoji = '🎮';
             effectText = `${powerUp.type} activé !`;
     }
     
-    effectDiv.textContent = effectText;
+    effectDiv.innerHTML = `${emoji} ${effectText}`;
     effectDiv.style.color = powerUp.properties.color;
     
-    document.body.appendChild(effectDiv);
-    
-    // Supprimer l'élément après l'animation
-    setTimeout(() => {
-        effectDiv.remove();
-    }, 2000);
+    // S'assurer que le div est ajouté au gameContainer plutôt qu'au body
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+        gameContainer.appendChild(effectDiv);
+        
+        // Supprimer l'élément après l'animation
+        setTimeout(() => {
+            if (effectDiv && effectDiv.parentNode) {
+                effectDiv.remove();
+            }
+        }, 2000);
+    }
 }
 
 export function getPowerUps() {
