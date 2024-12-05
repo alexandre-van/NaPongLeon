@@ -9,9 +9,10 @@ class Root:
 		self.id = 0
 		self.prev_branch = None
 		self.next_branch = None
+		self.id_set = set()
 		self.bench = None
 		if self.level < self.level_max:
-			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1)
+			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1, id_set=self.id_set)
 
 	def init_level_max(self, leaf_number):
 		level_max = 1

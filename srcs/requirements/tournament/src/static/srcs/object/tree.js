@@ -1,30 +1,35 @@
 import * as THREE from '../../js/three.module.js';
 import { renderer, camera, scene } from '../renderer.js';
+import showParchment from './parchment.js'
 
-function generateTree(tree, team_size) {
-	const boxWidth = 10 * team_size; // Largeur des rectangles
-	const boxHeight = 6; // Hauteur des rectangles
-	const boxDepth = 1.5; // Profondeur des rectangles
-	const verticalSpacing = 10; // Espacement vertical
-	const horizontalSpacing = 10; // Espacement horizontal
+const boxWidth = 10; // Largeur des rectangles
+const boxHeight = 6; // Hauteur des rectangles
+const boxDepth = 1.5; // Profondeur des rectangles
+const verticalSpacing = 10; // Espacement vertical
+const horizontalSpacing = 10; // Espacement horizontal
+let team_size = 1
 
+function generateTree(tree, nickname, data_team_size) {
+    if (data_team_size) {
+        team_size = data_team_size
+    }
 	for (let level = 0; level < tree.length; level++) {
 		const currentLevel = tree[level];
 		const y = -level * verticalSpacing; // Position verticale de ce niveau
 
-		const totalWidth = currentLevel.length * (boxWidth + horizontalSpacing) - horizontalSpacing;
+		const totalWidth = currentLevel.length * (boxWidth * team_size + horizontalSpacing) - horizontalSpacing;
 		const startX = -totalWidth / 2; // Centrer les rectangles
 
 		currentLevel.forEach((branch, index) => {
-			const x = startX + index * (boxWidth + horizontalSpacing);
-			createMatchBox(branch, x, y, boxWidth, boxHeight, boxDepth);
+			const x = startX + index * (boxWidth * team_size + horizontalSpacing);
+			createMatchBox(branch, x, y, nickname);
 
 			// Connecter avec le niveau précédent
 			if (level > 0) {
 				const parentIndex = Math.floor(index / 2); // Trouver le parent
 				const previousLevel = tree[level - 1];
-				const totalParentWidth = previousLevel.length * (boxWidth + horizontalSpacing) - horizontalSpacing;
-				const parentX = -totalParentWidth / 2 + parentIndex * (boxWidth + horizontalSpacing);
+				const totalParentWidth = previousLevel.length * (boxWidth * team_size + horizontalSpacing) - horizontalSpacing;
+				const parentX = -totalParentWidth / 2 + parentIndex * (boxWidth * team_size + horizontalSpacing);
 
 				// Dessiner une ligne entre le parent et l'enfant
 				drawConnection(parentX, -(level - 1) * verticalSpacing, x, y);
@@ -33,41 +38,60 @@ function generateTree(tree, team_size) {
 	}
 }
 
-function createMatchBox(branch, x, y, boxWidth, boxHeight, boxDepth) {
-	const boxGeometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-	const color = branch.match ? 0xffe333 : branch.bench ? 0xffffff : 0xA9A9A9
-	const boxMaterial = new THREE.MeshStandardMaterial({
-		color: color,
-		emissive: color,
-		side: THREE.DoubleSide,
-	});
-	const box = new THREE.Mesh(boxGeometry, boxMaterial);
-	box.position.set(x, y, 0);
-	box.castShadow = true;
-	box.userData.branch = branch;
-	scene.add(box);
-	if (branch.match) {
-		const textCanvas = document.createElement('canvas');
-		const ctx = textCanvas.getContext('2d');
-		textCanvas.width = 256;
-		textCanvas.height = 128;
-		ctx.font = '30px Arial';
-		ctx.textAlign = 'center';
-		ctx.textBaseline = 'middle';
-		ctx.fillStyle = 'black';
-		ctx.fillText(branch.match.team1.name, textCanvas.width / 2, textCanvas.height / 3);
-		ctx.fillText(branch.match.team2.name, textCanvas.width / 2, textCanvas.height / 3 * 2);
-		const textTexture = new THREE.CanvasTexture(textCanvas);
-		const textGeometry = new THREE.PlaneGeometry(boxWidth, boxHeight);
-		const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true, side: THREE.DoubleSide });
-		const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-		textMesh.position.set(x, y, boxDepth / 2); // Légèrement au-dessus du rectangle
-		scene.add(textMesh);
-	}
+function createMatchBox(branch, x, y, nickname) {
+    const playerStatus = determinePlayerStatus(branch, nickname);
+	console.log(playerStatus)
+    const color = getBoxColor(branch, playerStatus);
+
+    // Adjust box size for player's team
+    const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2
+		|| playerStatus.isPlayerInBench? 1.2 : 1;
+    const boxGeometry = new THREE.BoxGeometry(
+        boxWidth * team_size, 
+        boxHeight, 
+        boxDepth
+    );
+
+    const boxMaterial = new THREE.MeshStandardMaterial({
+        color: color,
+        emissive: color,
+        side: THREE.DoubleSide,
+    });
+    
+    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+    box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+    box.position.set(x, y, 0);
+    box.castShadow = true;
+    box.userData.branch = branch;
+    scene.add(box);
+    return box;
 }
 
+function determinePlayerStatus(branch, nickname) {
+    const status = {
+        isPlayerInTeam1: false,
+        isPlayerInTeam2: false,
+        isPlayerInBench: false
+    };
 
-//import { Raycaster, Vector2 } from 'three';
+    if (branch.match) {
+        const { team1, team2 } = branch.match;
+        status.isPlayerInTeam1 = team1.players.some(player => player.nickname === nickname);
+        status.isPlayerInTeam2 = team2.players.some(player => player.nickname === nickname);
+    }
+
+    if (branch.bench) {
+        status.isPlayerInBench = branch.bench.players.some(player => player.nickname === nickname);
+    }
+
+    return status;
+}
+
+function getBoxColor(branch) {
+    if (branch.match) return 0xffe333;
+    if (branch.bench) return 0xffffff;
+    return 0xA9A9A9;
+}
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -79,65 +103,54 @@ function onClick(event) {
 
     // Effectuer le raycasting
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
+    
+    // Filtrer uniquement les maillages avec des données de branche
+    const boxesWithBranch = scene.children.filter(child => 
+        child.isMesh && 
+        child.userData.branch
+    );
+
+    // Vérifier les intersections avec seulement les boîtes ayant des données
+    const intersects = raycaster.intersectObjects(boxesWithBranch);
 
     // Vérifier si un objet a été cliqué
     if (intersects.length > 0) {
         const clickedBox = intersects[0].object;
-
-        // Vérifier si l'objet cliqué a des données de branche
-        if (clickedBox.userData.branch) {
-            const branch = clickedBox.userData.branch;
-
-            // Afficher le parchemin avec les informations de branche
-            showParchment(branch);
-        }
+        showParchment(clickedBox.userData.branch);
     }
-}
-
-// Fonction pour afficher le parchemin avec les informations de la branche
-function showParchment(branch) {
-    // Récupérer l'élément du parchemin et le rendre visible
-    const parchmentDiv = document.getElementById('parchment');
-    parchmentDiv.style.display = 'block';
-
-    // Afficher les informations de la branche dans le parchemin
-    const branchInfoDiv = document.getElementById('branchInfo');
-    branchInfoDiv.innerHTML = `
-        <h2>Informations sur la branche</h2>
-        <p><strong>Nom de l'équipe 1:</strong> ${branch.match ? branch.match.team1.name : 'N/A'}</p>
-        <p><strong>Nom de l'équipe 2:</strong> ${branch.match ? branch.match.team2.name : 'N/A'}</p>
-        <p><strong>Autre info:</strong> ${branch.otherInfo || 'Aucune info supplémentaire'}</p>
-    `;
 }
 // Ajouter un écouteur pour les clics de souris
 window.addEventListener('click', onClick);
 
 function onMouseMove(event) {
-	// Calculer la position de la souris dans l'espace normalisé
-	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Calculer la position de la souris dans l'espace normalisé
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-	// Effectuer le raycasting
-	raycaster.setFromCamera(mouse, camera);
-	const intersects = raycaster.intersectObjects(scene.children);
+    // Effectuer le raycasting
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Filtrer uniquement les maillages avec des données de branche
+    const boxesWithBranch = scene.children.filter(child => 
+        child.isMesh && 
+        child.userData.branch && 
+        child.material.emissive
+    );
 
-	// Réinitialiser l'émissivité des boîtes uniquement
-	scene.children.forEach(child => {
-		// Vérifier si l'objet est une boîte avant de réinitialiser son émissivité
-		if (child.isMesh && child.material && child.material.emissive && child.userData.branch) {
-			child.material.emissiveIntensity = 0.1; // Réinitialiser l'émissivité
-		}
-	});
+    // Réinitialiser l'émissivité de toutes les boîtes
+    boxesWithBranch.forEach(box => {
+        box.material.emissiveIntensity = 0.1;
+    });
 
-	// Ajouter l'effet de surbrillance à la boîte survolée
-	if (intersects.length > 0) {
-		const hoveredBox = intersects[0].object;
-		if (hoveredBox.userData.branch) {
-			hoveredBox.material.emissiveIntensity = 0.5;
-			console.log('Boîte survolée :', hoveredBox.userData.branch);
-		}
-	}
+    // Vérifier les intersections avec seulement les boîtes ayant des données
+    const intersects = raycaster.intersectObjects(boxesWithBranch);
+
+    // Ajouter l'effet de surbrillance à la première boîte intersectée
+    if (intersects.length > 0) {
+        const hoveredBox = intersects[0].object;
+        hoveredBox.material.emissiveIntensity = 0.5;
+        console.log('Boîte survolée :', hoveredBox.userData.branch);
+    }
 }
 
 // Ajouter un écouteur pour les mouvements de souris
@@ -172,9 +185,88 @@ function clearTree() {
 	});
 }
 
-function updateTree(tree) {
-	clearTree();
-	generateTree(tree);
+function updateTree(tree, nickname) {
+    // Met à jour le contenu des branches sans recréer les objets
+    tree.forEach((level, levelIndex) => {
+        level.forEach((branch, index) => {
+
+            const playerStatus = determinePlayerStatus(branch, nickname);
+            const existingBox = scene.children.find(child => child.userData.branch && child.userData.branch.id === branch.id);
+
+            if (existingBox) {
+                // Mise à jour de la couleur et de la taille de la boîte
+                const color = getBoxColor(branch);
+                existingBox.userData.branch = branch
+                existingBox.material.color.setHex(color);
+                const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.2 : 1;
+                console.log(team_size, "*", playerTeamMultiplier)
+                existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+
+                // Mise à jour du texte
+                updateBoxText(existingBox, branch, playerStatus);
+            } else {
+                // Si la boîte n'existe pas, crée-la
+                //const x = calculateXForBranch(level, index, levelIndex);
+                //const y = -levelIndex * verticalSpacing;
+                //createMatchBox(branch, x, y, nickname);
+            }
+        });
+    });
+
+    // Met à jour les connexions entre les niveaux
+    //updateConnections(tree);
 }
+
+function updateBoxText(box, branch, playerStatus) {
+    // Créez un nouveau canevas pour le texte
+    const textCanvas = document.createElement('canvas');
+    const ctx = textCanvas.getContext('2d');
+    textCanvas.width = 256;
+    textCanvas.height = 128;
+
+    ctx.font = '30px Dancing Script';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'black';
+
+    if (branch.match) {
+        const { team1, team2 } = branch.match;
+        ctx.font = playerStatus.isPlayerInTeam1 ? 'bold 40px Dancing Script' : '30px Dancing Script';
+        ctx.fillText(team1.name, textCanvas.width / 2, textCanvas.height / 5);
+
+        ctx.font = '30px Dancing Script';
+        ctx.fillText("VS", textCanvas.width / 2, textCanvas.height / 2 * 1.05);
+
+        ctx.font = playerStatus.isPlayerInTeam2 ? 'bold 40px Dancing Script' : '30px Dancing Script';
+        ctx.fillText(team2.name, textCanvas.width / 2, textCanvas.height - textCanvas.height / 5);
+    }
+
+    if (branch.bench) {
+        ctx.font = playerStatus.isPlayerInBench ? 'bold 40px Dancing Script' : '30px Dancing Script';
+        ctx.fillText(branch.bench.name, textCanvas.width / 2, textCanvas.height / 2);
+    }
+
+    const textTexture = new THREE.CanvasTexture(textCanvas);
+    const textMaterial = new THREE.MeshBasicMaterial({
+        map: textTexture,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+
+    // Si le texte existe déjà, mettez à jour la texture
+    if (box.textMesh) {
+        box.textMesh.material.map = textTexture;
+        box.textMesh.material.needsUpdate = true; // Forcer la mise à jour de la texture
+    } else {
+        // Si le texte n'existe pas, créez-le
+        const textGeometry = new THREE.PlaneGeometry(boxWidth * team_size, boxHeight);
+        box.textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        const zOffset = box.geometry.parameters.depth / 2 + 0.2;
+        box.textMesh.position.set(box.position.x, box.position.y, zOffset);
+        scene.add(box.textMesh);
+    }
+}
+
+
 
 export { generateTree, clearTree, updateTree };

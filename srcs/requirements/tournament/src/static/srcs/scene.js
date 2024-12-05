@@ -1,7 +1,10 @@
 import * as THREE from '../js/three.module.js';
 import { renderer, camera } from './renderer.js';
+import { loadTexture } from './load.js';
 
 const scene = new THREE.Scene();
+
+scene.background = await loadTexture('background_dark.png');
 
 function cleanup() {
 	// Nettoyer les objets dans la scène

@@ -21,7 +21,18 @@ async function createPlateau(tree, team_size) {
         const maxHeight = tree.length * verticalSpacing + boxHeight / 2;
 
         // Charger la texture et créer le plateau
-        const texture = await loadTexture('Napoleon.jpg');
+        async function loadRandomPlateauTexture() {
+            // Générer un nombre aléatoire entre 1 et 6
+            const randomIndex = Math.floor(Math.random() * 8) + 1;
+        
+            // Construire le chemin du fichier correspondant
+            const filePath = `plateau${randomIndex}.jpeg`;
+        
+            // Charger la texture
+            const texture = await loadTexture(filePath);
+            return texture;
+        }
+        const texture = await loadRandomPlateauTexture();
         const plateauGeometry = new THREE.BoxGeometry(maxWidth, maxHeight, 2);
         const plateauMaterial = new THREE.MeshStandardMaterial({
             map: texture,

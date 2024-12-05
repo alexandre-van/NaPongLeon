@@ -268,7 +268,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					await self.send_tournament_finished(tournament_state['team'], tournament_state['score'])
 					await self.tournament_end()
 					return
-				await asyncio.sleep(0.025)
+				await asyncio.sleep(3)
 			else:
 				break
 
@@ -367,6 +367,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
 					logger.debug(f"{self.username} receive export data")
+					event['state']['nickname'] = 'nn_1'
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True
 			else:

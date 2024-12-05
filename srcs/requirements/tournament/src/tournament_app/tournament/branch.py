@@ -2,9 +2,7 @@ from .match import Match
 from ..utils.logger import logger
 
 class Branch:
-	id_set = set()  # Pour garder la trace des ID utilisés
-
-	def __init__(self, level_max, level, prev_branch, id):
+	def __init__(self, level_max, level, prev_branch, id, id_set):
 		self.level = level
 		self.id = id
 		self.prev_branch = prev_branch
@@ -13,17 +11,17 @@ class Branch:
 			self.next_branches = []
 			left_id = id + 1
 			# Vérification de l'unicité de left_id
-			while left_id in Branch.id_set:
+			while left_id in id_set:
 				left_id += 1
-			Branch.id_set.add(left_id)
-			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=left_id))
+			id_set.add(left_id)
+			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=left_id, id_set=id_set))
 
 			right_id = left_id + pow(2, level_max - level - 1)
 			# Vérification de l'unicité de right_id
-			while right_id in Branch.id_set:
+			while right_id in id_set:
 				right_id += 1
-			Branch.id_set.add(right_id)
-			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=right_id))
+			id_set.add(right_id)
+			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=right_id, id_set=id_set))
 		self.match = None
 		self.bench = None
 		logger.debug(f"create branch || level : {level}")

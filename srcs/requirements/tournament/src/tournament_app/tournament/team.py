@@ -8,7 +8,7 @@ class Team:
 		logger.debug(f"{self.name} team created")
 
 	def update_name(self):
-		self.name = ",".join(player.username for player in self.players)
+		self.name = ", ".join(player.nickname for player in self.players)
 
 	def set_level(self, level):
 		self.level = level

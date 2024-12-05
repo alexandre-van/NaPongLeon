@@ -22,8 +22,10 @@ class Tournament:
 	#tournament update
 
 	def update(self):
+		self.tree.root.bench = Team([Player('','IlestTropfort', None), Player('','IlcfaiCarry', None)])
 		return {
 			'type': 'tournament_update',
+			'tree': self.tree.export()
 		}
 
 	# export data

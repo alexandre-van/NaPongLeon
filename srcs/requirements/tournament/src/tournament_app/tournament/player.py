@@ -13,6 +13,5 @@ class Player:
 
 	def export(self):
 		return {
-			'username': self.username,
 			'nickname': self.nickname
 		}

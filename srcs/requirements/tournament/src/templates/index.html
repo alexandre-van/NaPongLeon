@@ -4,6 +4,37 @@
     <meta charset="UTF-8">
     <title>Three.js App</title>
     {% load static %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+        #branchInfo {
+            font-family: 'Dancing Script', cursive; /* Police manuscrite */
+            font-size: 18px; /* Ajuster la taille de la police */
+            color: #5a3e36; /* Couleur brun foncé */
+            text-align: center; /* Centrer le texte */
+            line-height: 1.1; /* Réduction de l'interligne */
+            margin: 0; /* Supprimer les marges inutiles */
+        }
+
+        #branchInfo h2 {
+            font-size: 24px; /* Taille du titre légèrement plus grande */
+            margin-bottom: 5px; /* Réduction de l'espace en bas */
+        }
+
+        #branchInfo p {
+            margin: 5px 0; /* Réduction de l'espace entre les paragraphes */
+        }
+
+        #branchInfo ul {
+            list-style-type: none; /* Supprimer les puces */
+            margin: 5px 0; /* Réduction des marges autour de la liste */
+            padding: 0; /* Supprimer les espaces internes */
+        }
+
+        #branchInfo li {
+            margin: 3px 0; /* Réduire l'espacement des éléments de liste */
+        }
+    </style>
 </head>
 <body>
     <script type="module" src="{% static 'main.js' %}"></script>
@@ -12,19 +43,9 @@
         <img id="parchmentImage" src="{% static 'texture/parchment.png' %}" style="width: auto; height: 90vh; display: block; margin: 0; object-fit: contain;"/>
     
         <!-- Texte centré par rapport à l'image -->
-        <div id="branchInfo" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; color: #333; padding: 10px; max-width: 80%; white-space: pre-line;">
+        <div id="branchInfo" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
             <!-- Informations de branche ici -->
         </div>
     </div>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 </body>
 </html>
