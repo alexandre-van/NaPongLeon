@@ -138,7 +138,7 @@ class IA:
 			pos_actuel : la derniere pos connu du paddle y avant l'actualisation
 			ws : websocket
 		"""	
-		TOLERANCE = 2
+		TOLERANCE = 0.5
 		if (pos_actuel + TOLERANCE < target):
 			if (timer_to_reach < time.time() - timer):
 				if self.is_moving_up:

@@ -124,7 +124,7 @@ class Game_manager:
 				await self.disconnect_to_game(game_id, game_mode)
 		else:
 			return None
-		ai_url = "http://ia:8000/api/ia/create_ia/"
+		ai_url = "http://ia:5000/api/ia/create_ia/"
 		for ai_id in all_ai:
 			try:
 				ids = {
@@ -141,7 +141,8 @@ class Game_manager:
 					return None
 			except httpx.RequestError as e:
 				logger.error(f"AI service error for AI {ai_id}: {str(e)}")
-				#return None
+				logger.error(f"Error details: {e}")
+				return None
 		return {
 			'game_id': game_id,
 			'service_name': game_mode_data['service_name']
