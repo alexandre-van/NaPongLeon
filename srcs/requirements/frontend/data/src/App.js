@@ -30,6 +30,7 @@ import ClassicTournament from './pages/ClassicTournament.js';
 import DuoTournament from './pages/DuoTournament.js';
 import CreateGameButton from './components/CreateGameButton.js';
 import AIpong from './pages/AIpong.js';
+import InGame from './pages/InGame.js';
 //import './assets/App.css';
 
 function AppContent() {
@@ -76,6 +77,7 @@ function AppContent() {
           <Route path="register-success" element={<RegisterSuccessPage />} />
           <Route path="matchmaking" element={<WaitMatchmaking />} />
           <Route path="ai-pong" element={<AIpong />} />
+          <Route path="ingame" element={<InGame />} />
 
         </Route>
       </Routes>

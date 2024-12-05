@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api.js';
+import { useNavigate } from "react-router-dom";
+
 
 const PlayButton = ({ gameMode, modifiers }) => {
 	const [loading, setLoading] = useState(false);
 	const [errorMessage, setErrorMessage] = useState(null);
+	const navigate = useNavigate();
 
 	const handlePlayButton = async () => {
 		try {
@@ -27,6 +30,9 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			const port = window.location.port;
 			const gameUrl = `http://${host}:${port}/api/${gameServiceName}?gameId=${gameId}`;
 
+			navigate("/ingame");
+
+
 			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;
@@ -38,6 +44,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			iframe.style.border = "none";           // Supprimer les bordures
 			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
 			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+
 
 			// Supprimer l'ancienne iframe s'il en existe une
 			const existingIframe = document.querySelector('#gameFrame');
