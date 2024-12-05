@@ -40,7 +40,6 @@ function generateTree(tree, nickname, data_team_size) {
 
 function createMatchBox(branch, x, y, nickname) {
     const playerStatus = determinePlayerStatus(branch, nickname);
-	console.log(playerStatus)
     const color = getBoxColor(branch, playerStatus);
 
     // Adjust box size for player's team
@@ -149,7 +148,6 @@ function onMouseMove(event) {
     if (intersects.length > 0) {
         const hoveredBox = intersects[0].object;
         hoveredBox.material.emissiveIntensity = 0.5;
-        console.log('Boîte survolée :', hoveredBox.userData.branch);
     }
 }
 
@@ -199,7 +197,6 @@ function updateTree(tree, nickname) {
                 existingBox.userData.branch = branch
                 existingBox.material.color.setHex(color);
                 const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.2 : 1;
-                console.log(team_size, "*", playerTeamMultiplier)
                 existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
 
                 // Mise à jour du texte

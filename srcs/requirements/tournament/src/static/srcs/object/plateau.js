@@ -33,6 +33,7 @@ async function createPlateau(tree, team_size) {
             return texture;
         }
         const texture = await loadRandomPlateauTexture();
+        console.log(maxWidth, ", ", maxHeight)
         const plateauGeometry = new THREE.BoxGeometry(maxWidth, maxHeight, 2);
         const plateauMaterial = new THREE.MeshStandardMaterial({
             map: texture,
