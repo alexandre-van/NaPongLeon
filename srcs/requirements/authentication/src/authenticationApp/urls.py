@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView
-from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView
+from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView
 from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 
 # for development
@@ -28,7 +28,9 @@ urlpatterns = [
     # Notifications
     path('notifications/', NotificationsView, name='notifications'),
 
+    # For backends
     path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
+    path('verify_friends/', VerifyFriendsView, name='verify_friends'),
 
     #path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/get-access/', WebSocketTokenView, name='get_websocket_token'),

@@ -26,6 +26,8 @@ async def LoginView(request):
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
 
+    #    if not check_password(password):
+
     user = await database_sync_to_async(authenticate)(username=username, password=password)
 
 
@@ -350,3 +352,12 @@ async def WebSocketTokenView(request):
         #return Response({'token': str(token)})
         return HttpResponseJD('Access Token provided', 200, { 'token': str(token) })
     return HttpResponseJD('Method not allowed', 405)
+
+
+
+async def VerifyFriendsView(request):
+    user = await sync_to_async(lambda: request.user)
+    if user == AnonymousUser:
+        return HttpResponseJD('Unknown user', 401)
+    
+

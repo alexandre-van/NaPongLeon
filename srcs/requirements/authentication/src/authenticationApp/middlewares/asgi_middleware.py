@@ -295,6 +295,7 @@ class CsrfAsgiMiddleware:
             '/api/authentication/oauth/42/callback/',
             '/api/authentication/oauth/42/authorize/',
             '/api/authentication/verify_token/',
+            '/api/authentication/verify_friends/',
         ]
         if request.path in exempt_paths:
             response = await self.get_response(scope, receive, send)

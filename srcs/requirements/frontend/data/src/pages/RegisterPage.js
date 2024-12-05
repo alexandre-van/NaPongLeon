@@ -6,6 +6,7 @@ import { useUser } from '../contexts/UserContext.js';
 export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [errorResponse, setErrorResponse] = useState('');
   const { register } = useUser();
   const navigate = useNavigate();
 
@@ -18,6 +19,7 @@ export function RegisterPage() {
       navigate('/login');
     } catch (error) {
       setError(true);
+      setErrorResponse(error.response);
       console.log('Error during registering:', error.response);
     } finally {
       setLoading(false);
@@ -27,7 +29,7 @@ export function RegisterPage() {
   return (
     <div className='login-page'>
       {loading && <p>Registering...</p>}
-      {error && <p>An user with this name already exists</p>}
+      {error && <p>{errorResponse}</p>}
       <RegisterForm onRegister={handleRegister} />
     </div>
   );

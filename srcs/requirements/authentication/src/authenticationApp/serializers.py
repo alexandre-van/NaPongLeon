@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser, Friendship
+import re
+#from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
     friends = serializers.SerializerMethodField()
@@ -9,7 +11,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('id', 'username', 'password', 'avatar_url', 'nickname', 'friends', 'pending_friend_requests')
         extra_kwargs = {
-            'password': {'write_only': True},
+            'password': {
+                'write_only': True,
+                'error_messages': {
+                    'max_length': 'Password must be 3 characters or less'
+                }
+            },
             'nickname': {
                 'max_length': 30,
                 'required': False,
@@ -22,6 +29,19 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = CustomUser.objects.create_user(**validated_data)
         return user
+    
+    def validate_username(self, value):
+        special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
+        if special_chars.search(value):
+            raise serializers.ValidationError("Username cannot contain special characters")
+        return value
+
+    
+    def validate_password(self, value):
+        special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
+        if special_chars.search(value):
+            raise serializers.ValidationError("Password cannot contain special characters")
+        return value
     
     def validate_avatar_url(self, value):
         validator = URLValidator()
