@@ -15,28 +15,32 @@ POWER_UPS = {
     'speed_boost': {
         'duration': 10,
         'probability': 0.1,
-        'color': '#FFD700',
+        'color': '#FFFFFF',
+        'text_color': '#32CD32',
         'effect': 'speed_multiplier',
         'value': 1.25
     },
     'slow_zone': {
         'duration': 10,
         'probability': 0.1,
-        'color': '#800080',
+        'color': '#FFFFFF',
+        'text_color': '#FF6B6B',
         'effect': 'speed_multiplier',
         'value': 0.7
     },
     'shield': {
         'duration': 8,
         'probability': 0.05,
-        'color': '#0000FF',
+        'color': '#FFFFFF',
+        'text_color': '#C0C0C0',
         'effect': 'invulnerable',
         'value': True
     },
     'point_multiplier': {
         'duration': 10,
         'probability': 0.08,
-        'color': '#FFA500',
+        'color': '#FFFFFF',
+        'text_color': '#FFA500',
         'effect': 'score_multiplier',
         'value': 2
     }
@@ -58,7 +62,7 @@ class Game:
         self.initialize_food()
         self.power_ups = []
         self.power_up_spawn_timer = 0
-        self.power_up_spawn_interval = 10  # secondes
+        self.power_up_spawn_interval = 3  # secondes
 
     def initialize_food(self):
         """Initialise la nourriture sur la carte"""
@@ -142,7 +146,8 @@ class Game:
             'color': f'#{random.randint(0, 0xFFFFFF):06x}',
             'speed_multiplier': 1,
             'invulnerable': False,
-            'score_multiplier': 1
+            'score_multiplier': 1,
+            'inventory': []
         }
         if len(self.players) > 4:
             self.status = "in_progress"
@@ -218,7 +223,6 @@ class Game:
                             'type': 'power_up_collected',
                             'game_id': self.game_id,
                             'players': self.players,
-                            'player_id': player_id,
                             'power_up': collected_power_up,
                             'power_ups': self.power_ups
                         })
@@ -304,10 +308,11 @@ class Game:
         
         for power_up in self.power_ups[:]:
             if self.distance(player, power_up) < player['size']:
-                self.apply_power_up(player_id, power_up)
-                collected_power_up = power_up  # Sauvegarder le power-up avant de le supprimer
-                self.power_ups.remove(power_up)
-                return collected_power_up  # Retourner le power-up collecté
+                if len(player['inventory']) < 3:  # Vérifier si l'inventaire n'est pas plein
+                    collected_power_up = power_up
+                    player['inventory'].append(power_up)
+                    self.power_ups.remove(power_up)
+                    return {'type': 'power_up_collected', 'power_up': collected_power_up}
         return False
 
     def apply_power_up(self, player_id, power_up):
@@ -336,6 +341,15 @@ class Game:
                 player['invulnerable'] = False
             elif effect == 'score_multiplier':
                 player['score_multiplier'] = 1
+
+    def use_power_up(self, player_id, slot_index):
+        player = self.players.get(player_id)
+        if not player or slot_index >= len(player['inventory']):
+            return False
+        
+        power_up = player['inventory'].pop(slot_index)
+        self.apply_power_up(player_id, power_up)
+        return {'type': 'power_up_used', 'power_up': power_up}
 
     async def cleanup(self):
         """Nettoie les ressources de la partie"""

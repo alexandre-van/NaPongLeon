@@ -2,9 +2,23 @@ import { updatePlayers, removePlayer } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
 import { updateGameInfo } from './utils.js';
-import { updatePowerUps, displayPowerUpEffect, createNewPowerUp } from './powers.js';
+import { updatePowerUps, displayPowerUpEffect, createNewPowerUp, usePowerUp } from './powers.js';
+import { updateHotbar } from './hotbar.js';
 
 let socket;
+
+document.addEventListener('keydown', (event) => {
+    const keyToSlot = {
+        '1': 0,
+        '2': 1,
+        '3': 2
+    };
+
+    if (keyToSlot.hasOwnProperty(event.key)) {
+        const slotIndex = keyToSlot[event.key];
+        usePowerUp(socket, slotIndex);
+    }
+});
 
 export function initNetwork() {
     console.log('Initializing network connection...');
@@ -85,9 +99,12 @@ function connectWebSocket() {
                 case 'power_up_collected':
                     console.log('Power-up collected:', data);
                     updatePowerUps(data.power_ups);
-                    if (data.player_id === data.yourPlayerId) {
-                        displayPowerUpEffect(data.power_up);
-                    }
+                    updateHotbar(data.players[data.yourPlayerId].inventory);
+                    break;
+                case 'power_up_used':
+                    console.log('Power-up used:', data);
+                    updateHotbar(data.players[data.yourPlayerId].inventory);
+                    displayPowerUpEffect(data.power_up);
                     break;
                 default:
                     console.log('Unknown message type:', data.type);

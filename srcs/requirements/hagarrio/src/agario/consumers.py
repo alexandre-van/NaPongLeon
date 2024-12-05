@@ -128,6 +128,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 				game = GameConsumer.active_games[self.current_game_id]
 				game.handle_player_input(self.player_id, data['key'], data['isKeyDown'])
 
+		elif data['type'] == 'use_power_up':
+			if self.current_game_id in GameConsumer.active_games:
+				game = GameConsumer.active_games[self.current_game_id]
+				game.use_power_up(self.player_id, data['slot'])
+
 	async def send_games_info(self):
 		"""Envoie la liste des parties disponibles à tous les joueurs"""
 		games_info = []
@@ -165,46 +170,36 @@ class GameConsumer(AsyncWebsocketConsumer):
 		"""Diffuse les mises à jour du jeu aux joueurs"""
 		if game_id in GameConsumer.active_games:
 			game = GameConsumer.active_games[game_id]
-			
+			message = {
+				'type': state_update['type'],
+				'game_id': state_update['game_id'],
+				'players': state_update['players'],
+				'yourPlayerName': game.players[self.player_id]['name'],
+				'yourPlayerId': self.player_id
+			}
 			# Détermine le type de mise à jour explicitement
 			if state_update['type'] == 'food_update':
-				message = {
-					'type': state_update['type'],
-					'game_id': state_update['game_id'],
-					'players': state_update['players'],
-					'food': state_update['food']
-				}
+				message.update({'food': state_update['food']})
 			elif state_update['type'] == 'power_up_spawned':
-				message = {
-					'type': state_update['type'],
-					'players': state_update['players'],
-					'game_id': state_update['game_id'],
+				message.update({
 					'power_up': state_update['power_up'],
 					'power_ups': state_update['power_ups']
-				}
+				})
 			elif state_update['type'] == 'power_up_collected':
-				message = {
-					'type': state_update['type'],
-					'game_id': state_update['game_id'],
-					'players': state_update['players'],
+				message.update({
+					'power_up': state_update['power_up'],
 					'power_ups': state_update['power_ups']
-				}
-			else:
-				message = {
-					'type': state_update['type'],
-					'game_id': state_update['game_id'],
-					'players': state_update['players']
-				}
+				})
+			elif state_update['type'] == 'power_up_used':
+				message.update({
+					'power_up': state_update['power_up']
+				})
 			# Envoie la mise à jour à tous les joueurs de la partie
 			for player_id in game.players:
 				if player_id in GameConsumer.players:
-					await GameConsumer.players[player_id].send(text_data=json.dumps({
-						**message,
-						'yourPlayerName': game.players[player_id]['name'],
-						'yourPlayerId': player_id
-					}))
+					await GameConsumer.players[player_id].send(text_data=json.dumps(message))
 
 	#TODO: Gérer les nouvelles parties avec matchmaking
-	async def new_game(game_id, player_excepted):
-		new_game = Game(game_id)
-		GameConsumer.active_games[new_game.game_id] = new_game
+	# async def new_game(game_id, player_excepted):
+	# 	new_game = Game(game_id)
+	# 	GameConsumer.active_games[new_game.game_id] = new_game

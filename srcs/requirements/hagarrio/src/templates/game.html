@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{% static 'favicon.ico' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
     <title>Hagarr.io</title>
     <style>
         body, html {
@@ -189,14 +190,22 @@
         }
         .power-up-effect {
             position: fixed;
-            top: 50%;
+            top: 25%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 24px;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-family: 'Righteous', cursive;
             font-weight: bold;
-            text-shadow: 0 0 10px currentColor;
-            animation: powerUpAnimation 2s ease-out forwards;
-            z-index: 1000;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7),
+                         -1px -1px 0 #000,
+                         1px -1px 0 #000,
+                         -1px 1px 0 #000,
+                         1px 1px 0 #000;
+            pointer-events: none;
+            opacity: 0;
+            animation: powerUpAnimation 3s ease-out forwards;
+            z-index: 200;
+            letter-spacing: 1px;
         }
 
         @keyframes powerUpAnimation {
@@ -216,6 +225,55 @@
                 transform: translate(-50%, -50%) scale(0.8);
                 opacity: 0;
             }
+        }
+        #hotbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .hotbar-slot {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .hotkey {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .power-up-icon {
+            font-size: 32px;
+            text-shadow: 0 0 10px currentColor;
+            filter: brightness(1.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -244,6 +302,17 @@
         <div id="scoreboard"></div>
         <canvas id="minimap"></canvas>
         <div id="speedometer">Speed: 0</div>
+        <div id="hotbar">
+            <div class="hotbar-slot" data-slot="0">
+                <span class="hotkey">1</span>
+            </div>
+            <div class="hotbar-slot" data-slot="1">
+                <span class="hotkey">2</span>
+            </div>
+            <div class="hotbar-slot" data-slot="2">
+                <span class="hotkey">3</span>
+            </div>
+        </div>
     </div>
     <!-- <script>
         window.ENV = {

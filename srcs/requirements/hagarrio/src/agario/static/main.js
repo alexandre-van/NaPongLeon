@@ -6,6 +6,7 @@ import { initNetwork, startGame } from './network.js';
 import { initInput } from './input.js';
 import { initUI, updateUI } from './ui.js';
 import { throttle } from './utils.js';
+import { createHotbar } from './hotbar.js';
 
 let scene, camera, renderer;
 export let mapHeight, mapWidth, max_food;
@@ -33,6 +34,7 @@ export function startGameLoop(initialGameState) {
     initInput();
     updatePlayers(initialGameState.players, initialGameState.yourPlayerId);
     initPlayers();
+    createHotbar();
     function gameLoop() {
         requestAnimationFrame(gameLoop);
         const myPlayer = getPlayers()[getMyPlayerId()];
