@@ -245,13 +245,13 @@
         <canvas id="minimap"></canvas>
         <div id="speedometer">Speed: 0</div>
     </div>
-    {% comment %} <script>
+    <!-- <script>
         window.ENV = {
             BASE_URL: '{{ BASE_URL|safe }}',
             WS_URL: '{{ WS_URL|safe }}',
             DEBUG: {{ DEBUG|yesno:"true,false" }}
         }
-    </script> {% endcomment %}
+    </script> -->
     <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>
