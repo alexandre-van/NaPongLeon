@@ -2,6 +2,7 @@ import * as THREE from '../js/three.module.js';
 import { renderer, camera, scene } from './renderer.js';
 import { controls } from './controls.js'
 import { updateTree } from './object/tree.js';
+import { update_status } from './object/status.js'
 
 let animationId;
 
@@ -14,8 +15,9 @@ function animate() {
 	renderer.render(scene, camera);
 }
 
-async function updateTournament(tree, nickname) {
-	updateTree(tree, nickname);
+async function updateTournament(data, nickname) {
+	update_status(data.teams, nickname);
+	updateTree(data.tree, nickname);
 	renderer.render(scene, camera);
 }
 

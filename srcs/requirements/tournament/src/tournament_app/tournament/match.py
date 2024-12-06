@@ -5,6 +5,8 @@ class Match:
 		self.id = id
 		self.team1 = team1
 		self.team2 = team2
+		self.team1.new_match(self)
+		self.team2.new_match(self)
 		self.status = 'Waiting'
 		self.score = {
 			team1.name: 0,

@@ -36,7 +36,7 @@ socket.onmessage = function(event) {
 		case "tournament_update":
 			console.log("Tournament update");
 			console.log("tu : ", data);
-			updateTournament(data.tree, nickname);
+			updateTournament(data, nickname);
 			break;
 		case "tournament_start":
 			console.log("Tournament started!");

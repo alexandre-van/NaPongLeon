@@ -5,13 +5,18 @@ class Player:
 		self.username = username
 		self.nickname = nickname
 		self.consumer = consumer
+		self.status = 'Waiting...'
 		self.team = team
 		logger.debug(f"Create player : {username}")
 
 	def set_team(self, team):
 		self.team = team
 
+	def set_status(self, new_status):
+		self.status = new_status
+
 	def export(self):
 		return {
-			'nickname': self.nickname
+			'nickname': self.nickname,
+			'status': self.status
 		}
