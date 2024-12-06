@@ -9,7 +9,10 @@ const verticalSpacing = 10; // Espacement vertical
 const horizontalSpacing = 10; // Espacement horizontal
 let team_size = 1
 
-function generateTree(tree, nickname, data_team_size) {
+let tree = []
+
+function generateTree(newtree, nickname, data_team_size) {
+    tree = newtree
     if (data_team_size) {
         team_size = data_team_size
     }
@@ -183,7 +186,8 @@ function clearTree() {
 	});
 }
 
-function updateTree(tree, nickname) {
+function updateTree(newtree, nickname) {
+    tree = newtree
     // Met à jour le contenu des branches sans recréer les objets
     tree.forEach((level, levelIndex) => {
         level.forEach((branch, index) => {
@@ -266,4 +270,4 @@ function updateBoxText(box, branch, playerStatus) {
 
 
 
-export { generateTree, clearTree, updateTree };
+export { tree, generateTree, clearTree, updateTree };

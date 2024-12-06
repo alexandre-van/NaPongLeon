@@ -6,6 +6,7 @@ class Team:
 		self.update_name()
 		self.level = 0
 		self.status = "Waiting..."
+		self.current_branch = None
 		self.matchs = []
 		logger.debug(f"{self.name} team created")
 
@@ -14,6 +15,13 @@ class Team:
 
 	def set_level(self, level):
 		self.level = level
+
+	def set_level(self, level):
+		self.level = level
+
+	def set_current_branch(self, new_current_branch):
+		self.current_branch = new_current_branch
+		self.level = self.current_branch.level
 
 	def new_match(self, match):
 		self.matchs.append(match)
@@ -28,5 +36,6 @@ class Team:
 			'name': self.name,
 			'players': list(player.export() for player in self.players),
 			'level': self.level,
-			'status': self.status
+			'status': self.status,
+			'current_cell_id': self.current_branch.id
 		}

@@ -1,3 +1,5 @@
+import {tree} from './tree.js'
+
 let teams = [];
 
 function update_status(teams_update, nickname) {

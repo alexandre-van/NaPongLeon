@@ -27,10 +27,13 @@ class Branch:
 		logger.debug(f"create branch || level : {level}")
 
 	def init_match(self, team1, team2):
-		self.match = Match(self.id, team1, team2)
+		team1.set_current_branch(self)
+		team2.set_current_branch(self)
+		self.match = Match(self, team1, team2)
 
 	def init_bench(self, team):
 		logger.debug(f"Create bench || team : {team.name}")
+		team.set_current_branch(self)
 		self.bench = team
 
 	def get_current_level(self):

@@ -1,8 +1,8 @@
 from ..utils.logger import logger
 
 class Match:
-	def __init__(self, id, team1, team2):
-		self.id = id
+	def __init__(self, branch, team1, team2):
+		self.branch = branch
 		self.team1 = team1
 		self.team2 = team2
 		self.team1.new_match(self)
