@@ -72,12 +72,12 @@ export function createPlayerSprite(player) {
     playerContext.fillStyle = gradient;
     playerContext.fill();
 
-    // Bordure
-    playerContext.strokeStyle = shadeColor(player.color, -0.9);
-    playerContext.lineWidth = size/30;
-    playerContext.beginPath();
-    playerContext.arc(size/2, size/2, size/2 - (size/200), 0, 2 * Math.PI); // Réduit le rayon pour coller la bordure plus près du joueur
-    playerContext.stroke();
+    // // Bordure
+    // playerContext.strokeStyle = shadeColor(player.color, -0.9);
+    // playerContext.lineWidth = size/30;
+    // playerContext.beginPath();
+    // playerContext.arc(size/2, size/2, size/2 - (size/200), 0, 2 * Math.PI); // Réduit le rayon pour coller la bordure plus près du joueur
+    // playerContext.stroke();
 
     const playerTexture = new THREE.CanvasTexture(playerCanvas);
     playerTexture.minFilter = THREE.LinearFilter;

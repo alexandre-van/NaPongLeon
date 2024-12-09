@@ -106,6 +106,10 @@ function connectWebSocket() {
                     updateHotbar(data.players[data.yourPlayerId].inventory);
                     displayPowerUpEffect(data.power_up);
                     break;
+                case 'player_eat_other_player':
+                    console.log('Player ate other player:', data);
+                    updatePlayers(data.players, data.yourPlayerId);
+                    break;
                 default:
                     console.log('Unknown message type:', data.type);
             }

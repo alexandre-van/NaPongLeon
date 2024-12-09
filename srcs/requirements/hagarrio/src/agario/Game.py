@@ -212,6 +212,14 @@ class Game:
                 if positions_updated:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
 
+                #Verfier les collisions entre les joueurs
+                # for player_id in self.players:
+                #     for other_player_id in self.players:
+                #         if player_id != other_player_id:
+                #             player_eated = player_eat_other_player(player_id, other_player_id)
+                #             if player_eated:
+                #                 await broadcast_callback(self.game_id, self.state_player_eat_other_player())
+
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
@@ -350,6 +358,32 @@ class Game:
         power_up = player['inventory'].pop(slot_index)
         self.apply_power_up(player_id, power_up)
         return {'type': 'power_up_used', 'power_up': power_up}
+
+    async def state_player_eat_other_player(self, player_id, other_player_id):
+        return {
+            'type': 'player_eat_other_player',
+            'game_id': self.game_id,
+            'players': self.players,
+            'player_id': player_id,
+            'other_player_id': other_player_id
+        }
+
+    async def player_eat_other_player(self, player_id, other_player_id):
+        player = self.players.get(player_id)
+        other_player = self.players.get(other_player_id)
+        if not player or not other_player:
+            return False
+
+        player1x = player['x']
+        player1y = player['y']
+        player2x = other_player['x']
+        player2y = other_player['y']
+        if player['size'] > other_player['size'] * 1.2:
+            player['size'] += other_player['size'] * 0.25
+            player['score'] += other_player['score'] * 0.25
+            del self.players[other_player_id]
+            return True
+        return False
 
     async def cleanup(self):
         """Nettoie les ressources de la partie"""

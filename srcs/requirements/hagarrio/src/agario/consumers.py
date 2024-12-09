@@ -194,6 +194,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 				message.update({
 					'power_up': state_update['power_up']
 				})
+			elif state_update['type'] == 'player_eat_other_player':
+				message.update({
+					'player_eaten': state_update['other_player_id'],
+				})
 			# Envoie la mise à jour à tous les joueurs de la partie
 			for player_id in game.players:
 				if player_id in GameConsumer.players:
