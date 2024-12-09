@@ -151,7 +151,7 @@ class Game:
         }
         if len(self.players) > 4:
             self.status = "in_progress"
-            
+
     def remove_player(self, player_id):
         """Retire un joueur de la partie"""
         if player_id in self.players:
@@ -212,13 +212,18 @@ class Game:
                 if positions_updated:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
 
-                #Verfier les collisions entre les joueurs
-                # for player_id in self.players:
-                #     for other_player_id in self.players:
-                #         if player_id != other_player_id:
-                #             player_eated = player_eat_other_player(player_id, other_player_id)
-                #             if player_eated:
-                #                 await broadcast_callback(self.game_id, self.state_player_eat_other_player())
+                # Liste pour stocker les joueurs qui se font manger
+                players_eaten = []
+                # Vérifier les collisions entre les joueurs
+                for player_id in self.players:
+                    for other_player_id in self.players:
+                        if player_id != other_player_id:
+                            if self.player_eat_other_player(player_id, other_player_id):
+                                players_eaten.append((player_id, other_player_id))
+                
+                # Traiter les joueurs mangés après la boucle
+                for player_id, other_player_id in players_eaten:
+                    await broadcast_callback(self.game_id, self.state_player_eat_other_player(player_id, other_player_id))
 
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
@@ -359,7 +364,7 @@ class Game:
         self.apply_power_up(player_id, power_up)
         return {'type': 'power_up_used', 'power_up': power_up}
 
-    async def state_player_eat_other_player(self, player_id, other_player_id):
+    def state_player_eat_other_player(self, player_id, other_player_id):
         return {
             'type': 'player_eat_other_player',
             'game_id': self.game_id,
@@ -368,21 +373,22 @@ class Game:
             'other_player_id': other_player_id
         }
 
-    async def player_eat_other_player(self, player_id, other_player_id):
+    def player_eat_other_player(self, player_id, other_player_id):
         player = self.players.get(player_id)
         other_player = self.players.get(other_player_id)
         if not player or not other_player:
             return False
 
-        player1x = player['x']
-        player1y = player['y']
-        player2x = other_player['x']
-        player2y = other_player['y']
-        if player['size'] > other_player['size'] * 1.2:
-            player['size'] += other_player['size'] * 0.25
-            player['score'] += other_player['score'] * 0.25
-            del self.players[other_player_id]
-            return True
+        # Vérifier si les joueurs se touchent
+        if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
+            if player['size'] > other_player['size'] * 1.2:
+                player['size'] += other_player['size'] * 0.25
+                player['score'] += other_player['score'] * 0.25
+                # Retourner les informations avant de supprimer le joueur
+                return {
+                    'eaten': True,
+                    'score': other_player['score']
+                }
         return False
 
     async def cleanup(self):

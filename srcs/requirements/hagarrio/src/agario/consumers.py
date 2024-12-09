@@ -195,9 +195,33 @@ class GameConsumer(AsyncWebsocketConsumer):
 					'power_up': state_update['power_up']
 				})
 			elif state_update['type'] == 'player_eat_other_player':
+				eaten_player_id = state_update['other_player_id']
 				message.update({
-					'player_eaten': state_update['other_player_id'],
+					'player_eaten': eaten_player_id,
 				})
+				
+				# Envoyer la mise à jour aux joueurs restants dans la partie
+				for player_id in game.players:
+					if player_id in GameConsumer.players:
+						await GameConsumer.players[player_id].send(text_data=json.dumps(message))
+				
+				# Gérer le joueur mangé
+				if eaten_player_id in GameConsumer.players:
+					eaten_player = GameConsumer.players[eaten_player_id]
+					# Récupérer le score avant de supprimer le joueur
+					final_score = game.players[eaten_player_id]['score']
+					game.remove_player(eaten_player_id)
+					eaten_player.current_game_id = None
+					
+					# Renvoyer le joueur mangé à la waiting room
+					await eaten_player.send(text_data=json.dumps({
+						'type': 'return_to_waiting_room',
+						'message': f'Score final : {final_score:.0f}'
+					}))
+					await eaten_player.send_games_info()
+					
+				return  # Sortir de la fonction pour éviter l'envoi multiple
+
 			# Envoie la mise à jour à tous les joueurs de la partie
 			for player_id in game.players:
 				if player_id in GameConsumer.players:

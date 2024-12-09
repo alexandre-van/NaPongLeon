@@ -64,3 +64,37 @@ export function updateGameInfo(data) {
         });
     });
 }
+
+export function showGameOverMessage(message) {
+    const overlay = document.createElement('div');
+    overlay.className = 'game-over-overlay';
+    
+    const content = document.createElement('div');
+    content.className = 'game-over-content';
+    
+    const title = document.createElement('div');
+    title.className = 'game-over-title';
+    title.textContent = 'GAME OVER';
+    
+    const messageText = document.createElement('div');
+    messageText.className = 'game-over-score';
+    messageText.textContent = message;
+    
+    content.appendChild(title);
+    content.appendChild(messageText);
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+    
+    // Attendre 3 secondes avant de rediriger vers la waiting room
+    setTimeout(() => {
+        overlay.style.animation = 'fadeOut 0.5s ease-out';
+        overlay.addEventListener('animationend', () => {
+            if (overlay && overlay.parentNode) {
+                overlay.remove();
+                // Afficher la waiting room
+                document.getElementById('waitingRoom').style.display = 'flex';
+                document.getElementById('gameContainer').style.display = 'none';
+            }
+        });
+    }, 3000);
+}

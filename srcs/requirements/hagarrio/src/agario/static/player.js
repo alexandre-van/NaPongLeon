@@ -43,10 +43,20 @@ function updatePlayerSprite(player, scene) {
 
 export function createPlayerSprite(player) {
     const playerCanvas = document.createElement('canvas');
-    const playerContext = playerCanvas.getContext('2d');
-    const size = player.size * 2;
+    const playerContext = playerCanvas.getContext('2d', {
+        antialias: true,
+        alpha: true
+    });
+    
+    // Augmenter significativement la taille du canvas pour un meilleur rendu
+    const size = player.size * 16;
     playerCanvas.width = size;
     playerCanvas.height = size;
+    
+    // Activer l'anti-aliasing
+    playerContext.imageSmoothingEnabled = true;
+    playerContext.imageSmoothingQuality = 'high';
+    
     function shadeColor(color, percent) {
         const f = parseInt(color.slice(1), 16);
         const t = percent < 0 ? 0 : 255;
@@ -64,24 +74,29 @@ export function createPlayerSprite(player) {
         size/2, size/2, size/2
     );
     gradient.addColorStop(0, player.color);
+    gradient.addColorStop(0.8, player.color);
     gradient.addColorStop(1, shadeColor(player.color, 0.3));
 
-    // Cercle principal
+    // Dessiner le cercle avec anti-aliasing amélioré
     playerContext.beginPath();
-    playerContext.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+    playerContext.arc(size/2, size/2, size/2 - 2, 0, 2 * Math.PI);
     playerContext.fillStyle = gradient;
+    
+    // Ajouter un effet de lissage supplémentaire
+    playerContext.shadowColor = player.color;
+    playerContext.shadowBlur = 5;
     playerContext.fill();
-
-    // // Bordure
-    // playerContext.strokeStyle = shadeColor(player.color, -0.9);
-    // playerContext.lineWidth = size/30;
-    // playerContext.beginPath();
-    // playerContext.arc(size/2, size/2, size/2 - (size/200), 0, 2 * Math.PI); // Réduit le rayon pour coller la bordure plus près du joueur
-    // playerContext.stroke();
+    
+    // Ajouter un contour subtil
+    playerContext.strokeStyle = shadeColor(player.color, -0.2);
+    playerContext.lineWidth = 2;
+    playerContext.stroke();
 
     const playerTexture = new THREE.CanvasTexture(playerCanvas);
-    playerTexture.minFilter = THREE.LinearFilter;
+    playerTexture.minFilter = THREE.LinearMipmapLinearFilter;
     playerTexture.magFilter = THREE.LinearFilter;
+    playerTexture.anisotropy = 16;
+
     const playerMaterial = new THREE.SpriteMaterial({ 
         map: playerTexture,
         transparent: true,
@@ -89,6 +104,7 @@ export function createPlayerSprite(player) {
         depthWrite: false,
         renderOrder: 0
     });
+
     const playerSprite = new THREE.Sprite(playerMaterial);
     playerSprite.name = `player_${player.id}`;
     playerSprite.scale.set(player.size * 2, player.size * 2, 1);
