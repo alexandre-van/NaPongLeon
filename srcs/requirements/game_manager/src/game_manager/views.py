@@ -51,10 +51,17 @@ async def get_out_matchmaking(username, matchmaking_instance):
 	except Exception as e:
 		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-	
-@async_csrf_exempt
+
 @auth_required
 async def create_game(request, username=None):
+	game_manager_instance = Game_manager.game_manager_instance
+	if game_manager_instance is None:
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+	await game_manager_instance.create_new_player_instance(username)
+	return await create_game_api(request, username)
+
+@auth_required
+async def join_game(request, username=None):
 	game_manager_instance = Game_manager.game_manager_instance
 	if game_manager_instance is None:
 		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)

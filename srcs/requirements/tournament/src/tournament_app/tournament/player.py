@@ -1,4 +1,5 @@
 from ..utils.logger import logger
+import uuid
 
 class Player:
 	def __init__(self, username, nickname, consumer, team=None):

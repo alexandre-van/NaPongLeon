@@ -1,6 +1,5 @@
 import * as THREE from '../../js/three.module.js';
-import { renderer, camera, scene } from '../renderer.js';
-import { showParchment } from './parchment.js'
+import { scene } from '../renderer.js';
 
 const boxWidth = 10; // Largeur des rectangles
 const boxHeight = 6; // Hauteur des rectangles
@@ -95,73 +94,11 @@ function getBoxColor(branch) {
     return 0xA9A9A9;
 }
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-function onClick(event) {
-    // Calculer la position de la souris dans l'espace normalisé
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    // Effectuer le raycasting
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Filtrer uniquement les maillages avec des données de branche
-    const boxesWithBranch = scene.children.filter(child => 
-        child.isMesh && 
-        child.userData.branch
-    );
-
-    // Vérifier les intersections avec seulement les boîtes ayant des données
-    const intersects = raycaster.intersectObjects(boxesWithBranch);
-
-    // Vérifier si un objet a été cliqué
-    if (intersects.length > 0) {
-        const clickedBox = intersects[0].object;
-        showParchment(clickedBox.userData.branch);
-    }
-}
-// Ajouter un écouteur pour les clics de souris
-window.addEventListener('click', onClick);
-
-function onMouseMove(event) {
-    // Calculer la position de la souris dans l'espace normalisé
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    // Effectuer le raycasting
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Filtrer uniquement les maillages avec des données de branche
-    const boxesWithBranch = scene.children.filter(child => 
-        child.isMesh && 
-        child.userData.branch && 
-        child.material.emissive
-    );
-
-    // Réinitialiser l'émissivité de toutes les boîtes
-    boxesWithBranch.forEach(box => {
-        box.material.emissiveIntensity = 0.1;
-    });
-
-    // Vérifier les intersections avec seulement les boîtes ayant des données
-    const intersects = raycaster.intersectObjects(boxesWithBranch);
-
-    // Ajouter l'effet de surbrillance à la première boîte intersectée
-    if (intersects.length > 0) {
-        const hoveredBox = intersects[0].object;
-        hoveredBox.material.emissiveIntensity = 0.5;
-    }
-}
-
-// Ajouter un écouteur pour les mouvements de souris
-window.addEventListener('mousemove', onMouseMove);
-
 function drawConnection(x1, y1, x2, y2) {
 	// Matériau de la ligne avec une épaisseur augmentée
 	const lineMaterial = new THREE.LineBasicMaterial({
 		color: 0xffffff,
-		linewidth: 3, // Épaisseur de la ligne
+		linewidth: 100, // Épaisseur de la ligne
 	});
 
 	// Points de la ligne : du centre du parent au centre de l'enfant
@@ -200,11 +137,11 @@ function updateTree(newtree, nickname) {
                 const color = getBoxColor(branch);
                 existingBox.userData.branch = branch
                 existingBox.material.color.setHex(color);
-                const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.2 : 1;
+                let playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.25 : 1;
                 existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
 
                 // Mise à jour du texte
-                updateBoxText(existingBox, branch, playerStatus);
+                updateBoxText(existingBox, branch, playerStatus, playerTeamMultiplier);
             } else {
                 // Si la boîte n'existe pas, crée-la
                 //const x = calculateXForBranch(level, index, levelIndex);
@@ -218,7 +155,7 @@ function updateTree(newtree, nickname) {
     //updateConnections(tree);
 }
 
-function updateBoxText(box, branch, playerStatus) {
+function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
     // Créez un nouveau canevas pour le texte
     const textCanvas = document.createElement('canvas');
     const ctx = textCanvas.getContext('2d');
@@ -266,7 +203,77 @@ function updateBoxText(box, branch, playerStatus) {
         box.textMesh.position.set(box.position.x, box.position.y, zOffset);
         scene.add(box.textMesh);
     }
+    manageSpectateButton(box, branch, playerTeamMultiplier);
 }
+
+
+function manageSpectateButton(box, branch, playerTeamMultiplier) {
+    const matchInProgress = branch.match && branch.match.status === "Waiting";
+    const buttonColor = '#F08080';
+
+    if (matchInProgress && playerTeamMultiplier == 1) {
+        // Agrandir la boîte pour faire de la place au bouton
+        playerTeamMultiplier = 1.25;
+        box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+        const zOffset = box.position.z + box.geometry.parameters.depth / 2 + 0.2;
+
+        if (box.textMesh) {
+            box.textMesh.position.set(box.position.x, box.position.y + boxHeight / 8, zOffset);
+        }
+
+        if (!box.spectateButton) {
+            // Créer la géométrie du bouton avec une épaisseur
+            const buttonGeometry = new THREE.BoxGeometry(boxWidth, boxHeight / 4, 0.2); // 0.2 pour l'épaisseur
+            const buttonCanvas = document.createElement('canvas');
+            const ctx = buttonCanvas.getContext('2d');
+            buttonCanvas.width = 128;
+            buttonCanvas.height = 64;
+
+            // Style du bouton
+            ctx.fillStyle = buttonColor; // Couleur de fond du bouton
+            ctx.fillRect(0, 0, buttonCanvas.width, buttonCanvas.height);
+            ctx.font = 'bold 35px Dancing Script';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Spectate', buttonCanvas.width / 2, buttonCanvas.height / 2);
+
+            const buttonTexture = new THREE.CanvasTexture(buttonCanvas);
+            const buttonMaterial = new THREE.MeshStandardMaterial({
+                map: buttonTexture,
+                color: buttonColor,
+                emissive: new THREE.Color(buttonColor), // Couleur émissive
+                emissiveIntensity: 0.1, // Intensité de l'émissivité
+                transparent: true,
+                side: THREE.FrontSide
+            });
+
+            // Matériaux pour toutes les faces du bouton
+            const materials = [
+                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+                buttonMaterial, // Face supérieure (avec texte)
+                new THREE.MeshStandardMaterial({ color: buttonColor })  // Face inférieure
+            ];
+
+            box.spectateButton = new THREE.Mesh(buttonGeometry, materials);
+            box.spectateButton.position.set(box.position.x, box.position.y - boxHeight / 2.25, zOffset);
+            box.spectateButton.userData.isSpectateButton = true; // Identifie le bouton
+            scene.add(box.spectateButton);
+
+        }
+    } else if (box.spectateButton) {
+        // Supprimer le bouton si le statut n'est plus "Waiting"
+        scene.remove(box.spectateButton);
+        box.spectateButton.geometry.dispose();
+        box.spectateButton.material.forEach(mat => mat.dispose());
+        box.spectateButton = null;
+    }
+}
+
+
 
 function findCellByCellId(cell_id) {
     // Parcours de tous les niveaux de l'arbre

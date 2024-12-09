@@ -97,7 +97,7 @@ function generateTeamList() {
 		statusSpan.textContent = `Status: ${team.status || 'Unknown'}`;
 
 		// Check if the team is "defeated"
-		if (team.status === 'Waiting the match...') {
+		if (team.status === 'Defeated') {
 			applyStyles(teamName, {
 				fontSize: '20px',
 				fontWeight: 'bold',

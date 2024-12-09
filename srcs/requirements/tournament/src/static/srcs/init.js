@@ -2,6 +2,7 @@ import { renderer, camera, scene } from './renderer.js';
 import { generateTree } from './object/tree.js';
 import { createPlateau } from './object/plateau.js'
 import { update_status } from './object/status.js'
+import './object/mouse.js'
 
 async function init(data, ws, nickname){
 	const team_size = data.game_mode.team_size
