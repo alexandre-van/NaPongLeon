@@ -17,7 +17,6 @@ class Match:
 	
 	def export(self):
 		return {
-			'id': self.id,
 			'team1': self.team1.export() if self.team1 else None,
 			'team2': self.team2.export() if self.team2 else None,
 			'status': self.status,
