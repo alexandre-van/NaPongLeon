@@ -18,7 +18,7 @@ class Ball:
 
 	def update_ball_position(self, get_players_in_side):
 		destination = self.get_destination()
-		logger.debug(f"dest = {destination}")
+		# logger.debug(f"dest = {destination}")
 		destination_collider = self.get_destination_collider(destination)
 		players_in_side = get_players_in_side('right' if destination['x'] > 0 else 'left')
 		for player_in_side in players_in_side:
@@ -30,7 +30,7 @@ class Ball:
 			padel_hitbox = padel.get_hitbox()
 			physic_position = get_position_physic(self.position, destination, self.ball_data['rad'],\
 						padel_hitbox)
-			logger.debug(f"physic_position:{physic_position}")
+			# logger.debug(f"physic_position:{physic_position}")
 			if physic_position:
 				self.padel_contact(physic_position, padel)
 				self.priority = True
@@ -49,7 +49,7 @@ class Ball:
 		
 	def get_destination(self):
 		normalized_speed = self.normalize_speed()
-		logger.debug(f"speed:{self.speed}")
+		# logger.debug(f"speed:{self.speed}")
 		destination = {
 			'x': self.position['x'] + self.direction['x'] \
 				* normalized_speed['x'] * self.timer.get_elapsed_time(),

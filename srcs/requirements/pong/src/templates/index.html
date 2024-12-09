@@ -1,3 +1,15 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js App</title>
+    {% load static %}
+</head>
+<body>
+    <script type="module" src="{% static 'main.js' %}"></script>
+</body>
+</html> {% endcomment %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +18,11 @@
     {% load static %}
 </head>
 <body>
+    <div id="score">
+        <span id="player1">0</span> - <span id="player2">0</span>
+    </div>
+
+    <!-- Inclusion du script principal -->
     <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>
