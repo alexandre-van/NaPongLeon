@@ -1,113 +1,174 @@
-import {tree} from './tree.js'
+import { findCellByCellId } from './tree.js';
+import { showParchment, showTeamParchment } from './parchment.js';
 
 let teams = [];
 
-function update_status(teams_update, nickname) {
-    teams = teams_update;
-    let playerStatus = "Unknown";
-
-    teams.forEach(team => {
-        team.players.forEach(player => {
-            if (player.nickname === nickname) {
-                playerStatus = player.status;
-            }
-        });
-    });
-
-    const statusButton = document.getElementById('statusButton');
-    if (statusButton) {
-        statusButton.textContent = playerStatus;
-    }
+/**
+ * Apply a set of styles to an element.
+ * @param {HTMLElement} element - The element to style.
+ * @param {Object} styles - A dictionary of styles.
+ */
+function applyStyles(element, styles) {
+	Object.assign(element.style, styles);
 }
 
+/**
+ * Create a button with specific properties.
+ * @param {string} text - The button's text.
+ * @param {Function} onClick - The click event handler.
+ * @returns {HTMLButtonElement} The created button.
+ */
+function createButton(text, onClick) {
+	const button = document.createElement('button');
+	button.textContent = text;
+	applyStyles(button, {
+		fontFamily: `'Dancing Script', cursive`,
+		fontSize: '16px',
+		cursor: 'pointer',
+	});
+	button.addEventListener('click', onClick);
+	return button;
+}
+
+/**
+ * Update the player's status in the UI.
+ * @param {Array} teamsUpdate - The updated list of teams.
+ * @param {string} nickname - The player's nickname.
+ */
+function update_status(teamsUpdate, nickname) {
+	teams = teamsUpdate;
+	let playerStatus = 'Unknown';
+
+	teams.forEach(team => {
+		team.players.forEach(player => {
+			if (player.nickname === nickname) {
+				console.log(player.status);
+				playerStatus = player.status;
+			}
+		});
+	});
+
+	const statusButton = document.getElementById('statusButton');
+	if (statusButton) {
+		statusButton.textContent = playerStatus;
+	}
+}
+
+function current_cell(team) {
+	const cell = findCellByCellId(team.current_cell_id);
+	if (cell) {
+		alert(`Navigating to cell ID: ${cell.id}\nLevel: ${cell.level}`);
+		showParchment(cell)
+	} else {
+		alert(`Cell with ID ${team.current_cell_id} not found.`);
+	}
+}
+
+function inspect(team) {
+	if (team) {
+		alert(`Inspecting team: ${team.name}\nStatus: ${team.status}`);
+		showTeamParchment(team)
+	}
+}
+/**
+ * Generate the list of teams dynamically.
+ */
+function generateTeamList() {
+	const teamList = document.getElementById('teamList');
+	teamList.innerHTML = ''; // Clear the current list
+
+	teams.forEach(team => {
+		const li = document.createElement('li');
+		applyStyles(li, {
+			display: 'flex',
+			flexDirection: 'column',
+			justifyContent: 'center',
+			alignItems: 'center',
+			fontFamily: 'Dancing Script, cursive',
+			fontSize: '18px',
+			textAlign: 'center',
+		});
+
+		// Team Name and Status
+		const teamName = document.createElement('div');
+		teamName.textContent = team.name;
+
+		const statusSpan = document.createElement('div');
+		statusSpan.textContent = `Status: ${team.status || 'Unknown'}`;
+
+		// Check if the team is "defeated"
+		if (team.status === 'Waiting the match...') {
+			applyStyles(teamName, {
+				fontSize: '20px',
+				fontWeight: 'bold',
+				color: 'red',
+				textDecoration: 'line-through', // Barré
+			});
+			applyStyles(statusSpan, {
+				color: 'red', // Status en rouge
+			});
+		} else {
+			applyStyles(teamName, {
+				fontSize: '20px',
+				fontWeight: 'bold',
+			});
+			applyStyles(statusSpan, {
+				fontSize: '16px',
+				fontStyle: 'italic',
+			});
+		}
+
+		li.appendChild(teamName);
+		li.appendChild(document.createElement('br'));
+		li.appendChild(statusSpan);
+		li.appendChild(document.createElement('br'));
+
+		// Button Container
+		const buttonContainer = document.createElement('div');
+		applyStyles(buttonContainer, {
+			display: 'inline-flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			gap: '10px',
+		});
+
+		// Button for inspecting the team
+		const inspectButton = createButton('Inspect', () => {
+			inspect(team);
+		});
+
+		// Button for switching to the current cell
+		const currentCellButton = createButton('Current Cell', () => {
+			current_cell(team);
+		});
+
+		const separator = document.createElement('span');
+		separator.textContent = '|';
+		applyStyles(separator, { color: '#000' });
+
+		buttonContainer.appendChild(inspectButton);
+		buttonContainer.appendChild(separator);
+		buttonContainer.appendChild(currentCellButton);
+
+		li.appendChild(buttonContainer);
+		li.appendChild(document.createElement('br'));
+
+		teamList.appendChild(li);
+	});
+}
+
+
+// Event listener for the team list button
 document.getElementById('teamListButton').addEventListener('click', () => {
-    const teamParchment = document.getElementById('teamParchment');
-    // Toggle visibility of the team parchment
-    teamParchment.style.display = 
-        teamParchment.style.display === 'none' ? 'block' : 'none';
-
-    const teamList = document.getElementById('teamList');
-    teamList.innerHTML = ''; // Clear the current list
-
-    // Dynamically generate the teams list
-    teams.forEach(team => {
-        const li = document.createElement('li');
-        li.style.display = 'flex';
-        li.style.flexDirection = 'column';
-        li.style.justifyContent = 'center';
-        li.style.alignItems = 'center';
-        li.style.fontFamily = 'Dancing Script, cursive';
-        li.style.fontSize = '18px';
-        li.style.textAlign = 'center'; // Center text horizontally
-
-        // Add team name (larger font)
-        const teamName = document.createElement('div');
-        teamName.textContent = team.name;
-        teamName.style.fontSize = '20px';
-        teamName.style.fontWeight = 'bold';
-        li.appendChild(teamName);
-
-        // Add line break
-        li.appendChild(document.createElement('br'));
-
-        // Add team status (smaller font)
-        const statusSpan = document.createElement('div');
-        statusSpan.textContent = `Status: ${team.status || 'Unknown'}`;
-        statusSpan.style.fontSize = '16px';
-        statusSpan.style.fontStyle = 'italic';
-        li.appendChild(statusSpan);
-
-        // Add line break
-        li.appendChild(document.createElement('br'));
-
-        // Add buttons
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.display = 'inline-flex';
-        buttonContainer.style.alignItems = 'center';
-        buttonContainer.style.justifyContent = 'center';
-        buttonContainer.style.gap = '10px';
-
-        const inspectButton = document.createElement('button');
-		inspectButton.style.fontFamily = `'Dancing Script', cursive`;
-        inspectButton.textContent = 'Inspect';
-        inspectButton.style.fontSize = '16px';
-        inspectButton.style.cursor = 'pointer';
-        inspectButton.addEventListener('click', () => {
-            alert(`Inspecting ${team.name}`);
-            // Add your inspect action here
-        });
-
-        const separator = document.createElement('span');
-        separator.textContent = '|';
-        separator.style.color = '#000';
-
-        const currentCellButton = document.createElement('button');
-        currentCellButton.textContent = 'Current Cell';
-		currentCellButton.style.fontFamily = `'Dancing Script', cursive`;
-        currentCellButton.style.fontSize = '16px';
-        currentCellButton.style.cursor = 'pointer';
-        currentCellButton.addEventListener('click', () => {
-            alert(`Switching to ${team.name}`);
-            // Add your current cell action here
-        });
-
-        buttonContainer.appendChild(inspectButton);
-        buttonContainer.appendChild(separator);
-        buttonContainer.appendChild(currentCellButton);
-
-        li.appendChild(buttonContainer);
-
-        // Add final line break
-        li.appendChild(document.createElement('br'));
-
-        teamList.appendChild(li);
-    });
+	const teamParchment = document.getElementById('teamParchment');
+	teamParchment.style.display = teamParchment.style.display === 'none' ? 'block' : 'none';
+	generateTeamList();
 });
 
-// Close button functionality
+// Event listener for the close button
 document.getElementById('closeTeamParchment').addEventListener('click', () => {
-    const teamParchment = document.getElementById('teamParchment');
-    teamParchment.style.display = 'none';
+	const teamParchment = document.getElementById('teamParchment');
+	teamParchment.style.display = 'none';
 });
 
 export { update_status };

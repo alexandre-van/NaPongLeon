@@ -13,6 +13,7 @@ class Player:
 		self.team = team
 
 	def set_status(self, new_status):
+		logger.debug(f"new status for {self.nickname}: {new_status}")
 		self.status = new_status
 
 	def export(self):

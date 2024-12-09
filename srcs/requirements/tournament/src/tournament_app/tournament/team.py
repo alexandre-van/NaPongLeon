@@ -25,11 +25,11 @@ class Team:
 
 	def new_match(self, match):
 		self.matchs.append(match)
-		self.set_status("Waiting the match")
+		self.set_status("Waiting the match...")
 
 	def set_status(self, new_status):
 		self.status = new_status
-		(player.set_status(new_status) for player in self.players)
+		list(player.set_status(new_status) for player in self.players)
 
 	def export(self):
 		return {

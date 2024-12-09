@@ -1,6 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 import { renderer, camera, scene } from '../renderer.js';
-import showParchment from './parchment.js'
+import { showParchment } from './parchment.js'
 
 const boxWidth = 10; // Largeur des rectangles
 const boxHeight = 6; // Hauteur des rectangles
@@ -268,6 +268,22 @@ function updateBoxText(box, branch, playerStatus) {
     }
 }
 
+function findCellByCellId(cell_id) {
+    // Parcours de tous les niveaux de l'arbre
+    for (const level of tree) {
+        // Vérification que le niveau est bien un tableau
+        if (Array.isArray(level)) {
+            // Parcours des cellules du niveau
+            for (const cell of level) {
+                // Vérification de l'ID du jeu dans la cellule
+                if (cell.id === cell_id) {
+                    return cell; // Cellule trouvée
+                }
+            }
+        }
+    }
+    // Si aucune correspondance n'a été trouvée
+    return null;
+}
 
-
-export { tree, generateTree, clearTree, updateTree };
+export { findCellByCellId, generateTree, clearTree, updateTree };
