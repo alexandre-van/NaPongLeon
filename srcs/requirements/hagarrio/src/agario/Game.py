@@ -51,8 +51,8 @@ class Game:
         self.game_id = game_id
         self.players = {}
         self.food = []
-        self.map_width = 35000
-        self.map_height = 35000
+        self.map_width = 10000
+        self.map_height = 10000
         self.max_food = 2500
         self.player_inputs = {}
         self.player_movements = {}
@@ -62,7 +62,7 @@ class Game:
         self.initialize_food()
         self.power_ups = []
         self.power_up_spawn_timer = 0
-        self.power_up_spawn_interval = 3  # secondes
+        self.power_up_spawn_interval = 5  # secondes
 
     def initialize_food(self):
         """Initialise la nourriture sur la carte"""
@@ -208,15 +208,18 @@ class Game:
                 if positions_updated:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
 
-                # Liste pour stocker les joueurs qui se font manger
-                players_eaten = []
+                player_ids = list(self.players.keys())     # Créer une copie des IDs des joueurs pour l'itération
+                players_eaten = []                        # Liste pour stocker les joueurs qui se font manger
                 # Vérifier les collisions entre les joueurs
-                for player_id in self.players:
-                    for other_player_id in self.players:
-                        if player_id != other_player_id:
+                for player_id in player_ids:
+                    if player_id not in self.players:  # Le joueur a peut-être été mangé
+                        continue
+                    for other_player_id in player_ids:
+                        if player_id != other_player_id and other_player_id in self.players:
                             if self.player_eat_other_player(player_id, other_player_id):
                                 players_eaten.append((player_id, other_player_id))
-                
+                                break  # Sortir de la boucle interne car le joueur a été mangé
+
                 # Traiter les joueurs mangés après la boucle
                 for player_id, other_player_id in players_eaten:
                     await broadcast_callback(self.game_id, self.state_player_eat_other_player(player_id, other_player_id))
@@ -224,6 +227,7 @@ class Game:
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
+
                 # Vérifier les collisions avec les power-ups
                 for player_id in self.players:
                     collected_power_up = self.check_power_up_collision(player_id)
@@ -378,13 +382,17 @@ class Game:
         # Vérifier si les joueurs se touchent
         if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
             if player['size'] > other_player['size'] * 1.2:
-                player['size'] += other_player['size'] * 0.25
-                player['score'] += other_player['score'] * 0.25
-                # Retourner les informations avant de supprimer le joueur
-                return {
+                # Stocker les informations avant de supprimer le joueur
+                eaten_player_info = {
                     'eaten': True,
                     'score': other_player['score']
                 }
+                # Mettre à jour le joueur qui mange
+                player['size'] += other_player['size'] * 0.25
+                player['score'] += other_player['score'] * 0.25
+                # Supprimer le joueur mangé
+                self.remove_player(other_player_id)
+                return eaten_player_info
         return False
 
     async def cleanup(self):
