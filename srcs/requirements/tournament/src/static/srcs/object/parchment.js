@@ -61,13 +61,13 @@ function generateBranchContent(branch) {
         <div style="display: flex; justify-content: center; align-items: center; font-size: 15px; margin: 12px 0;">
             <div style="text-align: center; margin-right: 12px;">
                 <p style="font-weight: bold; margin: 3px 0;">${team1.name}</p>
-                <p style="margin: 3px 0; font-style: italic;">(Future value)</p>
+                <p style="margin: 3px 0; font-style: italic;">(${match.team_in_game[team1.name]})</p>
                 <p style="font-weight: bold; margin: 3px 0;">${score[team1.name] || '0'}</p>
             </div>
             <div style="border-left: 2px solid #5D4037; height: 50px; margin: 0 12px;"></div>
             <div style="text-align: center; margin-left: 12px;">
                 <p style="font-weight: bold; margin: 3px 0;">${team2.name}</p>
-                <p style="margin: 3px 0; font-style: italic;">(Future value)</p>
+                <p style="margin: 3px 0; font-style: italic;">(${match.team_in_game[team2.name]})</p>
                 <p style="font-weight: bold; margin: 3px 0;">${score[team2.name] || '0'}</p>
             </div>
         </div>

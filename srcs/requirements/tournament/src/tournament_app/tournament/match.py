@@ -10,7 +10,7 @@ class Match:
 		self.team2 = team2
 		self.team1.new_match(self)
 		self.team2.new_match(self)
-		self.launch_cooldown = 5
+		self.launch_cooldown = 9
 		self.status = f'Begin in {self.launch_cooldown}s...'
 		self.team_in_game = {
 			team1.name: None,
@@ -31,9 +31,9 @@ class Match:
 		if self.launch_cooldown > 0:
 			self.status = f'Begin in {self.launch_cooldown}s...'
 			self.set_teams_status(f"Match begin in {self.launch_cooldown}s...")
-			self.launch_cooldown -= 1
+			self.launch_cooldown -= 3
 		elif self.launch_cooldown == 0:
-			self.launch_cooldown -= 1
+			self.launch_cooldown -= 3
 			game_is_created = await self.game.create_game()
 			if game_is_created:
 				self.set_status("waiting")
@@ -44,6 +44,15 @@ class Match:
 			logger.debug(f"Match {self.team1.name} vs {self.team2.name} | game_data = {game_data}")
 			if game_data:
 				self.set_status(game_data['status'])
+				self.winner = game_data['winner']
+				score = game_data['scores']
+				i = 0
+				teams = [self.team1.name, self.team2.name]
+				for teamname in score:
+					self.score[teams[i]] = score[teamname]
+					self.team_in_game[teams[i]] = teamname
+					i += 1
+				
 
 	def set_status(self, status):
 		self.status = match_status[status] if match_status.get(status) else status
