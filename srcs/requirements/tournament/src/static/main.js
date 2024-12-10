@@ -3,10 +3,11 @@ import { startTournament, updateTournament, stopAnimation } from './srcs/animate
 import {scene, cleanup} from './srcs/scene.js';
 import './srcs/object/camera.js';
 
+const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const host = window.location.hostname;
 const port = window.location.port;
 const tournamentId = new URLSearchParams(window.location.search).get('gameId');
-const socket = new WebSocket(`ws://${host}:${port}/ws/tournament/${tournamentId}/`);
+const socket = new WebSocket(`${wsProtocol}://${host}:${port}/ws/tournament/${tournamentId}/`);
 let nickname = '' 
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
