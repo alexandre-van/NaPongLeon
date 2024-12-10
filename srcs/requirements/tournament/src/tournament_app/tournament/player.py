@@ -5,6 +5,8 @@ class Player:
 	def __init__(self, username, nickname, consumer, team=None):
 		self.username = username
 		self.nickname = nickname
+		if nickname == None:
+			self.nickname = username
 		self.consumer = consumer
 		self.status = 'Waiting...'
 		self.team = team
@@ -16,6 +18,9 @@ class Player:
 	def set_status(self, new_status):
 		logger.debug(f"new status for {self.nickname}: {new_status}")
 		self.status = new_status
+
+	async def update(self):
+		pass
 
 	def export(self):
 		return {

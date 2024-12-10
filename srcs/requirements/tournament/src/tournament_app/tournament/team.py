@@ -1,4 +1,5 @@
 from ..utils.logger import logger
+from .status import teams_status
 
 class Team:
 	def __init__(self, players):
@@ -28,8 +29,12 @@ class Team:
 		self.set_status("Waiting the match...")
 
 	def set_status(self, new_status):
-		self.status = new_status
-		list(player.set_status(new_status) for player in self.players)
+		self.status = teams_status[new_status] if teams_status.get(new_status) else new_status
+		list(player.set_status(self.status) for player in self.players)
+
+	async def update(self):
+		for player in self.players:
+			await player.update()
 
 	def export(self):
 		return {

@@ -20,6 +20,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		self.admin_id = None
 		self.username = username
 		self.nickname = nickname
+		self.game_private_id = None
 		self.can_be_disconnected = True
 		special_id = None
 		if len(segments) >= 4:
@@ -252,7 +253,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		while tournament_manager.get_room(self.tournament_id):
 			tournament = self.room['tournament_instance']
 			if tournament:
-				tournament_state = tournament.update()
+				tournament_state = await tournament.update()
 				await self.channel_layer.group_send(
 					tournament_id,
 					{
@@ -367,11 +368,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
 					logger.debug(f"{self.username} receive export data")
-					event['state']['nickname'] = 'nn_1'
+					event['state']['nickname'] = self.username
+				event['state']['game_private_id'] = self.game_private_id
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True
 			else:
 				logger.debug(f"{self.username} consumer want send new statde but is closed")
 		except Exception as e:
 			logger.warning(f"{self.username}: Failed to send state: {e}")
+		self.game_private_id = None
 

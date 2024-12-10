@@ -36,7 +36,7 @@ socket.onmessage = function(event) {
 		case "tournament_update":
 			console.log("Tournament update");
 			console.log("tu : ", data);
-			updateTournament(data, nickname);
+			updateTournament(data, nickname, data.game_private_id);
 			break;
 		case "tournament_start":
 			console.log("Tournament started!");
@@ -67,5 +67,9 @@ function stopTournament() {
 	socket.close();
 	stopAnimation();
 	cleanup();
+	const iframe = document.querySelector('#gameInTournamentFrame');
+	if (iframe) {
+		iframe.remove();
+	}
 	window.parent.postMessage('tournament_end', '*');
 }

@@ -1,6 +1,7 @@
 # views.py
 from django.conf import settings
 from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
 from .utils.decorators import auth_required, async_csrf_exempt
 from .game_manager import Game_manager
 from matchmaking.matchmaking import Matchmaking
@@ -51,17 +52,9 @@ async def get_out_matchmaking(username, matchmaking_instance):
 	except Exception as e:
 		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+	
 @auth_required
 async def create_game(request, username=None):
-	game_manager_instance = Game_manager.game_manager_instance
-	if game_manager_instance is None:
-		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
-	await game_manager_instance.create_new_player_instance(username)
-	return await create_game_api(request, username)
-
-@auth_required
-async def join_game(request, username=None):
 	game_manager_instance = Game_manager.game_manager_instance
 	if game_manager_instance is None:
 		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
@@ -82,8 +75,11 @@ async def create_game_api(request, username=None):
 			players_list = data.get('playersList')
 			teams_list = data.get('teamsList')
 			ia_authorizes = data.get('ia_authorizes')
+			special_id = data.get('special_id')
 			logger.debug(f"Reçu: game_mode={game_mode}, modifiers={modifiers}, players_list={players_list}, teams={teams_list}, ai={ia_authorizes}")
-			game_data = await game_manager_instance.create_game(game_mode, modifiers, players_list, teams_list, ia_authorizes)
+			game_data = await game_manager_instance.create_game(game_mode, modifiers, players_list, teams_list,
+				ia_authorizes if ia_authorizes else False,
+				special_id if special_id else [])
 			# pars players
 			if game_data:
 				return JsonResponse({'status': 'success', 'data': game_data}, status=status.HTTP_201_CREATED)
@@ -94,3 +90,23 @@ async def create_game_api(request, username=None):
 			return JsonResponse({'error': 'Invalid JSON data'}, status=status.HTTP_400_BAD_REQUEST)
 	else:
 		return JsonResponse({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+	
+@async_csrf_exempt
+async def get_game_data_api(request, game_id):
+	logger.debug("HELLO")
+	if request.method != "GET":
+		return JsonResponse({"error": "Method not allowed"}, status=405)
+	game_manager = Game_manager.game_manager_instance
+	if not game_manager:
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+	try:
+		game_data = await game_manager.get_game_data(game_id)
+		
+		if not game_data:
+			return JsonResponse({"error": "Game not found"}, status=404)
+		
+		return JsonResponse({"game_data": game_data}, status=200)
+	except ObjectDoesNotExist:
+		return JsonResponse({"error": "Game not found"}, status=404)
+	except Exception as e:
+		return JsonResponse({"error": str(e)}, status=500)

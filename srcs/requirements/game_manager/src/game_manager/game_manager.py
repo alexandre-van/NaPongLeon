@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Player, GameInstance, PlayerGameHistory
+from .models import Player, GameInstance, PlayerGameHistory, GamePlayer, GameScore
 from .utils.logger import logger
 from .private_room.private_room import PrivateRoom, GenerateUsername
 from admin_manager.admin_manager import AdminManager
@@ -67,7 +67,7 @@ class Game_manager:
 					'players': players_list
 				}
 
-	async def create_game(self, game_mode, modifiers, players_list, teams_list, ia_authorizes):
+	async def create_game(self, game_mode, modifiers, players_list, teams_list, ia_authorizes, special_id):
 		# pars game_mode
 		game_mode_data = settings.GAME_MODES.get(game_mode) 
 		if game_mode_data is None:
@@ -101,7 +101,6 @@ class Game_manager:
 			return None
 		# ai
 		all_ai = []
-		special_id = []
 		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
 			ai_id = {
 				'private': str(uuid.uuid4()),
@@ -327,6 +326,43 @@ class Game_manager:
 	def create_player_instance(self, username):
 		with transaction.atomic():
 			Player.get_or_create_player(username)
+
+	@sync_to_async
+	def get_game_data(self, game_id):
+		try:
+			# Récupérer l'instance du jeu
+			game_instance = GameInstance.get_game(game_id)
+			if not game_instance:
+				return None
+	
+			# Récupérer les joueurs et leur répartition par équipe
+			game_players = GamePlayer.objects.filter(game=game_instance)
+			teams_distribution = {}
+			for player_entry in game_players:
+				if player_entry.team_name not in teams_distribution:
+					teams_distribution[player_entry.team_name] = []
+				teams_distribution[player_entry.team_name].append(player_entry.player.username)
+	
+			# Récupérer les scores des équipes
+			game_scores = GameScore.objects.filter(game=game_instance)
+			teams_scores = {score.team_name: score.score for score in game_scores}
+	
+			# Construire les données du jeu
+			game_data = {
+				"game_id": game_instance.game_id,
+				"status": game_instance.status,
+				"winner": game_instance.winner,
+				"game_mode": game_instance.game_mode,
+				"game_date": game_instance.game_date.isoformat(),
+				"teams": teams_distribution,
+				"scores": teams_scores,
+			}
+			return game_data
+		except Exception as e:
+			logger.error(f"Error fetching game data: {e}")
+			return None
+	
+
 
 	#utils
 

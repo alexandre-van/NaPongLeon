@@ -6,7 +6,8 @@ import './srcs/object/camera.js';
 const host = window.location.hostname;
 const port = window.location.port;
 const gameId = new URLSearchParams(window.location.search).get('gameId');
-const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/`);
+const specialId = new URLSearchParams(window.location.search).get('specialId');
+const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/${specialId}/`);
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
 socket.onopen = function() {

@@ -26,10 +26,10 @@ class Branch:
 		self.bench = None
 		logger.debug(f"create branch || level : {level}")
 
-	def init_match(self, team1, team2):
+	def init_match(self, team1, team2, game_mode, modifiers):
 		team1.set_current_branch(self)
 		team2.set_current_branch(self)
-		self.match = Match(self, team1, team2)
+		self.match = Match(self, team1, team2, game_mode, modifiers)
 
 	def init_bench(self, team):
 		logger.debug(f"Create bench || team : {team.name}")
@@ -56,6 +56,12 @@ class Branch:
 		if not self.next_branches or len(self.next_branches) == 0:
 			return
 		list(next_branch.get_branches(branches, level) for next_branch in self.next_branches)
+
+	async def update(self):
+		if self.match:
+			await self.match.update()
+		elif self.bench:
+			await self.bench.update()
 
 	def export(self):
 		return {

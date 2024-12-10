@@ -49,6 +49,10 @@ class Root:
 			self.next_branch.get_branches(branches, level)
 		return branches
 	
+	async def update(self):
+		if self.bench:
+			await self.bench.update()
+
 	def export(self):
 		return {
 			'id': self.id,

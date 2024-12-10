@@ -1,4 +1,4 @@
-curl -X POST http://localhost:8000/api/game_manager/create_game_api/ \
+curl -X POST http://gamemanager:8000/api/game_manager/create_game_api/ \
 -H "Content-Type: application/json" \
 -d '{
   "gameMode": "PONG_CLASSIC",

@@ -100,9 +100,9 @@ services:
     networks:
       - backend
     
-  game_manager:
+  gamemanager:
     build: ./requirements/game_manager
-    container_name: game_manager
+    container_name: gamemanager
     secrets:
       - db_user
       - db_password

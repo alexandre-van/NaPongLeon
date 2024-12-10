@@ -276,6 +276,7 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 
 
 function findCellByCellId(cell_id) {
+    console.log(tree)
     // Parcours de tous les niveaux de l'arbre
     for (const level of tree) {
         // Vérification que le niveau est bien un tableau

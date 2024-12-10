@@ -16,7 +16,7 @@ class Tournament_manager:
 		if (game_mode not in game_modes_data):
 			logger.debug(f"Error: Wrong tournament_mode: {game_mode}")
 			return None
-		if len(players_list) * 8 != game_modes_data[game_mode]['players'] * 4:
+		if len(players_list) != game_modes_data[game_mode]['players'] * 2:
 			logger.debug(f"Error: Wrong nomber of players for the tournament mode {game_mode}: {len(players_list)}")
 			return None
 		self.tournaments_room[tournament_id] = {
@@ -71,12 +71,12 @@ class Tournament_manager:
 		game_mode = room['game_mode']
 		modifiers = room['modifiers']
 		if room['status'] == 'waiting'\
-			and len(room['players']) * 8 is game_modes_data[game_mode]['players'] * 4:
+			and len(room['players']) is game_modes_data[game_mode]['players'] * 2:
 			logger.debug('player start the tournament')
 			room['status'] = 'startup'
-			players_test = self.generatePlayers(14)
+			players_test = room['players']#self.generatePlayers(16)
 			logger.debug(f"players_test: {players_test}")
-			new_tournament = Tournament(players_test, "PONG_CLASSIC", modifiers)
+			new_tournament = Tournament(players_test, game_mode, modifiers)
 			room['tournament_instance'] = new_tournament
 		return room
 

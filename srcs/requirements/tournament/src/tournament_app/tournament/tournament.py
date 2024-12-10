@@ -17,11 +17,13 @@ class Tournament:
 		self.players = self.init_players(players_dict)
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
+		self.tree.init_matchs(game_mode, modifiers_list)
 		#self.matchs = self.tree.get_all_()
 
 	#tournament update
 
-	def update(self):
+	async def update(self):
+		await self.tree.update()
 		return {
 			'type': 'tournament_update',
 			'tree': self.tree.export(),

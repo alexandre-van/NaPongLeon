@@ -1,7 +1,8 @@
-import { findCellByCellId } from './tree.js';
-import { showParchment, showTeamParchment } from './parchment.js';
+import { findCellByCellId } from './object/tree.js';
+import { showParchment, showTeamParchment } from './object/parchment.js';
 
 let teams = [];
+let playerStatus = 'Unknown';
 
 /**
  * Apply a set of styles to an element.
@@ -37,7 +38,6 @@ function createButton(text, onClick) {
  */
 function update_status(teamsUpdate, nickname) {
 	teams = teamsUpdate;
-	let playerStatus = 'Unknown';
 
 	teams.forEach(team => {
 		team.players.forEach(player => {
@@ -171,4 +171,4 @@ document.getElementById('closeTeamParchment').addEventListener('click', () => {
 	teamParchment.style.display = 'none';
 });
 
-export { update_status };
+export { update_status, playerStatus };

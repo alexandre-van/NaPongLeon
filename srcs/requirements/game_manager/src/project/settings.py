@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-96g9x-miw#=a!lql&#jsh!@umdr(ess*dlt6f1hslksct)ohaj
 DEBUG = False
 
 ALLOWED_HOSTS = [
-	'game_manager',
+	'gamemanager',
 	'*',
 ]
 
