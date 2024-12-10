@@ -130,10 +130,6 @@ class Game:
                 food_changes.extend(changes)
         return len(food_changes) > 0
 
-    # def is_game_active(self):
-    #     """Vérifie si la partie est active"""
-    #     return self.status == "in_progress"
-
     def add_player(self, player_id, player_name):
         """Ajoute un joueur à la partie"""
         self.players[player_id] = {
