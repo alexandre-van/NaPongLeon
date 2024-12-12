@@ -1,5 +1,7 @@
 import * as THREE from '../../js/three.module.js';
-import { scene } from '../renderer.js';
+import { get_scene } from '../scene.js';
+
+let scene = null
 
 const boxWidth = 10; // Largeur des rectangles
 const boxHeight = 6; // Hauteur des rectangles
@@ -7,14 +9,17 @@ const boxDepth = 1.5; // Profondeur des rectangles
 const verticalSpacing = 10; // Espacement vertical
 const horizontalSpacing = 10; // Espacement horizontal
 let team_size = 1
-
 let tree = []
 
-function generateTree(newtree, nickname, data_team_size) {
-    tree = newtree
-    if (data_team_size) {
-        team_size = data_team_size
-    }
+export function generateTree(newtree, nickname, data_team_size=null) {
+	scene = get_scene()
+	if (scene == null)
+		return;
+	if (newtree)
+		tree = newtree
+	if (data_team_size) {
+		team_size = data_team_size
+	}
 	for (let level = 0; level < tree.length; level++) {
 		const currentLevel = tree[level];
 		const y = -level * verticalSpacing; // Position verticale de ce niveau
@@ -38,60 +43,63 @@ function generateTree(newtree, nickname, data_team_size) {
 			}
 		});
 	}
+	updateTree(tree, nickname)
 }
 
 function createMatchBox(branch, x, y, nickname) {
-    const playerStatus = determinePlayerStatus(branch, nickname);
-    const color = getBoxColor(branch, playerStatus);
+	const playerStatus = determinePlayerStatus(branch, nickname);
+	const color = getBoxColor(branch, playerStatus);
 
-    // Adjust box size for player's team
-    const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2
+	// Adjust box size for player's team
+	const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2
 		|| playerStatus.isPlayerInBench? 1.2 : 1;
-    const boxGeometry = new THREE.BoxGeometry(
-        boxWidth * team_size, 
-        boxHeight, 
-        boxDepth
-    );
+	const boxGeometry = new THREE.BoxGeometry(
+		boxWidth * team_size, 
+		boxHeight, 
+		boxDepth
+	);
 
-    const boxMaterial = new THREE.MeshStandardMaterial({
-        color: color,
-        emissive: color,
-        side: THREE.DoubleSide,
-    });
-    
-    const box = new THREE.Mesh(boxGeometry, boxMaterial);
-    box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
-    box.position.set(x, y, 0);
-    box.castShadow = true;
-    box.userData.branch = branch;
-    scene.add(box);
-    return box;
+	const boxMaterial = new THREE.MeshStandardMaterial({
+		color: color,
+		emissive: color,
+		side: THREE.DoubleSide,
+	});
+	
+	const box = new THREE.Mesh(boxGeometry, boxMaterial);
+	box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+	box.position.set(x, y, 0);
+	box.castShadow = true;
+	box.userData.branch = branch;
+	scene = get_scene()
+    if (scene)
+		scene.add(box);
+	return box;
 }
 
 function determinePlayerStatus(branch, nickname) {
-    const status = {
-        isPlayerInTeam1: false,
-        isPlayerInTeam2: false,
-        isPlayerInBench: false
-    };
+	const status = {
+		isPlayerInTeam1: false,
+		isPlayerInTeam2: false,
+		isPlayerInBench: false
+	};
 
-    if (branch.match) {
-        const { team1, team2 } = branch.match;
-        status.isPlayerInTeam1 = team1.players.some(player => player.nickname === nickname);
-        status.isPlayerInTeam2 = team2.players.some(player => player.nickname === nickname);
-    }
+	if (branch.match) {
+		const { team1, team2 } = branch.match;
+		status.isPlayerInTeam1 = team1.players.some(player => player.nickname === nickname);
+		status.isPlayerInTeam2 = team2.players.some(player => player.nickname === nickname);
+	}
 
-    if (branch.bench) {
-        status.isPlayerInBench = branch.bench.players.some(player => player.nickname === nickname);
-    }
+	if (branch.bench) {
+		status.isPlayerInBench = branch.bench.players.some(player => player.nickname === nickname);
+	}
 
-    return status;
+	return status;
 }
 
 function getBoxColor(branch) {
-    if (branch.match) return 0xffe333;
-    if (branch.bench) return 0xffffff;
-    return 0xA9A9A9;
+	if (branch.match) return 0xffe333;
+	if (branch.bench) return 0xffffff;
+	return 0xA9A9A9;
 }
 
 function drawConnection(x1, y1, x2, y2) {
@@ -110,10 +118,15 @@ function drawConnection(x1, y1, x2, y2) {
 	// Créer et ajouter la ligne à la scène
 	const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 	const line = new THREE.Line(lineGeometry, lineMaterial);
-	scene.add(line);
+	scene = get_scene()
+    if (scene)
+		scene.add(line);
 }
 
-function clearTree() {
+export function clearTree() {
+	scene = get_scene()
+    if (scene == null)
+        return;
 	// Supprimer les anciens objets de la scène
 	const objectsToRemove = scene.children.filter(child => child instanceof THREE.Mesh || child instanceof THREE.Line);
 	objectsToRemove.forEach(object => {
@@ -123,175 +136,181 @@ function clearTree() {
 	});
 }
 
-function updateTree(newtree, nickname) {
-    tree = newtree
-    // Met à jour le contenu des branches sans recréer les objets
-    tree.forEach((level, levelIndex) => {
-        level.forEach((branch, index) => {
+export function updateTree(newtree, nickname) {
+	if (newtree)
+		tree = newtree
+	scene = get_scene()
+    if (scene == null)
+        return;
+	// Met à jour le contenu des branches sans recréer les objets
+	tree.forEach((level, levelIndex) => {
+		level.forEach((branch, index) => {
 
-            const playerStatus = determinePlayerStatus(branch, nickname);
-            const existingBox = scene.children.find(child => child.userData.branch && child.userData.branch.id === branch.id);
+			const playerStatus = determinePlayerStatus(branch, nickname);
+			const existingBox = scene.children.find(child => child.userData.branch && child.userData.branch.id === branch.id);
 
-            if (existingBox) {
-                // Mise à jour de la couleur et de la taille de la boîte
-                const color = getBoxColor(branch);
-                existingBox.userData.branch = branch
-                existingBox.material.color.setHex(color);
-                let playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.25 : 1;
-                existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+			if (existingBox) {
+				// Mise à jour de la couleur et de la taille de la boîte
+				const color = getBoxColor(branch);
+				existingBox.userData.branch = branch
+				existingBox.material.color.setHex(color);
+				let playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.25 : 1;
+				existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
 
-                // Mise à jour du texte
-                updateBoxText(existingBox, branch, playerStatus, playerTeamMultiplier);
-            } else {
-                // Si la boîte n'existe pas, crée-la
-                //const x = calculateXForBranch(level, index, levelIndex);
-                //const y = -levelIndex * verticalSpacing;
-                //createMatchBox(branch, x, y, nickname);
-            }
-        });
-    });
+				// Mise à jour du texte
+				updateBoxText(existingBox, branch, playerStatus, playerTeamMultiplier);
+			} else {
+				// Si la boîte n'existe pas, crée-la
+				//const x = calculateXForBranch(level, index, levelIndex);
+				//const y = -levelIndex * verticalSpacing;
+				//createMatchBox(branch, x, y, nickname);
+			}
+		});
+	});
 
-    // Met à jour les connexions entre les niveaux
-    //updateConnections(tree);
+	// Met à jour les connexions entre les niveaux
+	//updateConnections(tree);
 }
 
 function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
-    // Créez un nouveau canevas pour le texte
-    const textCanvas = document.createElement('canvas');
-    const ctx = textCanvas.getContext('2d');
-    textCanvas.width = 256;
-    textCanvas.height = 128;
+	// Créez un nouveau canevas pour le texte
+	const textCanvas = document.createElement('canvas');
+	const ctx = textCanvas.getContext('2d');
+	textCanvas.width = 256;
+	textCanvas.height = 128;
 
-    ctx.font = '30px Dancing Script';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'black';
+	ctx.font = '30px Dancing Script';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.fillStyle = 'black';
 
-    if (branch.match) {
-        const { team1, team2 } = branch.match;
-        ctx.font = playerStatus.isPlayerInTeam1 ? 'bold 40px Dancing Script' : '30px Dancing Script';
-        ctx.fillText(team1.name, textCanvas.width / 2, textCanvas.height / 5);
+	if (branch.match) {
+		const { team1, team2 } = branch.match;
+		ctx.font = playerStatus.isPlayerInTeam1 ? 'bold 40px Dancing Script' : '30px Dancing Script';
+		ctx.fillText(team1.name, textCanvas.width / 2, textCanvas.height / 5);
 
-        ctx.font = '30px Dancing Script';
-        ctx.fillText("VS", textCanvas.width / 2, textCanvas.height / 2 * 1.05);
+		ctx.font = '30px Dancing Script';
+		ctx.fillText("VS", textCanvas.width / 2, textCanvas.height / 2 * 1.05);
 
-        ctx.font = playerStatus.isPlayerInTeam2 ? 'bold 40px Dancing Script' : '30px Dancing Script';
-        ctx.fillText(team2.name, textCanvas.width / 2, textCanvas.height - textCanvas.height / 5);
-    }
+		ctx.font = playerStatus.isPlayerInTeam2 ? 'bold 40px Dancing Script' : '30px Dancing Script';
+		ctx.fillText(team2.name, textCanvas.width / 2, textCanvas.height - textCanvas.height / 5);
+	}
 
-    if (branch.bench) {
-        ctx.font = playerStatus.isPlayerInBench ? 'bold 40px Dancing Script' : '30px Dancing Script';
-        ctx.fillText(branch.bench.name, textCanvas.width / 2, textCanvas.height / 2);
-    }
+	if (branch.bench) {
+		ctx.font = playerStatus.isPlayerInBench ? 'bold 40px Dancing Script' : '30px Dancing Script';
+		ctx.fillText(branch.bench.name, textCanvas.width / 2, textCanvas.height / 2);
+	}
 
-    const textTexture = new THREE.CanvasTexture(textCanvas);
-    const textMaterial = new THREE.MeshBasicMaterial({
-        map: textTexture,
-        transparent: true,
-        side: THREE.DoubleSide
-    });
+	const textTexture = new THREE.CanvasTexture(textCanvas);
+	const textMaterial = new THREE.MeshBasicMaterial({
+		map: textTexture,
+		transparent: true,
+		side: THREE.DoubleSide
+	});
 
-    // Si le texte existe déjà, mettez à jour la texture
-    if (box.textMesh) {
-        box.textMesh.material.map = textTexture;
-        box.textMesh.material.needsUpdate = true; // Forcer la mise à jour de la texture
-    } else {
-        // Si le texte n'existe pas, créez-le
-        const textGeometry = new THREE.PlaneGeometry(boxWidth * team_size, boxHeight);
-        box.textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        const zOffset = box.geometry.parameters.depth / 2 + 0.2;
-        box.textMesh.position.set(box.position.x, box.position.y, zOffset);
-        scene.add(box.textMesh);
-    }
-    manageSpectateButton(box, branch, playerTeamMultiplier);
+	// Si le texte existe déjà, mettez à jour la texture
+	if (box.textMesh) {
+		box.textMesh.material.map = textTexture;
+		box.textMesh.material.needsUpdate = true; // Forcer la mise à jour de la texture
+	} else {
+		// Si le texte n'existe pas, créez-le
+		const textGeometry = new THREE.PlaneGeometry(boxWidth * team_size, boxHeight);
+		box.textMesh = new THREE.Mesh(textGeometry, textMaterial);
+		const zOffset = box.geometry.parameters.depth / 2 + 0.2;
+		box.textMesh.position.set(box.position.x, box.position.y, zOffset);
+		scene = get_scene()
+    	if (scene)
+			scene.add(box.textMesh);
+	}
+	manageSpectateButton(box, branch, playerTeamMultiplier);
 }
 
 
 function manageSpectateButton(box, branch, playerTeamMultiplier) {
-    const matchInProgress = branch.match && branch.match.status === "Waiting";
-    const buttonColor = '#F08080';
+	const matchInProgress = branch.match && branch.match.status === "Waiting";
+	const buttonColor = '#F08080';
 
-    if (matchInProgress && playerTeamMultiplier == 1) {
-        // Agrandir la boîte pour faire de la place au bouton
-        playerTeamMultiplier = 1.25;
-        box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
-        const zOffset = box.position.z + box.geometry.parameters.depth / 2 + 0.2;
+	if (matchInProgress && playerTeamMultiplier == 1) {
+		// Agrandir la boîte pour faire de la place au bouton
+		playerTeamMultiplier = 1.25;
+		box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
+		const zOffset = box.position.z + box.geometry.parameters.depth / 2 + 0.2;
 
-        if (box.textMesh) {
-            box.textMesh.position.set(box.position.x, box.position.y + boxHeight / 8, zOffset);
-        }
+		if (box.textMesh) {
+			box.textMesh.position.set(box.position.x, box.position.y + boxHeight / 8, zOffset);
+		}
 
-        if (!box.spectateButton) {
-            // Créer la géométrie du bouton avec une épaisseur
-            const buttonGeometry = new THREE.BoxGeometry(boxWidth, boxHeight / 4, 0.2); // 0.2 pour l'épaisseur
-            const buttonCanvas = document.createElement('canvas');
-            const ctx = buttonCanvas.getContext('2d');
-            buttonCanvas.width = 128;
-            buttonCanvas.height = 64;
+		if (!box.spectateButton) {
+			// Créer la géométrie du bouton avec une épaisseur
+			const buttonGeometry = new THREE.BoxGeometry(boxWidth, boxHeight / 4, 0.2); // 0.2 pour l'épaisseur
+			const buttonCanvas = document.createElement('canvas');
+			const ctx = buttonCanvas.getContext('2d');
+			buttonCanvas.width = 128;
+			buttonCanvas.height = 64;
 
-            // Style du bouton
-            ctx.fillStyle = buttonColor; // Couleur de fond du bouton
-            ctx.fillRect(0, 0, buttonCanvas.width, buttonCanvas.height);
-            ctx.font = 'bold 35px Dancing Script';
-            ctx.fillStyle = 'black';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('Spectate', buttonCanvas.width / 2, buttonCanvas.height / 2);
+			// Style du bouton
+			ctx.fillStyle = buttonColor; // Couleur de fond du bouton
+			ctx.fillRect(0, 0, buttonCanvas.width, buttonCanvas.height);
+			ctx.font = 'bold 35px Dancing Script';
+			ctx.fillStyle = 'black';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText('Spectate', buttonCanvas.width / 2, buttonCanvas.height / 2);
 
-            const buttonTexture = new THREE.CanvasTexture(buttonCanvas);
-            const buttonMaterial = new THREE.MeshStandardMaterial({
-                map: buttonTexture,
-                color: buttonColor,
-                emissive: new THREE.Color(buttonColor), // Couleur émissive
-                emissiveIntensity: 0.1, // Intensité de l'émissivité
-                transparent: true,
-                side: THREE.FrontSide
-            });
+			const buttonTexture = new THREE.CanvasTexture(buttonCanvas);
+			const buttonMaterial = new THREE.MeshStandardMaterial({
+				map: buttonTexture,
+				color: buttonColor,
+				emissive: new THREE.Color(buttonColor), // Couleur émissive
+				emissiveIntensity: 0.1, // Intensité de l'émissivité
+				transparent: true,
+				side: THREE.FrontSide
+			});
 
-            // Matériaux pour toutes les faces du bouton
-            const materials = [
-                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-                new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-                buttonMaterial, // Face supérieure (avec texte)
-                new THREE.MeshStandardMaterial({ color: buttonColor })  // Face inférieure
-            ];
+			// Matériaux pour toutes les faces du bouton
+			const materials = [
+				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
+				buttonMaterial, // Face supérieure (avec texte)
+				new THREE.MeshStandardMaterial({ color: buttonColor })  // Face inférieure
+			];
 
-            box.spectateButton = new THREE.Mesh(buttonGeometry, materials);
-            box.spectateButton.position.set(box.position.x, box.position.y - boxHeight / 2.25, zOffset);
-            box.spectateButton.userData.isSpectateButton = true; // Identifie le bouton
-            scene.add(box.spectateButton);
+			box.spectateButton = new THREE.Mesh(buttonGeometry, materials);
+			box.spectateButton.position.set(box.position.x, box.position.y - boxHeight / 2.25, zOffset);
+			box.spectateButton.userData.isSpectateButton = true; // Identifie le bouton
+			scene = get_scene()
+    		if (scene)
+				scene.add(box.spectateButton);
 
-        }
-    } else if (box.spectateButton) {
-        // Supprimer le bouton si le statut n'est plus "Waiting"
-        scene.remove(box.spectateButton);
-        box.spectateButton.geometry.dispose();
-        box.spectateButton.material.forEach(mat => mat.dispose());
-        box.spectateButton = null;
-    }
+		}
+	} else if (box.spectateButton) {
+		// Supprimer le bouton si le statut n'est plus "Waiting"
+		scene.remove(box.spectateButton);
+		box.spectateButton.geometry.dispose();
+		box.spectateButton.material.forEach(mat => mat.dispose());
+		box.spectateButton = null;
+	}
 }
 
 
 
-function findCellByCellId(cell_id) {
-    console.log(tree)
-    // Parcours de tous les niveaux de l'arbre
-    for (const level of tree) {
-        // Vérification que le niveau est bien un tableau
-        if (Array.isArray(level)) {
-            // Parcours des cellules du niveau
-            for (const cell of level) {
-                // Vérification de l'ID du jeu dans la cellule
-                if (cell.id === cell_id) {
-                    return cell; // Cellule trouvée
-                }
-            }
-        }
-    }
-    // Si aucune correspondance n'a été trouvée
-    return null;
+export function findCellByCellId(cell_id) {
+	console.log(tree)
+	// Parcours de tous les niveaux de l'arbre
+	for (const level of tree) {
+		// Vérification que le niveau est bien un tableau
+		if (Array.isArray(level)) {
+			// Parcours des cellules du niveau
+			for (const cell of level) {
+				// Vérification de l'ID du jeu dans la cellule
+				if (cell.id === cell_id) {
+					return cell; // Cellule trouvée
+				}
+			}
+		}
+	}
+	// Si aucune correspondance n'a été trouvée
+	return null;
 }
-
-export { findCellByCellId, generateTree, clearTree, updateTree };

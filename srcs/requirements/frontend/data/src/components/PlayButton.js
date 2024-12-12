@@ -23,8 +23,8 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			window.gameInfo.gameId = gameId;
 
 			// Construire l'URL du jeu avec le gameId
-			const gameUrl = `${location.origin}/api/${gameServiceName}?gameId=${gameId}`;
-
+			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
+			console.log(gameUrl);
 			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;

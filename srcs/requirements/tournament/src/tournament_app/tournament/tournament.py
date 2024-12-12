@@ -17,7 +17,7 @@ class Tournament:
 		self.players = self.init_players(players_dict)
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
-		self.tree.init_matchs(game_mode, modifiers_list)
+		self.tree.init_matchs(game_mode, self.game_modifiers)
 		#self.matchs = self.tree.get_all_()
 
 	#tournament update
@@ -73,6 +73,7 @@ class Tournament:
 		return teams
 	
 	def init_modifers(self, modifiers_list):
+		logger.debug(modifiers_list)
 		modifiers = {
 			'tournament': [],
 			'game': []
@@ -81,7 +82,7 @@ class Tournament:
 			return modifiers
 		for mod in modifiers_list:
 			if mod in modifiers_data:
-				modifiers_data['tournament'].append(mod)
+				modifiers['tournament'].append(mod)
 			else:
-				modifiers_data['game'].append(mod)
+				modifiers['game'].append(mod)
 		return modifiers

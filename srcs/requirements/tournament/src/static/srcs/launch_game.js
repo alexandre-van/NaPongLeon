@@ -21,7 +21,7 @@ function launch_game(teams, nickname, game_private_id){
 		const protocol = location.protocol;
 		const host = window.location.hostname;
 		const port = window.location.port;
-		const gameUrl = `${location.origin}/api/${gameServiceName}?gameId=${gameId}&specialId=${game_private_id}`;
+		const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}&specialId=${game_private_id}`;
 		console.log(gameUrl);
 		// Créer une iframe pour afficher le jeu
 		const iframe = document.createElement('iframe');

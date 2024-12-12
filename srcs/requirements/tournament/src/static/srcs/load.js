@@ -2,10 +2,6 @@ import * as THREE from '../js/three.module.js';
 import { GLTFLoader } from '../js/GLTFLoader.js';
 import { STLLoader } from '../js/STLLoader.js';
 
-const protocol = location.protocol;
-const host = window.location.hostname;
-const port = window.location.port;
-
 function loadModelGLT(url) {
     return new Promise((resolve, reject) => {
         const loader = new GLTFLoader();

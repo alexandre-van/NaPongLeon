@@ -1,13 +1,11 @@
 import { init } from './srcs/init.js';
-import { startTournament, updateTournament, stopAnimation } from './srcs/animate.js';
-import {scene, cleanup} from './srcs/scene.js';
-import './srcs/object/camera.js';
+import { updateTournament, stopTournament } from './srcs/tournament.js'
 
 const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const host = window.location.hostname;
 const port = window.location.port;
 const tournamentId = new URLSearchParams(window.location.search).get('gameId');
-const socket = new WebSocket(`${wsProtocol}://${host}:${port}/ws/tournament/${tournamentId}/`);
+const socket = new WebSocket(`${wsProtocol}//${host}:${port}/ws/tournament/${tournamentId}/`);
 let nickname = '' 
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
@@ -41,7 +39,6 @@ socket.onmessage = function(event) {
 			break;
 		case "tournament_start":
 			console.log("Tournament started!");
-			startTournament();
 			break;
 		case "tournament_end":
 			//socket.close();
@@ -62,15 +59,3 @@ socket.onerror = function(error) {
 	console.error("WebSocket error:", error);
 	stopTournament();
 };
-
-function stopTournament() {
-	console.log("Tournament removed.");
-	socket.close();
-	stopAnimation();
-	cleanup();
-	const iframe = document.querySelector('#gameInTournamentFrame');
-	if (iframe) {
-		iframe.remove();
-	}
-	window.parent.postMessage('tournament_end', '*');
-}

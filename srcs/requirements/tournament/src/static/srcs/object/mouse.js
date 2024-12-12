@@ -1,5 +1,6 @@
 import * as THREE from '../../js/three.module.js';
-import { renderer, camera, scene } from '../renderer.js';
+import { camera } from '../renderer.js';
+import { get_scene, scene } from '../scene.js';
 import { showParchment } from './parchment.js'
 
 const raycaster = new THREE.Raycaster();
@@ -41,6 +42,8 @@ function onClick(event) {
 
     // Filtrer les objets interactifs dans la scène
     const interactiveObjects = getInteractiveObjects();
+    if (interactiveObjects == null)
+        return;
     const intersects = raycaster.intersectObjects(interactiveObjects);
 
     if (intersects.length > 0) {
@@ -56,7 +59,8 @@ function onMouseMove(event) {
     // Mettre à jour les objets interactifs (pour highlight)
     raycaster.setFromCamera(mouse, camera);
     const interactiveObjects = getInteractiveObjects();
-
+    if (interactiveObjects == null)
+        return;
     // Réinitialiser la mise en surbrillance de tous les objets interactifs
     interactiveObjects.forEach(obj => resetHighlight(obj));
     if (isMouseOnPanel()) {
@@ -78,6 +82,9 @@ function updateMousePosition(event) {
 
 // Récupérer les objets interactifs dans la scène
 function getInteractiveObjects() {
+    let scene = get_scene();
+    if (scene == null)
+        return null;
     return scene.children.filter(child =>
         (child.isMesh && 
             (child.userData.branch || child.userData.isSpectateButton)) && 
@@ -123,8 +130,12 @@ function highlightHoveredObject(obj) {
     }
 }
 
-// Ajouter un écouteur pour les clics de souris
-window.addEventListener('click', onClick);
+export function setupEventListeners() {
+    window.addEventListener('click', onClick);
+    window.addEventListener('mousemove', onMouseMove);
+}
 
-// Ajouter un écouteur pour les mouvements de souris
-window.addEventListener('mousemove', onMouseMove);
+export function removeEventListeners() {
+    window.removeEventListener('click', onClick);
+    window.removeEventListener('mousemove', onMouseMove);
+}

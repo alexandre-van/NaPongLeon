@@ -86,7 +86,7 @@ class Game:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(game_manager_service_url, json={
 					'gameMode': self.game_mode,
-					'modifiers': self.modifiers,
+					'modifiers': ','.join(self.modifiers),
 					'playersList': [self.username_to_id[player]['public'] for player in players_list],
 					'teamsList': teams_with_public_ids,
 					'ia_authorizes': False,

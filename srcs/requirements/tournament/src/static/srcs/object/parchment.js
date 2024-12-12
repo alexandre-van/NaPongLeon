@@ -82,7 +82,7 @@ function generateBranchContent(branch) {
  * Show the parchment for a specific branch.
  * @param {Object} branch - The branch data.
  */
-function showParchment(branch) {
+export function showParchment(branch) {
     const parchmentDiv = document.getElementById('parchment');
     parchmentDiv.style.display = 'block';
 
@@ -145,7 +145,7 @@ function generateTeamContent(team) {
  * Show the parchment for a specific team.
  * @param {Object} team - The team data.
  */
-function showTeamParchment(team) {
+export function showTeamParchment(team) {
     const parchmentDiv = document.getElementById('parchment');
     parchmentDiv.style.display = 'block';
 
@@ -164,5 +164,3 @@ document.getElementById('closeParchment').addEventListener('click', () => {
     const parchmentDiv = document.getElementById('parchment');
     parchmentDiv.style.display = 'none';
 });
-
-export {showParchment, showTeamParchment} ;
