@@ -7,6 +7,8 @@ class Branch:
 		self.id = id
 		self.prev_branch = prev_branch
 		self.next_branches = None
+		self.game_mode = None
+		self.modifiers = None
 		if level < level_max:
 			self.next_branches = []
 			left_id = id + 1
@@ -24,15 +26,18 @@ class Branch:
 			self.next_branches.append(Branch(level_max, level=level+1, prev_branch=self, id=right_id, id_set=id_set))
 		self.match = None
 		self.bench = None
-		logger.debug(f"create branch || level : {level}")
 
 	def init_match(self, team1, team2, game_mode, modifiers):
+		self.game_mode = game_mode
+		self.modifiers = modifiers
 		team1.set_current_branch(self)
 		team2.set_current_branch(self)
 		self.match = Match(self, team1, team2, game_mode, modifiers)
+		self.bench = None
 
-	def init_bench(self, team):
-		logger.debug(f"Create bench || team : {team.name}")
+	def init_bench(self, team, game_mode, modifiers):
+		self.game_mode = game_mode
+		self.modifiers = modifiers
 		team.set_current_branch(self)
 		self.bench = team
 
@@ -57,11 +62,28 @@ class Branch:
 			return
 		list(next_branch.get_branches(branches, level) for next_branch in self.next_branches)
 
+	def ascend_team(self, team):
+		if self.prev_branch.is_free():
+			self.prev_branch.bench = team
+		elif self.prev_branch.id != 0 and self.prev_branch.match is None \
+			and self.prev_branch.bench != team:
+			self.prev_branch.init_match(
+				self.prev_branch.bench, team,
+				self.game_mode, self.modifiers)
+
 	async def update(self):
 		if self.match:
 			await self.match.update()
+			if self.match.winner:
+				self.ascend_team(self.match.winner)
 		elif self.bench:
-			await self.bench.update()
+			wait = not any(next_branch.is_free() for next_branch in self.next_branches)
+			if wait is False:
+				self.ascend_team(self.bench)
+
+
+	def is_free(self):
+		return self.match is None and self.bench is None
 
 	def export(self):
 		return {

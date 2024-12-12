@@ -30,7 +30,7 @@ class Team:
 
 	def set_status(self, new_status):
 		self.status = teams_status[new_status] if teams_status.get(new_status) else new_status
-		list(player.set_status(self.status) for player in self.players)
+		list(player.set_status(new_status) for player in self.players)
 
 	async def update(self):
 		for player in self.players:

@@ -8,7 +8,15 @@ match_status = {
 }
 
 teams_status = {
-    'waiting': 'Join game...',
+    'waiting': 'Players join game...',
     'loading': 'Players are loading...',
+    'in_progress': 'Players in game...',
+    'defeated': 'Defeated',
+}
+
+players_status = {
+    'waiting': 'Join game...',
+    'loading': 'Loading game...',
     'in_progress': 'In game...',
+    'defeated': 'Defeated',
 }

@@ -97,9 +97,20 @@ function determinePlayerStatus(branch, nickname) {
 }
 
 function getBoxColor(branch) {
-	if (branch.match) return 0xffe333;
-	if (branch.bench) return 0xffffff;
-	return 0xA9A9A9;
+    if (branch.match) {
+        switch (branch.match.status) {
+            case 'Game in progress':
+                return 0xffe333; // Jaune par défaut
+            case 'Game aborted':
+                return 0xff4444; // Rouge pour un match annulé
+            case 'Game finished':
+                return 0x4CAF50; // Vert pour un match terminé
+            default:
+                return 0xffe333; // Jaune par défaut si statut inconnu
+        }
+    }
+    if (branch.bench) return 0xADD8E6; // Bleu clair pour le bench
+    return 0xA9A9A9; // Gris par défaut pour les cellules vides
 }
 
 function drawConnection(x1, y1, x2, y2) {
@@ -172,6 +183,92 @@ export function updateTree(newtree, nickname) {
 	//updateConnections(tree);
 }
 
+// Fonction pour déterminer si une équipe est perdante
+const isLosingTeam = (teamName, winner, status) => {
+    return (status === "Game aborted" || status === "Game finished") && teamName !== winner;
+};
+
+// Fonction pour dessiner du texte avec style spécifique
+const drawText = (ctx, text, x, y, options = {}) => {
+    const {
+        font = '30px Dancing Script',
+        color = 'black',
+        strikeThrough = false
+    } = options;
+
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+
+    if (strikeThrough) {
+        const textWidth = ctx.measureText(text).width;
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.moveTo(x, y - 15); // Ligne au milieu du texte
+        ctx.lineTo(x + textWidth, y - 15);
+        ctx.stroke();
+    }
+};
+
+function renderMatchText(ctx, textCanvas, playerStatus, match) {
+    const isLoserTeam = (teamName) => 
+        (match.status === 'Game finished' || match.status === 'Game aborted') && 
+        teamName !== match.winner;
+
+    const renderTeamText = (teamName, isTop) => {
+        const isPlayerInTeam = isTop 
+            ? playerStatus.isPlayerInTeam1 
+            : playerStatus.isPlayerInTeam2;
+
+        ctx.font = isPlayerInTeam ? 'bold 40px Dancing Script' : '30px Dancing Script';
+        
+        const yPosition = isTop 
+            ? textCanvas.height / 5 
+            : textCanvas.height - textCanvas.height / 5;
+
+        if (isLoserTeam(teamName)) {
+            ctx.fillStyle = 'red';
+            ctx.save();
+            
+            ctx.fillText(teamName, textCanvas.width / 2, yPosition);
+            
+            const textWidth = ctx.measureText(teamName).width;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.moveTo(
+                textCanvas.width / 2 - textWidth / 2, 
+                yPosition
+            );
+            ctx.lineTo(
+                textCanvas.width / 2 + textWidth / 2, 
+                yPosition
+            );
+            ctx.stroke();
+            
+            ctx.restore();
+        } else {
+            ctx.fillStyle = 'black';
+            ctx.fillText(teamName, textCanvas.width / 2, yPosition);
+        }
+    };
+
+    if (match) {
+        const { team1, team2 } = match;
+
+        renderTeamText(team1.name, true);
+
+        ctx.font = '30px Dancing Script';
+        ctx.fillStyle = 'black';
+        ctx.fillText("VS", textCanvas.width / 2, textCanvas.height / 2 * 1.05);
+
+        renderTeamText(team2.name, false);
+    }
+}
+
+
 function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
 	// Créez un nouveau canevas pour le texte
 	const textCanvas = document.createElement('canvas');
@@ -185,15 +282,7 @@ function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
 	ctx.fillStyle = 'black';
 
 	if (branch.match) {
-		const { team1, team2 } = branch.match;
-		ctx.font = playerStatus.isPlayerInTeam1 ? 'bold 40px Dancing Script' : '30px Dancing Script';
-		ctx.fillText(team1.name, textCanvas.width / 2, textCanvas.height / 5);
-
-		ctx.font = '30px Dancing Script';
-		ctx.fillText("VS", textCanvas.width / 2, textCanvas.height / 2 * 1.05);
-
-		ctx.font = playerStatus.isPlayerInTeam2 ? 'bold 40px Dancing Script' : '30px Dancing Script';
-		ctx.fillText(team2.name, textCanvas.width / 2, textCanvas.height - textCanvas.height / 5);
+		renderMatchText(ctx, textCanvas, playerStatus, branch.match);
 	}
 
 	if (branch.bench) {
@@ -208,12 +297,10 @@ function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
 		side: THREE.DoubleSide
 	});
 
-	// Si le texte existe déjà, mettez à jour la texture
 	if (box.textMesh) {
 		box.textMesh.material.map = textTexture;
-		box.textMesh.material.needsUpdate = true; // Forcer la mise à jour de la texture
+		box.textMesh.material.needsUpdate = true;
 	} else {
-		// Si le texte n'existe pas, créez-le
 		const textGeometry = new THREE.PlaneGeometry(boxWidth * team_size, boxHeight);
 		box.textMesh = new THREE.Mesh(textGeometry, textMaterial);
 		const zOffset = box.geometry.parameters.depth / 2 + 0.2;
@@ -227,7 +314,7 @@ function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
 
 
 function manageSpectateButton(box, branch, playerTeamMultiplier) {
-	const matchInProgress = branch.match && branch.match.status === "Waiting";
+	const matchInProgress = branch.match && branch.match.status === "Game in progress...";
 	const buttonColor = '#F08080';
 
 	if (matchInProgress && playerTeamMultiplier == 1) {
@@ -286,11 +373,12 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 
 		}
 	} else if (box.spectateButton) {
-		// Supprimer le bouton si le statut n'est plus "Waiting"
 		scene.remove(box.spectateButton);
 		box.spectateButton.geometry.dispose();
 		box.spectateButton.material.forEach(mat => mat.dispose());
 		box.spectateButton = null;
+		const zOffset = box.geometry.parameters.depth / 2 + 0.2;
+		box.textMesh.position.set(box.position.x, box.position.y, zOffset);
 	}
 }
 

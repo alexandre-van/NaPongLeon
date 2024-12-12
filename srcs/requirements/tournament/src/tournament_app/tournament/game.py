@@ -9,7 +9,7 @@ class Game:
 		self.modifiers = modifiers
 		self.id = None
 		self.service_name = None
-		self.limiter = 3
+		self.limiter = 0
 		self.i_limiter = 0
 		# Dictionnaire pour mapper usernames et leurs IDs (public et privé)
 		self.username_to_id = {}
@@ -86,7 +86,7 @@ class Game:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(game_manager_service_url, json={
 					'gameMode': self.game_mode,
-					'modifiers': ','.join(self.modifiers),
+					'modifiers': ','.join(self.modifiers)	,
 					'playersList': [self.username_to_id[player]['public'] for player in players_list],
 					'teamsList': teams_with_public_ids,
 					'ia_authorizes': False,

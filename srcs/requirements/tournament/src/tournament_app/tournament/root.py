@@ -53,6 +53,9 @@ class Root:
 		if self.bench:
 			await self.bench.update()
 
+	def is_free(self):
+		return self.bench is None
+
 	def export(self):
 		return {
 			'id': self.id,
@@ -62,5 +65,4 @@ class Root:
 		}
 	
 	def init_bench(self, team):
-		logger.debug(f"Create bench || team : {team.name}")
 		self.bench = team

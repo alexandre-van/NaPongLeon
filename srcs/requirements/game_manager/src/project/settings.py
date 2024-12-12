@@ -66,7 +66,7 @@ MIDDLEWARE = [
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8080',
-	'https://a32d-81-65-161-75.ngrok-free.app',
+	'https://5f21-81-65-161-75.ngrok-free.app',
 ]
 
 

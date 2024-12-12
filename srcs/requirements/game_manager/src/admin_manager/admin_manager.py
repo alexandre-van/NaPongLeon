@@ -144,6 +144,7 @@ class AdminManager:
 				for player in teams[team]:
 					logger.debug(f"{player}")
 					game_instance.add_player_to_team(player, team)
+				self.update_score(game_id, team, 0)
 
 	def update_score(self, game_id, team, score):
 		game_instance = GameInstance.get_game(game_id)

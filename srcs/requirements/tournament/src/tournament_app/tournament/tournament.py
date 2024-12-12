@@ -43,7 +43,6 @@ class Tournament:
 	# init
 
 	def init_players(self, players_dict):
-		logger.debug("Player init")
 		usernames = list(players_dict.keys())
 		random.shuffle(usernames)
 		players = {username: players_dict[username] for username in usernames}
@@ -54,7 +53,6 @@ class Tournament:
 		return players
 
 	def init_teams(self):
-		logger.debug("Team distrib")
 		teams = []
 		teams_distrib = []
 		i_distrib = 0
@@ -73,7 +71,6 @@ class Tournament:
 		return teams
 	
 	def init_modifers(self, modifiers_list):
-		logger.debug(modifiers_list)
 		modifiers = {
 			'tournament': [],
 			'game': []

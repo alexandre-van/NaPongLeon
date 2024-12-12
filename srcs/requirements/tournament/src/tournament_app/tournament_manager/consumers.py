@@ -27,7 +27,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			self.tournament_id = segments[3]
 		if len(segments) >= 6:
 			special_id = segments[4]
-			logger.debug(f'special_id = {special_id}')
 		if special_id:
 			self.username = tournament_manager.special_connection(special_id, self.tournament_id)
 			if not self.username:
@@ -47,7 +46,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			})
 
 	async def new_users(self):
-		logger.debug("new_user")
 		self.ready = False
 		if self.admin_id:
 			self.room = tournament_manager.add_admin(self.admin_id, self, self.tournament_id)
@@ -77,11 +75,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			})
 
 	async def startup(self):
-		logger.debug("startup")
 		tournament_manager.update_status('loading', self.tournament_id)
 		admin = self.room['admin']
 		for player in self.room['players']:
-			logger.debug(f"add {player} to channel")
 			playerConsumer = self.room['players'][player]['consumer']
 			await self.channel_layer.group_add(self.tournament_id, playerConsumer.channel_name)
 		for spectator in self.room['spectator']:
@@ -91,10 +87,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		tournament_data = self.room['tournament_instance'].export_data()
 		#await self.send_export_teams(admin['id'], tournament_data['teams'])
 		await self.send_export_data(self.tournament_id, tournament_data)
-		logger.debug(f'Export data')
 
 	async def add_spectator(self):
-		logger.debug(f"{self.username} is here")
 		await self.send_message({
 			'type': "export_data",
 			'data': self.room['tournament_instance'].export_data()
@@ -249,7 +243,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	async def tournament_loop(self, tournament_id):
 		if not self.room:
 			return
-		logger.debug("tournament loop is running")
 		while tournament_manager.get_room(self.tournament_id):
 			tournament = self.room['tournament_instance']
 			if tournament:
@@ -262,7 +255,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					}
 				)
 				if tournament_state['type'] == 'scored':
-					logger.debug('scored')
 					await self.send_update_score(tournament_state['team'], tournament_state['score'])
 				elif tournament_state['type'] == 'tournament_end':
 					tournament_manager.update_status('finished', self.tournament_id)
@@ -300,7 +292,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	# STATUS_LOOP
 	async def status_loop(self):
 		while self.room['status'] != 'aborted':
-			#logger.debug("status_loop")
 			await asyncio.sleep(1)
 		await self.tournament_end()
 
@@ -341,7 +332,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		for group in groups:
 			if group:  # S'assurer que le nom du groupe est valide
 				try:
-					logger.debug(f"Sending message to group: {group} || message: {message}")
 					await self.channel_layer.group_send(
 						group, {
 							'type': 'send_state',
@@ -367,7 +357,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
-					logger.debug(f"{self.username} receive export data")
 					event['state']['nickname'] = self.username
 				event['state']['game_private_id'] = self.game_private_id
 				await self.send(text_data=json.dumps(event['state']))

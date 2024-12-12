@@ -11,7 +11,7 @@ export async function updateTournament(data, nickname, game_private_id) {
 	updateTree(data.tree, nickname);
 	if (playerStatus != "Join game..."
 		&& playerStatus != "In game..."
-		&& playerStatus != "Players are loading...") {
+		&& playerStatus != "Loading game...") {
 		if (in_game) {
 			close_game();
 			await create_interface(data, nickname);

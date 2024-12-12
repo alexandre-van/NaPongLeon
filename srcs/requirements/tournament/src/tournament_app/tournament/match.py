@@ -24,10 +24,8 @@ class Match:
 		logger.debug(f"create match || team : {team1.name} vs {team2.name}")
 	
 	async def update(self):
-		if self.team1:
-			await self.team1.update()
-		if self.team2:
-			await self.team2.update()
+		if self.game is None:
+			return
 		if self.launch_cooldown > 0:
 			self.status = f'Begin in {self.launch_cooldown}s...'
 			self.set_teams_status(f"Match begin in {self.launch_cooldown}s...")
@@ -44,15 +42,22 @@ class Match:
 			logger.debug(f"Match {self.team1.name} vs {self.team2.name} | game_data = {game_data}")
 			if game_data:
 				self.set_status(game_data['status'])
-				self.winner = game_data['winner']
 				score = game_data['scores']
 				i = 0
-				teams = [self.team1.name, self.team2.name]
+				teams = [self.team1, self.team2]
 				for teamname in score:
-					self.score[teams[i]] = score[teamname]
-					self.team_in_game[teams[i]] = teamname
+					self.score[teams[i].name] = score[teamname]
+					self.team_in_game[teams[i].name] = teamname
+					winner = game_data['winner']
+					if teamname == winner:
+						self.set_winner(teams[i], teams[(i + 1) % 2])
 					i += 1
-				
+		if self.status == "Game finished" or self.status == "Game aborted":
+			self.game = None
+
+	def set_winner(self, win_team, lose_team):
+		self.winner = win_team
+		lose_team.set_status("defeated")
 
 	def set_status(self, status):
 		self.status = match_status[status] if match_status.get(status) else status
@@ -71,5 +76,5 @@ class Match:
 			'status': self.status,
 			'team_in_game': self.team_in_game,
 			'score': self.score,
-			'winner': self.winner
+			'winner': self.winner.name if self.winner else None
 		}
