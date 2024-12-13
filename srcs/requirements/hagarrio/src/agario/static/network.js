@@ -29,7 +29,7 @@ function connectWebSocket() {
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
     const port = window.location.port;
-    const wsUrl = `${wsProtocol}://${host}:${port}/ws/hagarrio/`;
+    const wsUrl = `${wsProtocol}//${host}:${port}/ws/hagarrio/`;
     console.log('Attempting WebSocket connection to:', wsUrl);
     
     try {
