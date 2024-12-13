@@ -1,8 +1,8 @@
-import { updatePlayers, removePlayer } from './player.js';
+import { updatePlayers, removePlayer, getMyPlayerId } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
 import { updateGameInfo, showGameOverMessage } from './utils.js';
-import { updatePowerUps, displayPowerUpEffect, createNewPowerUp, usePowerUp } from './powers.js';
+import { updatePowerUps, displayPowerUpCollected, createNewPowerUp, usePowerUp } from './powers.js';
 import { updateHotbar } from './hotbar.js';
 
 let socket;
@@ -100,12 +100,16 @@ function connectWebSocket() {
                 case 'power_up_collected':
                     console.log('Power-up collected:', data);
                     updatePowerUps(data.power_ups);
-                    updateHotbar(data.players[data.yourPlayerId].inventory);
+                    if (data.yourPlayerId === getMyPlayerId()) {
+                        updateHotbar(data.players[data.yourPlayerId].inventory);
+                        displayPowerUpCollected(data.power_up, true);
+                    }
                     break;
                 case 'power_up_used':
                     console.log('Power-up used:', data);
-                    updateHotbar(data.players[data.yourPlayerId].inventory);
-                    displayPowerUpEffect(data.power_up);
+                    if (data.yourPlayerId === getMyPlayerId()) {
+                        updateHotbar(data.players[data.yourPlayerId].inventory, data.slot_index);
+                    }
                     break;
                 case 'player_eat_other_player':
                     console.log('Player ate other player:', data);

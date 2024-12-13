@@ -236,7 +236,7 @@ class Game:
                             'type': 'power_up_collected',
                             'game_id': self.game_id,
                             'players': self.players,
-                            'power_up': collected_power_up,
+                            'power_up': collected_power_up['power_up'],
                             'power_ups': self.power_ups
                         })
                 # Gestion des power-ups
@@ -303,6 +303,9 @@ class Game:
         return positions_updated
 
     def spawn_power_up(self):
+        if len(self.power_ups) >= 9:
+            return None
+            
         power_up_type = random.choice(list(POWER_UPS.keys()))
         power_up = {
             'id': str(uuid.uuid4()),
@@ -340,7 +343,7 @@ class Game:
             player['invulnerable'] = value
         elif effect == 'score_multiplier':
             player['score_multiplier'] = value
-        
+
         # Planifier la fin de l'effet
         asyncio.create_task(self.remove_power_up_effect(player_id, effect, duration))
 
@@ -362,7 +365,14 @@ class Game:
         
         power_up = player['inventory'].pop(slot_index)
         self.apply_power_up(player_id, power_up)
-        return {'type': 'power_up_used', 'power_up': power_up}
+        # Retourner les informations mises à jour pour le broadcast
+        return {
+            'type': 'power_up_used',
+            'game_id': self.game_id,
+            'players': self.players,
+            'slot_index': slot_index,
+            'power_up': power_up
+        }
 
     def state_player_eat_other_player(self, player_id, other_player_id):
         return {

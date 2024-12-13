@@ -68,48 +68,61 @@ export function updatePowerUps(newPowerUps) {
     });
 }
 
-export function displayPowerUpEffect(powerUp) {
-    console.log('Displaying power-up effect:', powerUp);
-    // Supprimer les anciens effets s'il y en a
+export function displayPowerUpCollected(powerUp, isCollected = false) {
+    console.log('Displaying power-up effect:', powerUp, 'isCollected:', isCollected);
+    
+    // Supprimer les anciens effets s'il y en avait
     const oldEffects = document.querySelectorAll('.power-up-effect');
     oldEffects.forEach(effect => effect.remove());
 
     const effectDiv = document.createElement('div');
     effectDiv.className = 'power-up-effect';
-    
+
     let effectText;
     let emoji;
     switch (powerUp.type) {
         case 'speed_boost':
             emoji = '🚀';
-            effectText = 'Speed boost !';
+            effectText = isCollected ? 'Speed boost collected!' : 'Speed boost activated!';
             break;
         case 'slow_zone':
             emoji = '🐌';
-            effectText = 'Speed slowed !';
+            effectText = isCollected ? 'Slow zone collected!' : 'Speed slowed!';
             break;
         case 'shield':
             emoji = '🛡️';
-            effectText = 'Shield activated !';
+            effectText = isCollected ? 'Shield collected!' : 'Shield activated!';
             break;
         case 'point_multiplier':
             emoji = '✨';
-            effectText = 'Point multiplier !';
+            effectText = isCollected ? 'Point multiplier collected!' : 'Point multiplier activated!';
             break;
         default:
             emoji = '🎮';
-            effectText = `${powerUp.type} activated !`;
+            effectText = isCollected ? `${powerUp.type} collected!` : `${powerUp.type} activated!`;
     }
     
     effectDiv.innerHTML = `${emoji} ${effectText}`;
-    effectDiv.style.color = powerUp.properties.text_color;
+    
+    // Appliquer la couleur du texte si disponible
+    if (powerUp.properties && powerUp.properties.text_color) {
+        effectDiv.style.color = powerUp.properties.text_color;
+    }
     
     document.body.appendChild(effectDiv);
+    
+    // Ajouter une animation de fondu
+    effectDiv.style.animation = 'fadeInOut 2s ease-in-out';
+    effectDiv.style.opacity = '0';
+    requestAnimationFrame(() => {
+        effectDiv.style.opacity = '1';
+    });
     
     // Supprimer l'élément après l'animation
     setTimeout(() => {
         if (effectDiv && effectDiv.parentNode) {
-            effectDiv.remove();
+            effectDiv.style.opacity = '0';
+            setTimeout(() => effectDiv.remove(), 300);
         }
     }, 2000);
 }
