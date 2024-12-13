@@ -1,5 +1,6 @@
 import { init } from './srcs/init.js';
 import { startGame, updateGame, stopAnimation } from './srcs/animate.js';
+import { updateScore } from './srcs/object/score.js';
 import {scene, cleanup} from './srcs/scene.js';
 import './srcs/object/camera.js';
 
@@ -21,6 +22,9 @@ socket.onopen = function() {
 	}));
 };
 
+let playerLscore = 0;
+let playerRscore = 0;
+
 socket.onmessage = function(event) {
 	const data = JSON.parse(event.data);
 	switch (data.type) {
@@ -36,11 +40,17 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			console.log("Game state updated:", data);
+			//console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":
-			console.log(data.msg);
+			console.log("CSSSSSSSSSSSSSSSSS", data);
+			if (data.team === "left") {
+				playerLscore++;
+			} else {
+				playerRscore++;
+			}
+			updateScore(playerLscore, playerRscore);
 			break;
 		case "game_end":
 			//socket.close();

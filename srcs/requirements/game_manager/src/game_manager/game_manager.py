@@ -123,7 +123,7 @@ class Game_manager:
 				await self.disconnect_to_game(game_id, game_mode)
 		else:
 			return None
-		ai_url = "http://ia:8000/api/ia/create_ia/"
+		ai_url = "http://ia:5000/api/ia/create_ia/"
 		for ai_id in all_ai:
 			try:
 				ids = {
