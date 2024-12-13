@@ -9,13 +9,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'password', 'avatar_url', 'nickname', 'friends', 'pending_friend_requests')
+        fields = ('id', 'username', 'password', 'email', 'avatar_url', 'nickname', 'friends', 'pending_friend_requests')
         extra_kwargs = {
             'password': {
                 'write_only': True,
                 'error_messages': {
                     'max_length': 'Password must be 3 characters or less'
                 }
+            },
+            'email': {
+                'required': True
             },
             'nickname': {
                 'max_length': 30,
@@ -36,12 +39,17 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Username cannot contain special characters")
         return value
 
-    
     def validate_password(self, value):
+        if len(value) < 10:
+            raise serializers.ValidationError("Password must have at least 10 characters")
         special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
-        if special_chars.search(value):
-            raise serializers.ValidationError("Password cannot contain special characters")
-        return value
+        if special_chars.search(value) is True:
+            raise serializers.ValidationError("Password must have at least a special character")
+        for c in value:
+            if c.isupper():
+                return value
+        raise serializers.ValidationError("Password must have at least a uppercase character")
+        
     
     def validate_avatar_url(self, value):
         validator = URLValidator()

@@ -57,6 +57,9 @@ export function UserProvider({ children }) {
     window.location.href = '/api/authentication/oauth/42/authorize';
   };
 
+  const resetPassword = async (email) => {
+    const response = await api.post('/authentication/users/password-reset/', email);
+  };
 
   const logout = async () => {
     await api.post('/authentication/auth/logout/');
@@ -130,6 +133,7 @@ export function UserProvider({ children }) {
     logout,
     checkAuth,
     register,
+    resetPassword,
     sendFriendRequest,
     updateUser,
     updateAvatarVersion,

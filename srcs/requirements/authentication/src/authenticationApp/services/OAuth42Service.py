@@ -16,8 +16,11 @@ class AsyncOAuth42Service:
         self._session: Optional[aiohttp.ClientSession] = None
         # To avoid data race on simultaneous requests
         self._lock = asyncio.Lock()
+        self._lock = None
+        self._session = None
         # Recurring requests to 42 API limited to 2
         self._semaphore = asyncio.Semaphore(2)
+
 
 
     ''' Context manager entry '''
@@ -26,8 +29,16 @@ class AsyncOAuth42Service:
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=30)
             )
+        await self.__ensure_lock__()
         return self
+    
 
+
+    async def __ensure_lock__(self):
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
+    
 
 
     ''' Context manager exit '''
@@ -44,6 +55,8 @@ class AsyncOAuth42Service:
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=30)
             )
+
+
 
     async def _make_42_api_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         await self._ensure_session()

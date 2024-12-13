@@ -14,6 +14,8 @@ import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
 import Leaderboard from './pages/LeaderboardPage.js';
 import LoginPage from './pages/LoginPage.js';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.js';
+import ResetPasswordPage from './pages/ResetPasswordPage.js';
 import HagarrioPage from './pages/HagarrioPage.js';
 import Auth42Success from './components/Auth42Success.js';
 import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
@@ -46,6 +48,7 @@ function AppContent() {
 
   return (
       <Routes>
+        <Route path="reset-password/:id/:token" element={<ResetPasswordPage />}/>
         <Route element={isAuthenticated ? <ConnectedLayout /> : <LoginPage />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
@@ -71,6 +74,7 @@ function AppContent() {
           <Route path="classic-tournament" element={<ClassicTournament />}/>
           <Route path="duo-tournament" element={<DuoTournament />}/>
           <Route path="login" element={<LoginPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />}/>
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />

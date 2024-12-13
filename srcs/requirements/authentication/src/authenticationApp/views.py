@@ -27,9 +27,11 @@ class UserView(APIView):
 
     # Registration without checking JWT
     def post(self, request):
+        logger.debug('\nUserView POST\n')
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            logger.debug(f'request.data = {request.data}')
             return Response({'message': 'Registration success'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
