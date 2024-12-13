@@ -2,6 +2,7 @@ import { getPlayers } from './player.js';
 import { getFood } from './food.js';
 import { getMyPlayerId } from './player.js';
 import { mapHeight, mapWidth } from './main.js';
+import { getPowerUps } from './powers.js';
 
 const minimapCanvas = document.getElementById('minimap');
 const minimapCtx = minimapCanvas.getContext('2d');
@@ -97,8 +98,8 @@ export function initMinimap() {
 export function updateMinimap() {
     const players = getPlayers();
     const food = getFood();
-    // // console.log('in updateMinimap, mapheight', mapHeight, 'mapWidth', mapWidth);
-
+    const powerUps = getPowerUps();
+    
     minimapCtx.clearRect(0, 0, minimapSize, minimapSize);
 
     // // Dessiner le fond
@@ -151,6 +152,23 @@ export function updateMinimap() {
                 minimapCtx.arc(x, y, 1, 0, 2 * Math.PI);
                 minimapCtx.fill();
             }
+        });
+    }
+
+    // Dessiner les power-ups sur la minimap
+    if (powerUps && powerUps.length > 0) {
+        powerUps.forEach(powerUp => {
+            const x = (powerUp.x / mapWidth) * minimapSize;
+            const y = ((mapHeight - powerUp.y) / mapHeight) * minimapSize;
+            minimapCtx.fillStyle = powerUp.properties.color;
+            minimapCtx.beginPath();
+            minimapCtx.arc(x, y, 3, 0, 2 * Math.PI);
+            minimapCtx.fill();
+            
+            // Ajouter un effet de brillance
+            minimapCtx.strokeStyle = 'white';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.stroke();
         });
     }
 }
