@@ -61,6 +61,7 @@ function connectWebSocket() {
                 case 'update_waiting_room':
                     console.log('Update waiting room:', data);
                     updateGameInfo(data);
+                    updatePlayers(data.players, data.yourPlayerId);
                     break;
                 case 'game_started':
                     console.log('Game started:', data);

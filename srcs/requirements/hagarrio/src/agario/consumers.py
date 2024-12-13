@@ -164,6 +164,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			await player.send(text_data=json.dumps({
 				'type': 'update_waiting_room',
 				'games': games_info,
+				'players': game.players
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
