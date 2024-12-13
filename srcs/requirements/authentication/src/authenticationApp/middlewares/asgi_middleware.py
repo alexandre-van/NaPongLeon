@@ -182,9 +182,10 @@ class AsyncJWTAuthMiddleware:
 
         response = await self.inner(scope, receive, send_modifier)
         return response
+
+
+
 '''
-
-
 @sync_and_async_middleware
 class AsyncJWTAuthMiddleware:
     def __init__(self, inner):
@@ -259,7 +260,6 @@ class AsyncJWTAuthMiddleware:
                 message['headers'] = headers
             await send(message)
         return send_wrapper
-    
 
 
 
