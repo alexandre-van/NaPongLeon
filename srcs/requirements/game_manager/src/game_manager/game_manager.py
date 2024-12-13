@@ -140,7 +140,7 @@ class Game_manager:
 					return None
 			except httpx.RequestError as e:
 				logger.error(f"AI service error for AI {ai_id}: {str(e)}")
-				#return None
+				return None
 		return {
 			'game_id': game_id,
 			'service_name': game_mode_data['service_name']
