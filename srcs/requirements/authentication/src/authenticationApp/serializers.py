@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from .models import CustomUser, Friendship
 import re
 #from django.contrib.auth.password_validation import validate_password
@@ -18,7 +19,13 @@ class UserSerializer(serializers.ModelSerializer):
                 }
             },
             'email': {
-                'required': True
+                'required': True,
+                'validators': [
+                    UniqueValidator(
+                        queryset=CustomUser.objects.all(),
+                        message='Email address must be unique.'
+                    )
+                ]
             },
             'nickname': {
                 'max_length': 30,
@@ -43,12 +50,21 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) < 10:
             raise serializers.ValidationError("Password must have at least 10 characters")
         special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
-        if special_chars.search(value) is True:
+        if not special_chars.search(value):
             raise serializers.ValidationError("Password must have at least a special character")
+        has_digit = False
+        has_upper = False
         for c in value:
             if c.isupper():
+                has_upper = True
+            if c.isdigit():
+                has_digit = True
+            if has_upper and has_digit:
                 return value
-        raise serializers.ValidationError("Password must have at least a uppercase character")
+        if not has_digit:
+            raise serializers.ValidationError("Password must have at least a numerical character")
+        if not has_upper:
+            raise serializers.ValidationError("Password must have at least a uppercase character")
         
     
     def validate_avatar_url(self, value):

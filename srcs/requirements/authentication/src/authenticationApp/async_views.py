@@ -455,11 +455,12 @@ async def PasswordResetView(request):
 async def PasswordResetConfirmationView(request, uidb64, token):
     from django.contrib.auth.tokens import default_token_generator
     from django.utils.http import urlsafe_base64_decode
+    from .serializers import UserSerializer
+    from rest_framework import serializers
 
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = await database_sync_to_async(CustomUser.objects.get)(pk=uid)
-
         is_token_valid = await database_sync_to_async(default_token_generator.check_token)(user, token)
 
         if is_token_valid:
@@ -468,8 +469,15 @@ async def PasswordResetConfirmationView(request, uidb64, token):
                     data = json.loads(request.body)
                     new_password = data.get('new_password')
 
-                    user.set_password(new_password)
+                    serializer = UserSerializer()
+                    try:
+                        await database_sync_to_async(serializer.validate_password)(new_password)
+                    except serializers.ValidationError as e:
+                        return HttpResponseJD('Password validation failed', 400, {'errors': e.detail})
+
+                    await database_sync_to_async(user.set_password)(new_password)
                     await database_sync_to_async(user.save)()
+                    return HttpResponseJD('Password modified', 200)
                 
                 except json.JSONDecodeError:
                     return HttpResponseBadRequestJD('Invalid JSON')
