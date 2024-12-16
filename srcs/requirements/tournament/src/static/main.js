@@ -1,12 +1,12 @@
 import { init } from './srcs/init.js';
-import { startTournament, updateTournament, stopAnimation } from './srcs/animate.js';
-import {scene, cleanup} from './srcs/scene.js';
-import './srcs/object/camera.js';
+import { updateTournament, stopTournament } from './srcs/tournament.js'
 
+const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const host = window.location.hostname;
 const port = window.location.port;
 const tournamentId = new URLSearchParams(window.location.search).get('gameId');
-const socket = new WebSocket(`ws://${host}:${port}/ws/tournament/${tournamentId}/`);
+const socket = new WebSocket(`${wsProtocol}//${host}:${port}/ws/tournament/${tournamentId}/`);
+let nickname = '' 
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
 socket.onopen = function() {
@@ -27,21 +27,23 @@ socket.onmessage = function(event) {
 			break;
 		case "export_data":
 			console.log("Game created! \Tournament ID :", tournamentId);
-			console.log("export_data : ", data)
-			init(data.data, socket)
+			console.log("export_data : ", data);
+			console.log("nickname : ", data.nickname);
+			nickname = data.nickname;
+			init(data.data, socket, nickname);
 			break;
 		case "tournament_update":
 			console.log("Tournament update");
-			updateTournament()
+			console.log("tu : ", data);
+			updateTournament(data, nickname, data.game_private_id);
 			break;
 		case "tournament_start":
 			console.log("Tournament started!");
-			startTournament()
 			break;
 		case "tournament_end":
 			//socket.close();
 			console.log("Tournament ended. Reason:", data.reason);
-			stopTournament()
+			stopTournament();
 			break;
 		default:
 			console.log("Unknown message type:", data.type);
@@ -50,18 +52,10 @@ socket.onmessage = function(event) {
 
 socket.onclose = function(event) {
 	console.log("WebSocket connection closed.", event);
-	stopTournament()
+	stopTournament();
 }; 
 
 socket.onerror = function(error) {
 	console.error("WebSocket error:", error);
-	stopTournament()
+	stopTournament();
 };
-
-function stopTournament() {
-	console.log("Tournament removed.");
-	socket.close();
-	stopAnimation();
-	cleanup();
-	window.parent.postMessage('tournament_end', '*');
-}

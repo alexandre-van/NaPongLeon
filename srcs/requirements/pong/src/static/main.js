@@ -1,13 +1,16 @@
 import { init } from './srcs/init.js';
 import { startGame, updateGame, stopAnimation } from './srcs/animate.js';
+import { updateScore } from './srcs/object/score.js';
 import {scene, cleanup} from './srcs/scene.js';
 import './srcs/object/camera.js';
 
+const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const host = window.location.hostname;
 const port = window.location.port;
 const gameId = new URLSearchParams(window.location.search).get('gameId');
-const socket = new WebSocket(`ws://${host}:${port}/ws/pong/${gameId}/`);
-//const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
+const specialId = new URLSearchParams(window.location.search).get('specialId');
+const url = `${wsProtocol}//${host}${port ? `:${port}` : ''}/ws/pong/${gameId}${specialId ? `/${specialId}` : ''}/`;
+const socket = new WebSocket(url);
 
 socket.onopen = function() {
 	console.log("WebSocket connection established.");
@@ -18,6 +21,9 @@ socket.onopen = function() {
 		cookies: cookies
 	}));
 };
+
+let playerLscore = 0;
+let playerRscore = 0;
 
 socket.onmessage = function(event) {
 	const data = JSON.parse(event.data);
@@ -34,11 +40,17 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			console.log("Game state updated:", data);
+			//console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":
-			console.log(data.msg);
+			console.log("CSSSSSSSSSSSSSSSSS", data);
+			if (data.team === "left") {
+				playerLscore++;
+			} else {
+				playerRscore++;
+			}
+			updateScore(playerLscore, playerRscore);
 			break;
 		case "game_end":
 			//socket.close();

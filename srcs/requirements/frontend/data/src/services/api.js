@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+const protocol = location.protocol;
 const host = window.location.hostname;
 const port = window.location.port;
 
@@ -20,7 +21,7 @@ function getCsrfToken() {
 }
 
 const api = axios.create({
-  baseURL: `http://${host}:${port}/api`,
+  baseURL: `${location.origin}/api`,
   withCredentials: true,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',

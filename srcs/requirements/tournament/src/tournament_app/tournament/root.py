@@ -9,9 +9,10 @@ class Root:
 		self.id = 0
 		self.prev_branch = None
 		self.next_branch = None
+		self.id_set = set()
 		self.bench = None
 		if self.level < self.level_max:
-			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1)
+			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1, id_set=self.id_set)
 
 	def init_level_max(self, leaf_number):
 		level_max = 1
@@ -48,9 +49,20 @@ class Root:
 			self.next_branch.get_branches(branches, level)
 		return branches
 	
-	def get_id(self):
-		return self.id
+	async def update(self):
+		if self.bench:
+			await self.bench.update()
+
+	def is_free(self):
+		return self.bench is None
+
+	def export(self):
+		return {
+			'id': self.id,
+			'level': self.level,
+			'match': None,
+			'bench': self.bench.export() if self.bench else None
+		}
 	
 	def init_bench(self, team):
-		logger.debug(f"Create bench || team : {team.name}")
 		self.bench = team

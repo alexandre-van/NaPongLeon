@@ -12,7 +12,7 @@ import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
-import Leaderboard from './pages/LeaderboardPage.js';
+import GameHistory from './pages/GameHistoryPage.js';
 import LoginPage from './pages/LoginPage.js';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.js';
 import ResetPasswordPage from './pages/ResetPasswordPage.js';
@@ -32,6 +32,7 @@ import ClassicTournament from './pages/ClassicTournament.js';
 import DuoTournament from './pages/DuoTournament.js';
 import CreateGameButton from './components/CreateGameButton.js';
 import AIpong from './pages/AIpong.js';
+import InGame from './pages/InGame.js';
 //import './assets/App.css';
 
 function AppContent() {
@@ -54,7 +55,7 @@ function AppContent() {
           <Route />
           <Route path="pong" element={<PongPage />} />
           <Route path="hagarrio" element={<HagarrioPage />} />
-          <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="gamehistory" element={<GameHistory />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
@@ -80,6 +81,7 @@ function AppContent() {
           <Route path="register-success" element={<RegisterSuccessPage />} />
           <Route path="matchmaking" element={<WaitMatchmaking />} />
           <Route path="ai-pong" element={<AIpong />} />
+          <Route path="ingame" element={<InGame />} />
 
         </Route>
       </Routes>

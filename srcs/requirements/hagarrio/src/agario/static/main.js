@@ -1,11 +1,12 @@
 import * as THREE from './three/three.module.js';
 import { initScene, render, updateCameraPosition } from './scene.js';
-import { updatePlayers, getMyPlayerId, getPlayers } from './player.js';
+import { initPlayers, updatePlayers, getMyPlayerId, getPlayers } from './player.js';
 import { initFood } from './food.js';
 import { initNetwork, startGame } from './network.js';
 import { initInput } from './input.js';
 import { initUI, updateUI } from './ui.js';
 import { throttle } from './utils.js';
+import { createHotbar } from './hotbar.js';
 
 let scene, camera, renderer;
 export let mapHeight, mapWidth, max_food;
@@ -32,6 +33,8 @@ export function startGameLoop(initialGameState) {
     initUI();
     initInput();
     updatePlayers(initialGameState.players, initialGameState.yourPlayerId);
+    initPlayers();
+    createHotbar();
     function gameLoop() {
         requestAnimationFrame(gameLoop);
         const myPlayer = getPlayers()[getMyPlayerId()];
@@ -41,6 +44,9 @@ export function startGameLoop(initialGameState) {
         updateUI();
         render(scene, camera, renderer);
     }
+    window.addEventListener('beforeunload', () => {
+        cleanup();
+    });
     const throttledGameLoop = throttle(gameLoop, 16); // 60 FPS
     throttledGameLoop();
 }

@@ -1,23 +1,12 @@
-import * as THREE from '../js/three.module.js';
-import { renderer, camera, scene } from './renderer.js';
-import { controls } from './controls.js'
+import { render } from './renderer.js';
 
 let animationId;
 
-function startTournament() {
-	animate();
-}
-
-function animate() {
+export function animate() {
 	animationId = requestAnimationFrame(animate);
-	renderer.render(scene, camera);
+	render();
 }
 
-function updateTournament(state) {
-}
-
-function stopAnimation() {
+export function stopAnimation() {
 	cancelAnimationFrame(animationId);
 }
-
-export { startTournament, updateTournament, stopAnimation };

@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-#        self.user = await self.get_user_from_token()
         self.user = self.scope["user"]
         if not self.user:
             await self.close()

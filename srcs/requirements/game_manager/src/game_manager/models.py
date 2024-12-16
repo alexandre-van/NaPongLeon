@@ -42,7 +42,6 @@ class Player(models.Model):
 			player = cls.objects.get(username=username)
 			return player
 		except ObjectDoesNotExist:
-			logger.warning(f"Player account '{username}' does not exist.")
 			return None
 		except IntegrityError as e:
 			logger.error(f"Integrity error while fetching player '{username}': {e}")

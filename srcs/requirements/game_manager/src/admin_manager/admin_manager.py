@@ -27,16 +27,19 @@ class AdminManager:
 
 	def cleanup_thread(self, game_id):
 		with self._threads_mutex:
-			users = self.threads[game_id]['users']
-			logger.debug(f"Cleanup after game {game_id}. Closing resources...")
-			logger.debug(f"users change status : {users}")
-			self.upadte_game_status(game_id, users, 'aborted')
-			del self.threads[game_id]
+			if self.threads.get(game_id):
+				users = self.threads[game_id]['users']
+				logger.debug(f"Cleanup after game {game_id}. Closing resources...")
+				logger.debug(f"users change status : {users}")
+				self.upadte_game_status(game_id, users, 'aborted')
+				del self.threads[game_id]
 		logger.debug(f"Thread for game {game_id} cleaned up.")
 	
 	async def _handle_websocket(self, game_id, ws_url):
+		users = None
 		with self._threads_mutex:
-			users = self.threads[game_id]['users']
+			if self.threads.get(game_id):
+				users = self.threads[game_id]['users']
 		logger.debug(f'thread in game : {game_id} is running...')
 		try :
 			async with websockets.connect(ws_url) as websocket:
@@ -141,6 +144,7 @@ class AdminManager:
 				for player in teams[team]:
 					logger.debug(f"{player}")
 					game_instance.add_player_to_team(player, team)
+				self.update_score(game_id, team, 0)
 
 	def update_score(self, game_id, team, score):
 		game_instance = GameInstance.get_game(game_id)

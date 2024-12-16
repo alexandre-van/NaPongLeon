@@ -63,7 +63,6 @@ services:
       - .env/.env.web
     depends_on:
       - postgres
-        #        condition: service_healthy
       - redis
     networks:
       - backend
@@ -104,9 +103,9 @@ services:
     networks:
       - backend
     
-  game_manager:
+  gamemanager:
     build: ./requirements/game_manager
-    container_name: game_manager
+    container_name: gamemanager
     secrets:
       - db_user
       - db_password
@@ -143,7 +142,7 @@ services:
       - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
-    command: # pour les logs
+    command:
       - "postgres"
       - "-c"
       - "log_statement=all"
@@ -176,7 +175,9 @@ services:
       - nginx
     networks:
       - backend
-    #command: ["python", "IAapp/run_ia.py"]  # Ajout de la commande pour exécuter le script
+    ports:
+    - "5000:5000"
+    command: python manage.py runserver 0.0.0.0:5000
 
   
     
@@ -191,7 +192,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ./requirements/frontend/data
+      device: ./srcs/requirements/frontend/data
       o: bind
   postgres_data:
   media_vol:
