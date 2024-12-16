@@ -12,7 +12,7 @@ import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
-import Leaderboard from './pages/LeaderboardPage.js';
+import GameHistory from './pages/GameHistoryPage.js';
 import LoginPage from './pages/LoginPage.js';
 import HagarrioPage from './pages/HagarrioPage.js';
 import Auth42Success from './components/Auth42Success.js';
@@ -52,7 +52,7 @@ function AppContent() {
           <Route />
           <Route path="pong" element={<PongPage />} />
           <Route path="hagarrio" element={<HagarrioPage />} />
-          <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="gamehistory" element={<GameHistory />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>

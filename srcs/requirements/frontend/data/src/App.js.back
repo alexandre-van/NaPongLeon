@@ -4,7 +4,7 @@ import AboutPage from './pages/AboutPage.js'
 import './assets/App.css';
 import NewsPage from './pages/NewsPage.js';
 import GameModePage from './pages/GameModesPage.js';
-import Leaderboard from './pages/LeaderboardPage.js';
+import GameHistory from './pages/GameHistoryPage.js';
 import LoginPage from './pages/LoginPage.js';
 import RegisterPage from './pages/RegisterPage.js';
 
@@ -23,8 +23,8 @@ function App() {
         return <AboutPage navigate={navigate} />;
       case 'game-modes':
         return <GameModePage navigate={navigate} />;
-      case 'leaderboard':
-        return <Leaderboard navigate={navigate} />;
+      case 'gamehistory':
+        return <GameHistory navigate={navigate} />;
       case 'login':
         return <LoginPage navigate={navigate} />;
       case 'news':

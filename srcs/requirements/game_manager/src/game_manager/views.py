@@ -11,16 +11,37 @@ import asyncio
 import json
 
 @auth_required
+async def get_history(request, username=None):
+	logger.debug(f"Hello 1")
+	if request.method != "GET":
+		return JsonResponse({"error": "Method not allowed"}, status=405)
+	game_manager_instance = Game_manager.game_manager_instance
+	if game_manager_instance is None:
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	try :
+		await game_manager_instance.create_new_player_instance(username)
+		game_history = await game_manager_instance.get_game_history(username)
+		if game_history:
+			return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
+		else:
+			return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	except Exception as e:
+		logger.error(f"Error in get_game_history for user {username}: {str(e)}")
+		return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	
+
+@auth_required
 async def get_in_matchmaking(request, game_mode, username=None):
+	if request.method != "GET":
+		return JsonResponse({"error": "Method not allowed"}, status=405)
 	game_manager_instance = Game_manager.game_manager_instance
 	matchmaking_instance = Matchmaking.matchmaking_instance
 	if game_manager_instance is None:
-		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	if matchmaking_instance is None:
-		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_200_OK)
-	await game_manager_instance.create_new_player_instance(username)
+		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	if game_mode is "":
-		return await get_out_matchmaking(username, matchmaking_instance)
+		return await get_out_matchmaking(username, game_manager_instance, matchmaking_instance)
 	if settings.GAME_MODES.get(game_mode) is None:
 		return JsonResponse({"message": "Wrong game mode"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 	modifiers = request.GET.get("mods", "")
@@ -30,6 +51,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 	logger.debug(f"get_matchmaking: player_request: (username: {username}, game_mode: {game_mode}, modifier: {modifier_list})")
 	future = None
 	try:
+		await game_manager_instance.create_new_player_instance(username)
 		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list)
 		game_data = await asyncio.wait_for(future, timeout=3600)
 		return JsonResponse({"message": "Matchmaking succeeded", "data": game_data}, status=status.HTTP_200_OK)
@@ -42,13 +64,13 @@ async def get_in_matchmaking(request, game_mode, username=None):
 		logger.error(f"Error in matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
-async def get_out_matchmaking(username, matchmaking_instance):
-	matchmaking_instance = Matchmaking.matchmaking_instance
+async def get_out_matchmaking(username, game_manager_instance, matchmaking_instance):
 	if matchmaking_instance is None:
-		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_200_OK)
+		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	try:
+		await game_manager_instance.create_new_player_instance(username)
 		await matchmaking_instance.remove_player_request(username)
-		return JsonResponse({"message": "Get out matchmaking succeeded"}, status=status.HTTP_200_OK)
+		return JsonResponse({"message": "Get out matchmaking succeeded"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	except Exception as e:
 		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -57,7 +79,7 @@ async def get_out_matchmaking(username, matchmaking_instance):
 async def create_game(request, username=None):
 	game_manager_instance = Game_manager.game_manager_instance
 	if game_manager_instance is None:
-		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	await game_manager_instance.create_new_player_instance(username)
 	return await create_game_api(request, username)
 
@@ -67,7 +89,7 @@ async def create_game_api(request, username=None):
 		try:
 			game_manager_instance = Game_manager.game_manager_instance
 			if game_manager_instance is None:
-				return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+				return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 			# json LOADS
 			data = json.loads(request.body)
 			game_mode = data.get('gameMode')
@@ -93,12 +115,11 @@ async def create_game_api(request, username=None):
 	
 @async_csrf_exempt
 async def get_game_data_api(request, game_id):
-	logger.debug("HELLO")
 	if request.method != "GET":
 		return JsonResponse({"error": "Method not allowed"}, status=405)
 	game_manager = Game_manager.game_manager_instance
 	if not game_manager:
-		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_200_OK)
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	try:
 		game_data = await game_manager.get_game_data(game_id)
 		

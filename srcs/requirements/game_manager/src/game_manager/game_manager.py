@@ -12,6 +12,7 @@ import threading
 import asyncio
 import httpx
 import uuid
+import copy
 
 class Game_manager:
 	game_manager_instance = None
@@ -66,6 +67,53 @@ class Game_manager:
 					'latest_update_status': Timer(),
 					'players': players_list
 				}
+			
+	@sync_to_async
+	def fetch_player(self, username):
+		"""Récupère un joueur de la base de données de manière synchrone."""
+		return Player.objects.get(username=username)
+
+	@sync_to_async
+	def fetch_history(self, player):
+		"""Récupère l'historique des parties d'un joueur de manière synchrone."""
+		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
+
+	@sync_to_async
+	def extract_game_ids(self, history):
+		"""Extrait les game_id de l'historique et retourne une liste de tuples (game_date, game_id)."""
+		return [(entry.game_date, entry.game.game_id) for entry in history]
+
+	async def get_game_history(self, username):
+		logger.debug("Hello 2")
+		try:
+			player = await self.fetch_player(username)
+			logger.debug("Hello 3")
+			
+			# Récupérer l'historique
+			history = await self.fetch_history(player)
+			logger.debug("Hello 4")
+			
+			# Extraire les game_id
+			game_entries = await self.extract_game_ids(history)
+			logger.debug(f"Extracted game entries: {game_entries}")
+
+			# Construire l'historique avec les données de jeu
+			history_dict = {}
+			for game_date, game_id in game_entries:
+				logger.debug("Hello 5")
+				game_data = await self.get_game_data(game_id)
+				if game_data:
+					date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
+					history_dict[date_key] = game_data
+				logger.debug("Hello 6")
+			
+			return history_dict
+		except Player.DoesNotExist:
+			logger.error(f"Player '{username}' does not exist.")
+			return None
+		except Exception as e:
+			logger.error(f"Error fetching game history for player '{username}': {e}")
+			return None
 
 	async def create_game(self, game_mode, modifiers, players_list, teams_list, ia_authorizes, special_id):
 		# pars game_mode
@@ -328,6 +376,18 @@ class Game_manager:
 			Player.get_or_create_player(username)
 
 	@sync_to_async
+	def fetch_player(self, username):
+		return Player.objects.get(username=username)
+
+	@sync_to_async
+	def fetch_history(self, player):
+		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
+	
+	@sync_to_async
+	def extract_game_ids(self, history):
+		return [(entry.game_date, entry.game.game_id) for entry in history]
+
+	@sync_to_async
 	def get_game_data(self, game_id):
 		try:
 			# Récupérer l'instance du jeu
@@ -357,12 +417,15 @@ class Game_manager:
 				"teams": teams_distribution,
 				"scores": teams_scores,
 			}
+			logger.debug(f"game_data = {game_data}")
 			return game_data
 		except Exception as e:
 			logger.error(f"Error fetching game data: {e}")
 			return None
 	
-
+	@sync_to_async
+	def copy_data(self, data):
+		return copy.deepcopy(data)
 
 	#utils
 
