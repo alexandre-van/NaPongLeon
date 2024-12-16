@@ -61,7 +61,6 @@ services:
       - .env/.env.web
     depends_on:
       - postgres
-        #        condition: service_healthy
       - redis
     networks:
       - backend
@@ -141,7 +140,7 @@ services:
       - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
-    command: # pour les logs
+    command:
       - "postgres"
       - "-c"
       - "log_statement=all"
@@ -175,9 +174,8 @@ services:
     networks:
       - backend
     ports:
-    - "5000:5000"  # Expose le port 8000 de l'API à l'extérieur du conteneur
+    - "5000:5000"
     command: python manage.py runserver 0.0.0.0:5000
-    #command: ["python", "IAapp/run_ia.py"]  # Ajout de la commande pour exécuter le script
 
   
     
