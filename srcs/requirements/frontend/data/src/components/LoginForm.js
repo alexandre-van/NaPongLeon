@@ -13,6 +13,7 @@ const LoginForm = ({ onLogin }) => {
     username: '',
     password: '',
   })
+  const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState('credentials'); // 'credentials' or 'totp'
   const { login42 } = useUser();
 
@@ -67,6 +68,7 @@ const LoginForm = ({ onLogin }) => {
               required
             />
           </Form.Group>
+          <Link to='/forgot-password'>Forgot Password ?</Link>
 
           <Button variant="primary" type="submit">LOG IN</Button> {/* Utilisation du bouton de React-Bootstrap */}
           

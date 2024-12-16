@@ -270,6 +270,22 @@ def AsyncJWTAuthMiddlewareStack(inner):
 class CsrfAsgiMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+    
+    def path_matches_pattern(self, path, pattern):
+    # Vérifie si le chemin correspond au modèle, en tenant compte des segments variables
+        path_parts = path.split('/')
+        pattern_parts = pattern.split('/')
+        
+        if len(path_parts) != len(pattern_parts):
+            return False
+            
+        for path_part, pattern_part in zip(path_parts, pattern_parts):
+            # Si le segment du pattern contient {}, c'est un paramètre variable
+            if pattern_part.startswith('{') and pattern_part.endswith('}'):
+                continue
+            if path_part != pattern_part:
+                return False
+        return True
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
@@ -287,18 +303,29 @@ class CsrfAsgiMiddleware:
             'path': scope.get('path', '')
         })
 
+        logger.debug(f'\nCSRF ASGI MIDDLEWARE\nexempt_path: {request.path}')
 
         # Exempt routes
-        exempt_paths = [
+        exempt_patterns = [
             '/api/authentication/auth/login/',
             '/api/authentication/users/',
+            '/api/authentication/users/password-reset/',
+            '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
             '/api/authentication/oauth/42/callback/',
             '/api/authentication/oauth/42/authorize/',
             '/api/authentication/verify_token/',
+            '/api/authentication/verify_friends/',
         ]
-        if request.path in exempt_paths:
-            response = await self.get_response(scope, receive, send)
-            return response
+
+        #if request.path in exempt_paths:
+        #    response = await self.get_response(scope, receive, send)
+        #    return response
+        
+            # Vérifie si le chemin correspond à l'un des patterns exemptés
+        for pattern in exempt_patterns:
+            if self.path_matches_pattern(request.path, pattern):
+                logger.debug(f'Path matches exempt pattern: {pattern}')
+                return await self.get_response(scope, receive, send)
 
         # Check JWT (assuming you have a function to do this)
         #if not self.validate_jwt(request):

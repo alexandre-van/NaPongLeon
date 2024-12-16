@@ -57,6 +57,8 @@ services:
       - db_password
       - oauth_42_client_id
       - oauth_42_client_secret
+      - gmail_app_password
+      - gmail_host_user
     env_file:
       - .env/.env.web
     depends_on:
@@ -206,4 +208,8 @@ secrets:
     file: ./.secrets/oauth_42_client_id
   oauth_42_client_secret:
     file: ./.secrets/oauth_42_client_secret
+  gmail_app_password:
+    file: ./.secrets/gmail_app_password
+  gmail_host_user:
+    file: ./.secrets/gmail_host_user
   

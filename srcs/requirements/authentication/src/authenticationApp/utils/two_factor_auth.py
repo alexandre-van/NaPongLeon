@@ -20,7 +20,7 @@ async def create_login_response(user, request):
         httponly=True,
         secure=False,  # True for production
         samesite='Strict',
-        expires=datetime.now(tz=ZoneInfo("Europe/Paris")) + timedelta(hours=1),
+        max_age=2 * 60 * 60
     )
     response.set_cookie(
         'refresh_token',
