@@ -1,8 +1,10 @@
 import { findCellByCellId } from './object/tree.js';
-import { showParchment, showTeamParchment } from './object/parchment.js';
+import { showParchment, showTeamParchment, updateTeamParchment } from './object/parchment.js';
 
 let teams = [];
 let playerStatus = 'Unknown';
+let current_team_inspect = null;
+let teamListIsOpen = false;
 
 /**
  * Apply a set of styles to an element.
@@ -46,11 +48,15 @@ function update_status(teamsUpdate, nickname) {
 				playerStatus = player.status;
 			}
 		});
+		if (team.name == current_team_inspect)
+			updateTeamParchment(team);
 	});
-
 	const statusButton = document.getElementById('statusButton');
 	if (statusButton) {
 		statusButton.textContent = playerStatus;
+	}
+	if (teamListIsOpen) {
+		generateTeamList()
 	}
 }
 
@@ -67,99 +73,137 @@ function current_cell(team) {
 function inspect(team) {
 	if (team) {
 		alert(`Inspecting team: ${team.name}\nStatus: ${team.status}`);
+		current_team_inspect = team.name;
 		showTeamParchment(team)
 	}
 }
+
 /**
- * Generate the list of teams dynamically.
+ * Génère ou met à jour dynamiquement la liste des équipes.
  */
 function generateTeamList() {
-	const teamList = document.getElementById('teamList');
-	teamList.innerHTML = ''; // Clear the current list
+    const teamList = document.getElementById('teamList');
 
-	teams.forEach(team => {
-		const li = document.createElement('li');
-		applyStyles(li, {
-			display: 'flex',
-			flexDirection: 'column',
-			justifyContent: 'center',
-			alignItems: 'center',
-			fontFamily: 'Dancing Script, cursive',
-			fontSize: '18px',
-			textAlign: 'center',
-		});
+    // Sauvegarder la position de défilement actuelle
+    const scrollTop = teamList.scrollTop;
 
-		// Team Name and Status
-		const teamName = document.createElement('div');
-		teamName.textContent = team.name;
+    // Crée un dictionnaire des éléments actuels pour un accès rapide
+    const existingItems = {};
+    Array.from(teamList.children).forEach(li => {
+        const teamNameDiv = li.querySelector('div:first-child');
+        if (teamNameDiv) {
+            existingItems[teamNameDiv.textContent] = li;
+        }
+    });
 
-		const statusSpan = document.createElement('div');
-		statusSpan.textContent = `Status: ${team.status || 'Unknown'}`;
+    // Mise à jour ou ajout des équipes
+    teams.forEach(team => {
+        let li = existingItems[team.name];
+        if (!li) {
+            // Créer un nouvel élément s'il n'existe pas encore
+            li = document.createElement('li');
+            applyStyles(li, {
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontFamily: 'Dancing Script, cursive',
+                fontSize: '18px',
+                textAlign: 'center',
+            });
 
-		// Check if the team is "defeated"
-		if (team.status === 'Defeated') {
-			applyStyles(teamName, {
-				fontSize: '20px',
-				fontWeight: 'bold',
-				color: 'red',
-				textDecoration: 'line-through', // Barré
-			});
-			applyStyles(statusSpan, {
-				color: 'red', // Status en rouge
-			});
-		} else {
-			applyStyles(teamName, {
-				fontSize: '20px',
-				fontWeight: 'bold',
-			});
-			applyStyles(statusSpan, {
-				fontSize: '16px',
-				fontStyle: 'italic',
-			});
-		}
+            // Ajouter au DOM
+            teamList.appendChild(li);
+        } else {
+            // Effacer l'élément pour une mise à jour propre
+            li.innerHTML = '';
+        }
 
-		li.appendChild(teamName);
-		li.appendChild(document.createElement('br'));
-		li.appendChild(statusSpan);
-		li.appendChild(document.createElement('br'));
+        // Nom de l'équipe et statut
+        const teamName = document.createElement('div');
+        teamName.textContent = team.name;
 
-		// Button Container
-		const buttonContainer = document.createElement('div');
-		applyStyles(buttonContainer, {
-			display: 'inline-flex',
-			alignItems: 'center',
-			justifyContent: 'center',
-			gap: '10px',
-		});
+        const statusSpan = document.createElement('div');
+        const newStatusText = `Status: ${team.status || 'Unknown'}`;
+        if (statusSpan.textContent !== newStatusText) {
+            statusSpan.textContent = newStatusText;
+        }
 
-		// Button for inspecting the team
-		const inspectButton = createButton('Inspect', () => {
-			inspect(team);
-		});
+        // Vérification si l'équipe est "défaite"
+        if (team.status === 'Defeated') {
+            applyStyles(teamName, {
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: 'red',
+                textDecoration: 'line-through', // Barré
+            });
+            applyStyles(statusSpan, {
+                color: 'red', // Statut en rouge
+            });
+        } else {
+            applyStyles(teamName, {
+                fontSize: '20px',
+                fontWeight: 'bold',
+            });
+            applyStyles(statusSpan, {
+                fontSize: '16px',
+                fontStyle: 'italic',
+            });
+        }
 
-		// Button for switching to the current cell
-		const currentCellButton = createButton('Current Cell', () => {
-			current_cell(team);
-		});
+        li.appendChild(teamName);
+        li.appendChild(document.createElement('br'));
+        li.appendChild(statusSpan);
+        li.appendChild(document.createElement('br'));
 
-		const separator = document.createElement('span');
-		separator.textContent = '|';
-		applyStyles(separator, { color: '#000' });
+        // Conteneur des boutons
+        const buttonContainer = document.createElement('div');
+        applyStyles(buttonContainer, {
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+        });
 
-		buttonContainer.appendChild(inspectButton);
-		buttonContainer.appendChild(separator);
-		buttonContainer.appendChild(currentCellButton);
+        // Bouton pour inspecter l'équipe
+        const inspectButton = createButton('Inspect', () => {
+            inspect(team);
+        });
 
-		li.appendChild(buttonContainer);
-		li.appendChild(document.createElement('br'));
+        // Bouton pour passer à la cellule actuelle
+        const currentCellButton = createButton('Current Cell', () => {
+            current_cell(team);
+        });
 
-		teamList.appendChild(li);
-	});
+        const separator = document.createElement('span');
+        separator.textContent = '|';
+        applyStyles(separator, { color: '#000' });
+
+        buttonContainer.appendChild(inspectButton);
+        buttonContainer.appendChild(separator);
+        buttonContainer.appendChild(currentCellButton);
+
+        li.appendChild(buttonContainer);
+        li.appendChild(document.createElement('br'));
+    });
+
+    // Supprimer les éléments qui ne sont plus dans la liste des équipes
+    Array.from(teamList.children).forEach(li => {
+        const teamNameDiv = li.querySelector('div:first-child');
+        if (teamNameDiv && !teams.some(team => team.name === teamNameDiv.textContent)) {
+            li.remove();
+        }
+    });
+
+    // Restaurer la position de défilement
+    teamList.scrollTop = scrollTop;
 }
+
 
 
 // Event listener for the team list button
 document.getElementById('teamListButton').addEventListener('click', () => {
+	teamListIsOpen = true
 	const teamParchment = document.getElementById('teamParchment');
 	teamParchment.style.display = teamParchment.style.display === 'none' ? 'block' : 'none';
 	generateTeamList();
@@ -167,6 +211,7 @@ document.getElementById('teamListButton').addEventListener('click', () => {
 
 // Event listener for the close button
 document.getElementById('closeTeamParchment').addEventListener('click', () => {
+	teamListIsOpen = false
 	const teamParchment = document.getElementById('teamParchment');
 	teamParchment.style.display = 'none';
 });

@@ -2,6 +2,7 @@ import * as THREE from '../../js/three.module.js';
 import { camera } from '../renderer.js';
 import { get_scene, scene } from '../scene.js';
 import { showParchment } from './parchment.js'
+import { set_current_branch_inspect } from './tree.js'
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -100,6 +101,7 @@ function handleClickedObject(clickedObject) {
         // Logique pour spectateur
     } else {
         // Si l'objet cliqué est une boîte avec des données de branche
+        set_current_branch_inspect(clickedObject.userData.branch);
         showParchment(clickedObject.userData.branch);
     }
 }
