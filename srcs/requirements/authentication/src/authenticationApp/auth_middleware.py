@@ -33,6 +33,7 @@ class AsyncCustomJWTAuthentication(JWTAuthentication):
     async def authenticate(self, request):
         header = self.get_header(request)
 
+        logger.debug('\n\n\n\nAsyncCustomJWTAuthentication')
         if header is None:
             raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE']) or None
         else:

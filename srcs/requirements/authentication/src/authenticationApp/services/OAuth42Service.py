@@ -15,7 +15,7 @@ class AsyncOAuth42Service:
         self.redirect_uri = f"{settings.SITE_URL}/api/authentication/oauth/42/callback"
         self._session: Optional[aiohttp.ClientSession] = None
         # To avoid data race on simultaneous requests
-        self._lock = asyncio.Lock()
+        #self._lock = asyncio.Lock()
         self._lock = None
         self._session = None
         # Recurring requests to 42 API limited to 2

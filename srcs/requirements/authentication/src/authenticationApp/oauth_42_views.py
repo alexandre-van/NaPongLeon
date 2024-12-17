@@ -66,12 +66,21 @@ async def OAuth42CallbackView(request):
         async with async_oauth_42_service as service:
             from channels.db import database_sync_to_async
             from django.middleware.csrf import get_token
+            from django.utils import timezone
+            from datetime import timedelta
+            import pytz
 
             access_token = await service.exchange_code_for_token(code)
             user_data = await service.get_user_data(access_token)
             user = await service.get_or_create_user(user_data)
-            
+
             refresh = await database_sync_to_async(RefreshToken.for_user)(user)
+
+            cet = pytz.timezone('CET')
+            current_time_cet = timezone.now().astimezone(cet)
+
+            refresh.access_token.set_exp(from_time=timezone.now(), lifetime=timedelta(minutes=5))
+            
             
             response = HttpResponseRedirectJD(
                 message='Login successful',
@@ -84,7 +93,7 @@ async def OAuth42CallbackView(request):
                 httponly=True,
                 secure=False,  # True for production
                 samesite='Strict',
-                max_age=2 * 60 * 60
+                max_age=300
             )
             response.set_cookie(
                 'refresh_token',
