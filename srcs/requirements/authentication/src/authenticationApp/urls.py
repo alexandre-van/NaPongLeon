@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView
-from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView, PasswordResetView, PasswordResetConfirmationView
+from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView, PasswordResetView, PasswordResetConfirmationView, TokenRefreshView
 from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 
 # for development
@@ -34,8 +34,9 @@ urlpatterns = [
     path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
     path('verify_friends/', VerifyFriendsView, name='verify_friends'),
 
-    #path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
+    # Check tokens
     path('auth/token/get-access/', WebSocketTokenView, name='get_websocket_token'),
+    path('auth/token/refresh/', TokenRefreshView, name='token_refresh'),
 
     # OAUTH 42 API
     path('oauth/42/callback/', OAuth42CallbackView, name='oauth_42_callback'),
@@ -45,12 +46,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-'''
-
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
-
-    '''
-
-

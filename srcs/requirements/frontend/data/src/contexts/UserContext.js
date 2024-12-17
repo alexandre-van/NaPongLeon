@@ -35,6 +35,37 @@ export function UserProvider({ children }) {
 		checkAuth();
 	}, [checkAuth]);
 
+	const refreshAccessToken = useCallback(async () => {
+		try {
+		  const response = await api.get('/authentication/auth/token/refresh/');
+		  if (response.data && response.data.message === "Token refreshed") {
+			await checkAuth(); // Vérifier que l'utilisateur est toujours authentifié
+		  }
+		} catch (error) {
+		  console.error('Token refresh failed:', error);
+		  // Si le refresh échoue, déconnecter l'utilisateur
+		  await logout();
+		}
+	  }, []);
+
+	useEffect(() => {
+		let heartbeatInterval;
+	
+		if (isAuthenticated) {
+		  // Lancer le heartbeat toutes les 3 minutes
+		  heartbeatInterval = setInterval(async () => {
+			await refreshAccessToken();
+		  }, 60 * 1000); // 3 minutes en millisecondes
+		}
+	
+		// Cleanup lors du démontage ou de la déconnexion
+		return () => {
+		  if (heartbeatInterval) {
+			clearInterval(heartbeatInterval);
+		  }
+		};
+	  }, [isAuthenticated, refreshAccessToken]);
+
 	const register = async (userData) => {
 		const response = await api.post('/authentication/users/', userData);
 	};
