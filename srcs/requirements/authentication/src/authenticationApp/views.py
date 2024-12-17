@@ -27,9 +27,11 @@ class UserView(APIView):
 
     # Registration without checking JWT
     def post(self, request):
+        logger.debug('\nUserView POST\n')
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            logger.debug(f'request.data = {request.data}')
             return Response({'message': 'Registration success'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -59,7 +61,7 @@ class TokenRefreshView(APIView):
                 httponly=True,
                 secure=False,
                 samesite='Strict',
-                max_age=60 * 60
+                max_age=2 * 60 * 60
             )
             return response
         except TokenError:
@@ -78,6 +80,10 @@ class VerifyTokenView(APIView):
         logger.debug('\n\n\n\n\nVerifyTokenView\n\n\n\n\n')
         logger.debug(f"user={user}")
         logger.debug(f"username={user.username}")
-        return Response({'user': user.username}, status=status.HTTP_200_OK)
+        logger.debug(f"nickname: {user.nickname}")
+        return Response({
+            'user': user.username,
+            'nickname': user.nickname
+        }, status=status.HTTP_200_OK)
         #token = request.token
         #access_ authenticate(request.token.get('access_token'))

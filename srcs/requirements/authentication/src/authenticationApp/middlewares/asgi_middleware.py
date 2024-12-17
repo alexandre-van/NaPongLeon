@@ -41,28 +41,28 @@ class ASGIUserMiddleware:
     '''
     async def __call__(self, scope, receive, send):
         if 'user' in scope:
-            logger.debug(f"ASGIUserMiddleware: path={scope['path']}\n user={scope['user']}")
+            (f"ASGIUserMiddleware: path={scope['path']}\n user={scope['user']}")
         else:
-            logger.debug(f"ASGIUserMiddleware: path={scope['path']}\n user not in scope")
+            (f"ASGIUserMiddleware: path={scope['path']}\n user not in scope")
 
         async def wrapped_receive():
             message = await receive()
-            logger.debug(f"message[type]={message['type']} with scope[user]={scope['user']}")
+            (f"message[type]={message['type']} with scope[user]={scope['user']}")
             if message['type'] == 'http.request':
                 message['_user'] = scope.get('user', AnonymousUser())
             return message
             
         async def user_send(response):
-            logger.debug(f"response[type]={response['type']}")
+            (f"response[type]={response['type']}")
             if response['type'] == 'http.response.start':
                 if 'user' in scope:
                     response.setdefault('headers', []).append(
                         (b'X-User', str(scope['user']).encode())
                     )
-                logger.debug(f"ASGIUserMiddleware.user_send: scope[user]={scope['user']}")
+                (f"ASGIUserMiddleware.user_send: scope[user]={scope['user']}")
             await send(response)
 
-        logger.debug("Before result")
+        ("Before result")
 #        result = await self.inner(dict(scope, user=scope.get('user', AnonymousUser())), receive, user_send)
         result = await self.inner(scope, wrapped_receive, user_send)
         logger.debug("After result")
@@ -182,9 +182,10 @@ class AsyncJWTAuthMiddleware:
 
         response = await self.inner(scope, receive, send_modifier)
         return response
+
+
+
 '''
-
-
 @sync_and_async_middleware
 class AsyncJWTAuthMiddleware:
     def __init__(self, inner):
@@ -215,7 +216,6 @@ class AsyncJWTAuthMiddleware:
                 try:
                     user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                     scope['user'] = user
-                    logger.debug(f"Successfully authenticated with access token")
                     return await self.inner(scope, receive, send)
                 except Exception as e:
                     logger.warning(f"Access token validation failed: {str(e)}")
@@ -228,7 +228,6 @@ class AsyncJWTAuthMiddleware:
                             request.COOKIES['access_token'] = scope['access_token']
                             user, validated_token = await sync_to_async(self.auth.authenticate)(request)
                             scope['user'] = user
-                            logger.debug(f"Successfully refreshed token for user {user}")
                         except Exception as refresh_error:
                             logger.warning(f"Refresh token validation failed: {str(refresh_error)}")
                             scope['user'] = AnonymousUser()
@@ -251,7 +250,7 @@ class AsyncJWTAuthMiddleware:
                 if 'access_token' in scope:
                     headers.append((
                         b'set-cookie',
-                        f"access_token={scope['access_token']}; HttpOnly; SameSite=Strict; Max-Age=3600; Path=/".encode()
+                        f"access_token={scope['access_token']}; HttpOnly; SameSite=Strict; Max-Age=7200; Path=/".encode()
                     ))
                 elif scope.get('clear_tokens'):
                     headers.extend([
@@ -261,7 +260,6 @@ class AsyncJWTAuthMiddleware:
                 message['headers'] = headers
             await send(message)
         return send_wrapper
-    
 
 
 
@@ -272,6 +270,22 @@ def AsyncJWTAuthMiddlewareStack(inner):
 class CsrfAsgiMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+    
+    def path_matches_pattern(self, path, pattern):
+    # Vérifie si le chemin correspond au modèle, en tenant compte des segments variables
+        path_parts = path.split('/')
+        pattern_parts = pattern.split('/')
+        
+        if len(path_parts) != len(pattern_parts):
+            return False
+            
+        for path_part, pattern_part in zip(path_parts, pattern_parts):
+            # Si le segment du pattern contient {}, c'est un paramètre variable
+            if pattern_part.startswith('{') and pattern_part.endswith('}'):
+                continue
+            if path_part != pattern_part:
+                return False
+        return True
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
@@ -289,18 +303,29 @@ class CsrfAsgiMiddleware:
             'path': scope.get('path', '')
         })
 
+        logger.debug(f'\nCSRF ASGI MIDDLEWARE\nexempt_path: {request.path}')
 
         # Exempt routes
-        exempt_paths = [
+        exempt_patterns = [
             '/api/authentication/auth/login/',
             '/api/authentication/users/',
+            '/api/authentication/users/password-reset/',
+            '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
             '/api/authentication/oauth/42/callback/',
             '/api/authentication/oauth/42/authorize/',
             '/api/authentication/verify_token/',
+            '/api/authentication/verify_friends/',
         ]
-        if request.path in exempt_paths:
-            response = await self.get_response(scope, receive, send)
-            return response
+
+        #if request.path in exempt_paths:
+        #    response = await self.get_response(scope, receive, send)
+        #    return response
+        
+            # Vérifie si le chemin correspond à l'un des patterns exemptés
+        for pattern in exempt_patterns:
+            if self.path_matches_pattern(request.path, pattern):
+                logger.debug(f'Path matches exempt pattern: {pattern}')
+                return await self.get_response(scope, receive, send)
 
         # Check JWT (assuming you have a function to do this)
         #if not self.validate_jwt(request):
@@ -341,7 +366,6 @@ class CsrfExemptMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        logger.debug('CsrfExemptMiddleware')
         if getattr(request, 'csrf_exempt', False):
             setattr(request, '_dont_enforce_csrf_checks', True)
         return self.get_response(request)

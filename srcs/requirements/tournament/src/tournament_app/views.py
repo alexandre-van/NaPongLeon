@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from .tournament_manager import tournament_manager
+from .tournament_manager.tournament_manager import tournament_manager
 from .utils.logger import logger
 import json
 
@@ -36,7 +36,7 @@ def aborttournament(request):
 	if request.method == 'POST':
 		try:
 			data = json.loads(request.body)
-			tournament_id = data.get('adminId')
+			tournament_id = data.get('gameId')
 			if tournament_manager.aborttournament(tournament_id) is False:
 				return JsonResponse({'error': 'Invalid tournament id'}, status=406)
 			logger.debug(f"Abort: tournamentId={tournament_id}")

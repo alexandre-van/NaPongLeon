@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api.js';
+import { useNavigate } from "react-router-dom";
 
-const PlayButton = ({ gameMode, modifiers }) => {
+
+const PlayButton = ({ gameMode, modifiers, number='' }) => {
 	const [loading, setLoading] = useState(false);
 	const [errorMessage, setErrorMessage] = useState(null);
+	const navigate = useNavigate();
 
 	const handlePlayButton = async () => {
 		try {
 			setLoading(true);
 			setErrorMessage(null); // Reset error message before starting
 
-			const mods = modifiers.join(",");
-			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}`, 3600000);
+			let mods = modifiers.join(",");
+			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}&playernumber=${number}`, 3600000);
 			const gameId = response.data['data']['game_id'];
 			if (!gameId) throw new Error('Game ID is missing from the response.');
 			const gameServiceName = response.data['data']['service_name'];
@@ -23,10 +26,11 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			window.gameInfo.gameId = gameId;
 
 			// Construire l'URL du jeu avec le gameId
-			const host = window.location.hostname;
-			const port = window.location.port;
-			const gameUrl = `http://${host}:${port}/api/${gameServiceName}?gameId=${gameId}`;
+			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
 
+			navigate("/ingame");
+
+			console.log(gameUrl);
 			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;
@@ -38,6 +42,7 @@ const PlayButton = ({ gameMode, modifiers }) => {
 			iframe.style.border = "none";           // Supprimer les bordures
 			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
 			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+
 
 			// Supprimer l'ancienne iframe s'il en existe une
 			const existingIframe = document.querySelector('#gameFrame');

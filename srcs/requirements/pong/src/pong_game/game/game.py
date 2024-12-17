@@ -53,8 +53,8 @@ class Game:
 			'type': type, #game update
 			'bp': self.ball.position,
 			'bs': {
-				'x': self.ball.speed['x'] * self.ball.direction['x'],
-				'y': self.ball.speed['y'] * self.ball.direction['y']
+				'x': self.ball.normalize_speed()['x'] * self.ball.direction['x'],
+				'y': self.ball.normalize_speed()['y'] * self.ball.direction['y']
 			},
 			'pp': self.export_padels_position()
 		}
@@ -120,7 +120,7 @@ class Game:
 	def scored(self, scoring_side):
 		self.ball.reset_position()
 		self.score[scoring_side] += 1
-		if self.score[scoring_side] >= 11:
+		if self.score[scoring_side] >= 5:
 			return {
 				'type': 'game_end',
 				'reason': 'The ' + str(scoring_side) + ' side wins !',

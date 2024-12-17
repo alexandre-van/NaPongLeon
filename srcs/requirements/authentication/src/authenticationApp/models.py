@@ -15,13 +15,6 @@ logger = logging.getLogger(__name__)
 def user_avatar_path(instance, filename):
     return f'users/{instance.id}/avatar/{filename}'
 
-def validate_no_underscore(value):
-    from django.core.exceptions import ValidationError
-    if '_' in value:
-        raise ValidationError(
-            'The caracter (_) is not authorized in the username'
-        )
-
 class FriendshipStatus(models.TextChoices):
     PENDING = 'PE', 'Pending'
     ACCEPTED = 'AC', 'Accepted'
@@ -30,10 +23,9 @@ class CustomUser(AbstractUser):
     username=models.CharField(
         max_length=20,
         unique=True,
-        validators=[validate_no_underscore],
-        error_messages={
-            'unique': 'A user with this username already exists',
-        }
+#        error_messages={
+#            'unique': 'A user with this username already exists',
+#        }
     )
     avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True)
     nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
@@ -57,7 +49,7 @@ class CustomUser(AbstractUser):
     def friends(self):
         cache_key = f'user_friends_{self.id}'
         friends = cache.get(cache_key)
-        logger.debug(f"friends 1 ={friends}")
+        (f"friends 1 ={friends}")
 
         if friends is None:
             friends_as_from = self.friendships_sent.filter(status=FriendshipStatus.ACCEPTED).values_list('to_user', flat=True)
@@ -73,7 +65,6 @@ class CustomUser(AbstractUser):
 
             # Mettre en cache pour 5 minutes (300 secondes)
             cache.set(cache_key, friends, 300)
-        logger.debug(f"friends 2 ={friends}")
         return friends
 
     def save(self, *args, **kwargs):
@@ -113,7 +104,6 @@ class CustomUser(AbstractUser):
         super().delete(*args, **kwargs)
 
     async def create_friendship(self, to_user):
-        logger.debug(f"self={self} ------- to_user={to_user}\n\n")
         if (to_user != self):
             try:
                 friendship, created = await Friendship.aget_or_create_friendship(self, to_user)
@@ -125,7 +115,7 @@ class CustomUser(AbstractUser):
                         notification_type="friend_request"
                     )
                     return notification
-                return false
+                return False
             except Exception as e:
                 logger.error(f"Error creating friendship: {e}")
                 return None
@@ -133,16 +123,14 @@ class CustomUser(AbstractUser):
 
     @database_sync_to_async
     def accept_friend_request(self, from_user, notification):
-        logger.debug("CustomUser: accept_friend_request debut")
         if (from_user != self):
             friendship = Friendship.objects.filter(
                 from_user=from_user,
                 to_user=self,
                 status=FriendshipStatus.PENDING
             ).first()
-            logger.debug(f"CustomUser: accept_friend_request avant friendship: friendship={friendship}\nfriendship.from_user={friendship.from_user}\nfriendship.to_user={friendship.to_user}\n")
             if friendship:
-                logger.debug(f"dans le if de friendship friendship.status={friendship.status}\n")
+                (f"dans le if de friendship friendship.status={friendship.status}\n")
                 friendship.status = FriendshipStatus.ACCEPTED
                 friendship.save()
             if notification:
@@ -281,7 +269,6 @@ class Notification(models.Model):
         ]
 
     def to_dict(self):
-        logger.debug(f"to_dict notification")
         return {
             "id": self.id,
             "recipient__username": self.recipient.username,
@@ -293,7 +280,6 @@ class Notification(models.Model):
         }
 
     def to_group_send_format(self):
-        logger.debug(f"to_group_send_format notification username: {self.recipient.username}")
         return {
                 "type": "notification", # Gets the notification method in Consumers called
                 "notification": self.to_dict()

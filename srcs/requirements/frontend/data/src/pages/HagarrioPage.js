@@ -3,10 +3,8 @@ import React, { useEffect } from 'react';
 export default function HagarrioPage() {
   useEffect(() => {
     // Construire l'URL de l'iframe
-    const host = window.location.hostname;
-    const port = window.location.port;
     const gameServiceName = "hagarrio"; // Remplacez par le bon nom du service
-    const gameUrl = `http://${host}:${port}/api/${gameServiceName}/`;
+    const gameUrl = `${location.origin}/api/${gameServiceName}/`;
 
     // Créer et configurer l'iframe
     const iframe = document.createElement('iframe');

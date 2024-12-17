@@ -177,6 +177,13 @@ DATABASES = {
     }
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = read_secret('GMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = read_secret('GMAIL_APP_PASSWORD')
+
 SIMPLE_JWT = {
     'AUTH_COOKIE': 'access_token',
 }
@@ -268,3 +275,19 @@ LOGGING = {
     },
 }
 
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'authenticationApp/templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]

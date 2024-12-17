@@ -3,10 +3,11 @@ import { renderer, camera } from './renderer.js';
 
 const scene = new THREE.Scene();
 const loader = new THREE.TextureLoader();
+const protocol = location.protocol;
 const host = window.location.hostname;
 const port = window.location.port;
 
-loader.load(`http://${host}:${port}/api/pong/static/pong/texture/sunset.jpg`, function (texture) {
+loader.load(`${location.origin}/api/pong/static/pong/texture/sunset.jpg`, function (texture) {
 	scene.background = texture;
 });
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 const RegisterForm = ({ onRegister }) => {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
   });
 
@@ -32,6 +33,17 @@ const RegisterForm = ({ onRegister }) => {
               id="username"
               name="username"
               value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="email">Email</label>
+            <input
+              type="text"
+              id="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               required
             />

@@ -3,6 +3,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 #from rest_framework import status
 from asgiref.sync import sync_to_async
+from .models import CustomUser
 
 # for LoginView and Setup2FAView
 from django_otp import user_has_device
@@ -23,9 +24,10 @@ async def LoginView(request):
         username = data.get('username')
         password = data.get('password')
         totp_token = data.get('totpToken') # Optional 2FA token
-        logger.debug(f'data:{data}')
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
+
+    #    if not check_password(password):
 
     user = await database_sync_to_async(authenticate)(username=username, password=password)
 
@@ -37,10 +39,8 @@ async def LoginView(request):
     if not has_2fa:
         return await create_login_response(user, request)
 
-    logger.debug(f'totp_token={totp_token}')
     # If 2FA enabled but no token provided
     if not totp_token:
-        logger.debug('not totp_token')
         return HttpResponseJD('2FA token required', 403, {'requires_2fa': True})
 
     is_valid = await validate_totp(user, totp_token)
@@ -124,8 +124,6 @@ async def LogoutView(request):
 
 
 async def UserNicknameView(request):
-    logger.debug(f"request:{request}")
-    logger.debug(f"request.user:{request.user}")
     if request.method != 'PATCH':
         return HttpResponseJD('Method not allowed', 405)
 
@@ -136,8 +134,6 @@ async def UserNicknameView(request):
         return HttpResponseBadRequestJD('Invalid JSON')
 
     user = request.user
-    logger.debug(f"user:{user}")
-    logger.debug(f"user.is_authenticated ={user.is_authenticated}")
     if user.is_authenticated:
         await user.update_nickname(nickname)
         data = {
@@ -153,13 +149,11 @@ async def UserAvatarView(request):
     user = request.user
     if request.method == 'GET':
         if user.avatar:
-            logger.debug(f"Avatar_url: {user.avatar.url}")
             data = {
                 'avatar_url': user.avatar.url
             }
             return HttpResponseJD('Avatar found', 200, data)
         else:
-            logger.debug("No avatar found")
             return HttpResponseJD('No avatar found', 404)
     elif request.method == 'POST':
         if 'avatar' not in request.FILES:
@@ -318,7 +312,6 @@ async def FriendsView(request):
 async def NotificationsView(request):
     from .models import Notification
 
-    logger.debug(f"request.method: {request.method}")
     user = await sync_to_async(lambda: request.user)()
     if request.method == "GET":
         notifications = await Notification.get_all_received_notifications(user)
@@ -326,7 +319,6 @@ async def NotificationsView(request):
         for notification in notifications:
             notification['created_at'] = notification['created_at'].isoformat()
 
-        logger.debug(f"notifications={notifications}")
         response = HttpResponseJD('Notifications', 200, notifications)
         return response
 
@@ -357,8 +349,145 @@ async def WebSocketTokenView(request):
     from rest_framework_simplejwt.tokens import AccessToken
 
     if request.method == "GET":
-        logger.debug(f"\n\n\n WEBSOCKETTOKENVIEW request.user={request.user}")
         token = AccessToken.for_user(request.user)
         #return Response({'token': str(token)})
         return HttpResponseJD('Access Token provided', 200, { 'token': str(token) })
     return HttpResponseJD('Method not allowed', 405)
+
+
+
+async def VerifyFriendsView(request):
+    user = await sync_to_async(lambda: request.user)
+    if user == AnonymousUser:
+        return HttpResponseJD('Unknown user', 401)
+    
+
+
+async def PasswordResetView(request):
+    from django.contrib.auth.tokens import default_token_generator
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.encoding import force_bytes
+    from django.utils.http import urlsafe_base64_encode
+    from django.urls import reverse
+    import os
+    from django.conf import settings
+
+    if request.method != 'POST':
+        return HttpResponseJD('Method not allowed', 405)
+
+    logger.debug('\nPasswordResetView\n')
+    logger.debug(f"Current directory: {os.getcwd()}")
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+
+        try:
+            user = await database_sync_to_async(CustomUser.objects.get)(email=email)
+        except CustomUser.DoesNotExist:
+            return HttpResponseJD('If this email address exists, you will receive the password reset instructions', 200)
+        
+        token = await database_sync_to_async(default_token_generator.make_token)(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        '''
+        reset_url = request.build_absolute_uri(
+            reverse('password_reset_confirmation', kwargs={'uidb64': uid, 'token': token})
+        )
+        '''
+        reset_url = f"{settings.SITE_URL}/reset-password/{uid}/{token}"
+        logger.debug(f"reset_url={reset_url}")
+        context = {
+            'user': user,
+            'reset_url': reset_url,
+        }
+
+
+        template_name = 'authenticationApp/password_reset_email.html'
+        
+        logger.debug(f"Template name: {template_name}")
+        logger.debug(f"Context: {context}")
+        logger.debug(f"Template directories: {settings.TEMPLATES[0]['DIRS']}")
+        logger.debug(f"\n\nEmail_host_password={settings.EMAIL_HOST_PASSWORD}")
+        
+        # Try to list template directory contents
+        template_dir = '/app/authenticationApp/templates/authenticationApp'
+        if os.path.exists(template_dir):
+            logger.debug(f"Template directory contents: {os.listdir(template_dir)}")
+        else:
+            logger.debug(f"Template directory does not exist: {template_dir}")
+
+        try:
+            email_html = render_to_string(template_name, context)
+            logger.debug("Successfully rendered email template")
+        except Exception as template_error:
+            logger.error(f"Template rendering error: {str(template_error)}")
+            raise
+
+        email_subject = 'Reinitiatize your password'
+        '''
+        logger.debug(f'email_subject={email_subject}')
+
+        email_html = render_to_string('authenticationApp/password_reset_email.html', context)
+        '''
+
+        logger.debug(f'email_html={email_html}')
+        
+
+        await database_sync_to_async(send_mail)(
+            subject=email_subject,
+            message=email_html,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+            html_message=email_html,
+            fail_silently=False,
+        )
+
+        return HttpResponseJD('If this email address exists, you will receive the password reset instructions', 200)
+
+    except Exception as e:
+        logger.error(f"Erreur lors du rendu du template: {str(e)}")
+        logger.error(f"Template dirs: {settings.TEMPLATES[0]['DIRS']}")
+        logger.error(f"App Dirs enabled: {settings.TEMPLATES[0]['APP_DIRS']}")
+        return HttpResponseJDexception(e)
+
+
+async def PasswordResetConfirmationView(request, uidb64, token):
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_decode
+    from .serializers import UserSerializer
+    from rest_framework import serializers
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = await database_sync_to_async(CustomUser.objects.get)(pk=uid)
+        is_token_valid = await database_sync_to_async(default_token_generator.check_token)(user, token)
+
+        if is_token_valid:
+            if request.method == 'POST':
+                try:
+                    data = json.loads(request.body)
+                    new_password = data.get('new_password')
+
+                    serializer = UserSerializer()
+                    try:
+                        await database_sync_to_async(serializer.validate_password)(new_password)
+                    except serializers.ValidationError as e:
+                        return HttpResponseJD('Password validation failed', 400, {'errors': e.detail})
+
+                    await database_sync_to_async(user.set_password)(new_password)
+                    await database_sync_to_async(user.save)()
+                    return HttpResponseJD('Password modified', 200)
+                
+                except json.JSONDecodeError:
+                    return HttpResponseBadRequestJD('Invalid JSON')
+
+            else:
+                return HttpResponseJD('Invalid Token', 200)
+
+        else:
+            return HttpResponseJD('Invalid or expired Token', 400)
+
+    
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return HttpResponseJD('Could not reset password', 403)

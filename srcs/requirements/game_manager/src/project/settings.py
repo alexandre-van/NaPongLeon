@@ -29,10 +29,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-96g9x-miw#=a!lql&#jsh!@umdr(ess*dlt6f1hslksct)ohaj'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
-	'game_manager',
+	'gamemanager',
 	'*',
 ]
 
@@ -63,6 +63,12 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',
+	'https://5f21-81-65-161-75.ngrok-free.app',
+]
+
 
 ROOT_URLCONF = 'project.urls'
 
@@ -130,7 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'CET'
 
 USE_I18N = True
 

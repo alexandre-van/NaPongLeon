@@ -42,7 +42,6 @@ class Player(models.Model):
 			player = cls.objects.get(username=username)
 			return player
 		except ObjectDoesNotExist:
-			logger.warning(f"Player account '{username}' does not exist.")
 			return None
 		except IntegrityError as e:
 			logger.error(f"Integrity error while fetching player '{username}': {e}")
@@ -71,7 +70,7 @@ class Player(models.Model):
 class PlayerGameHistory(models.Model):
 	player = models.ForeignKey(Player, on_delete=models.CASCADE)
 	game = models.ForeignKey('GameInstance', on_delete=models.CASCADE)
-	game_date = models.DateTimeField(default=timezone.now)
+	game_date = models.DateTimeField(default=timezone.now())
 
 	class Meta:
 		unique_together = ('player', 'game')
@@ -90,7 +89,7 @@ class GameInstance(models.Model):
 	game_id = models.CharField(max_length=100, unique=True)
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
 	winner = models.CharField(max_length=20, blank=True, null=True)
-	game_date = models.DateTimeField(default=timezone.now)
+	game_date = models.DateTimeField(default=timezone.now())
 	game_mode = models.CharField(max_length=30)
 
 	def __str__(self):
@@ -120,12 +119,11 @@ class GameInstance(models.Model):
 		game_score.save()
 
 	def add_player_to_team(self, player_username, team_name):
-		player = Player.objects.get(username=player_username)  # Fetch the player instance by username
-		game_player, created = GamePlayer.objects.get_or_create(game=self, player=player, team_name=team_name)
-		if not created:
-			logger.debug(f"Player {player.username} is already part of the game {self.game_id}.")
-
-
+		player = Player.get_player(player_username)
+		if player:
+			game_player, created = GamePlayer.objects.get_or_create(game=self, player=player, team_name=team_name)
+			if not created:
+				logger.debug(f"Player {player.username} is already part of the game {self.game_id}.")
 
 	def clean(self):
 		"""Validation pour l'unicité des usernames."""
@@ -138,7 +136,7 @@ class GameInstance(models.Model):
 		super(GameInstance, self).save(*args, **kwargs)
 
 	@classmethod
-	def create_game(cls, game_id, game_mode, usernames):
+	def create_game(cls, game_id, game_mode, modifiers, usernames):
 		try:
 			# Créer l'instance de jeu
 			new_game = cls(
@@ -148,20 +146,30 @@ class GameInstance(models.Model):
 				game_mode=game_mode
 			)
 			new_game.save()
-
+	
 			# Ajouter chaque joueur au jeu et à l'historique
 			for username in usernames:
 				player = Player.get_player(username)
 				if player:
 					PlayerGameHistory.objects.get_or_create(player=player, game=new_game)
-
+	
+			# Ajouter les modifiers à la partie
+			for modifier_name in modifiers:
+				# Créer le modifier s'il n'existe pas
+				modifier, _ = Modifiers.objects.get_or_create(name=modifier_name)
+				# Associer le modifier à l'historique de cette partie
+				ModifiersHistory.objects.get_or_create(game=new_game, modifier=modifier)
+	
+			logger.info(f"Game '{game_id}' created successfully with modifiers {modifiers}.")
+	
 			return new_game
 		except IntegrityError as e:
-			logger.error(f"Integrity error while creating game: {e}")
+			logger.error(f"Integrity error while creating game '{game_id}': {e}")
 			return None
 		except DatabaseError as e:
-			logger.error(f"Database error while creating game: {e}")
+			logger.error(f"Database error while creating game '{game_id}': {e}")
 			return None
+
 
 
 	@classmethod
@@ -187,3 +195,36 @@ class GameScore(models.Model):
 	class Meta:
 		unique_together = ('game', 'team_name')
 
+class Modifiers(models.Model):
+    """
+    Modèle pour sauvegarder les modifiers existants sous forme de chaîne.
+    """
+    name = models.CharField(max_length=100, unique=True)  # Nom unique du modifier
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def get_modifier(cls, name):
+        """
+        Récupère un modifier existant par son nom.
+        """
+        try:
+            return cls.objects.get(name=name)
+        except cls.DoesNotExist:
+            logger.warning(f"Modifier '{name}' introuvable.")
+            return None
+
+
+class ModifiersHistory(models.Model):
+    """
+    Modèle pour garder une trace des modifiers associés à chaque partie.
+    """
+    game = models.ForeignKey(GameInstance, on_delete=models.CASCADE)  # Référence au jeu
+    modifier = models.ForeignKey(Modifiers, on_delete=models.CASCADE)  # Référence au modifier
+
+    class Meta:
+        unique_together = ('game', 'modifier')  # Unicité entre le jeu et le modifier
+
+    def __str__(self):
+        return f"Game: {self.game.game_id}, Modifier: {self.modifier.name}"
