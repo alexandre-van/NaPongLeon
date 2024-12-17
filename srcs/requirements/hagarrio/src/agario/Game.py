@@ -47,8 +47,11 @@ POWER_UPS = {
 }
 
 class Game:
-    def __init__(self, game_id):
+    def __init__(self, game_id, admin_id, expected_players):
         self.game_id = game_id
+        self.admin_id = admin_id
+        self.admin_consumer = None
+        self.expected_players = expected_players
         self.players = {}
         self.food = []
         self.map_width = 10000
@@ -131,7 +134,8 @@ class Game:
         return len(food_changes) > 0
 
     def add_player(self, player_id, player_name):
-        """Ajoute un joueur à la partie"""
+        if player_id not in self.expected_players:
+            return False
         self.players[player_id] = {
             'id': player_id,
             'name': player_name,
@@ -147,6 +151,7 @@ class Game:
         }
         if len(self.players) > 4:
             self.status = "in_progress"
+        return True
 
     def remove_player(self, player_id):
         """Retire un joueur de la partie"""

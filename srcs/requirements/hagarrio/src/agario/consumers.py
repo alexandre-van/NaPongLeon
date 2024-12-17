@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from .decorators import auth_required
 from .Game import Game
 import uuid
 import asyncio
@@ -17,11 +18,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.player_id = None
 		self.current_game_id = None
 
-	async def connect(self):
+	@auth_required
+	async def connect(self, username=None, nickname=None):
+		if username is None:
+			logger.warning(f'An unauthorized connection has been received')
+			return
 		await self.accept()
-		self.player_id = str(uuid.uuid4())
+		self.player_id = username
 		GameConsumer.player_count += 1
-		self.player_name = f"Player_{GameConsumer.player_count}"
+		self.player_name = nickname if nickname else username
 		GameConsumer.players[self.player_id] = self
 
 		# Envoyer la liste des parties disponibles
@@ -79,27 +84,29 @@ class GameConsumer(AsyncWebsocketConsumer):
 		data = json.loads(text_data)
 		
 		if data['type'] == 'start_game':
-			# Créer une nouvelle partie
-			new_game = Game(str(uuid.uuid4()))
-			GameConsumer.active_games[new_game.game_id] = new_game
-			self.current_game_id = new_game.game_id
-			new_game.add_player(self.player_id, self.player_name)
-			
-			# Démarrer la boucle de jeu
-			await new_game.start_game_loop(self.broadcast_game_state)
-			await self.broadcast_games_info_waitingroom()
-			
-			# Envoyer l'état initial au créateur
-			await self.send(text_data=json.dumps({
-				'type': 'game_started',
-				'gameId': new_game.game_id,
-				'mapWidth': new_game.map_width,
-				'mapHeight': new_game.map_height,
-				'maxFood': new_game.max_food,
-				'players': new_game.players,
-				'food': new_game.food,
-				'yourPlayerId': self.player_id
-			}))
+			self.current_game_id = data['game_id']
+			# Recuperer la partie demander
+			game = GameConsumer.active_games.get(self.current_game_id)
+			if game:
+				# Se connecter a la partie
+				authorized = game.add_player(self.player_id, self.player_name)
+				if authorized:
+					await self.broadcast_games_info_waitingroom()
+					await self.send(text_data=json.dumps({
+						'type': 'game_started',
+						'gameId': game.game_id,
+						'mapWidth': game.map_width,
+						'mapHeight': game.map_height,
+						'maxFood': game.max_food,
+						'players': game.players,
+						'food': game.food,
+						'yourPlayerId': self.player_id
+					}))
+				else:
+					await self.send(text_data=json.dumps({
+						'type': 'error',
+						'message': 'Unauthorized'
+					}))
 
 		elif data['type'] == 'join_game':
 			game_id = data['gameId']
@@ -231,7 +238,61 @@ class GameConsumer(AsyncWebsocketConsumer):
 				if player_id in GameConsumer.players:
 					await GameConsumer.players[player_id].send(text_data=json.dumps(message))
 
-	#TODO: Gérer les nouvelles parties avec matchmaking
-	# async def new_game(game_id, player_excepted):
-	# 	new_game = Game(game_id)
-	# 	GameConsumer.active_games[new_game.game_id] = new_game
+	@classmethod
+	def create_new_game(cls, game_id, admin_id, expected_players):
+		if game_id in cls.active_games:
+			raise ValueError(f"A game with ID {game_id} already exists.")
+
+		# Créer une nouvelle partie
+		new_game = Game(game_id, admin_id, expected_players)
+		cls.active_games[game_id] = new_game
+
+		# Log de création de la partie
+		logger.info(f"New game created with ID: {game_id}")
+
+		# Lancer la boucle du jeu dans un thread asyncio
+		asyncio.create_task(cls.start_game_loop(game_id))
+
+		return game_id
+
+	@classmethod
+	async def start_game_loop(cls, game_id):
+		"""
+		Démarre la boucle du jeu pour une partie donnée.
+		Cette méthode sera exécutée après la création d'une nouvelle partie.
+		"""
+		game = cls.active_games.get(game_id)
+		if game:
+			logger.info(f"Starting game loop for game {game_id}")
+
+			# On peut ajouter ici la logique pour la boucle de jeu
+			await game.start_game_loop()  # Assure-toi que `start_game_loop` est une méthode asynchrone
+
+			# Exemple : boucle de jeu, tu peux ajuster la logique de la boucle en fonction de ton jeu
+			while game.status == "in_progress":
+				# Logique de mise à jour du jeu, gestion des événements, etc.
+				await asyncio.sleep(1)  # Simule l'attente d'une seconde entre chaque mise à jour
+				game.update_game_state()
+
+			# Après la fin du jeu, envoie des informations sur la fin du jeu
+			await cls.broadcast_game_end(game_id)
+
+	@classmethod
+	async def broadcast_game_end(cls, game_id):
+		"""
+		Diffuse les informations de fin de jeu à tous les joueurs.
+		"""
+		game = cls.active_games.get(game_id)
+		if game:
+			message = {
+				'type': 'game_ended',
+				'game_id': game_id,
+				'players': game.players,
+				'final_scores': game.get_scores()
+			}
+			# Diffuser à tous les joueurs dans cette partie
+			for player_id in game.players:
+				if player_id in cls.players:
+					await cls.players[player_id].send(text_data=json.dumps(message))
+
+			logger.info(f"Game {game_id} ended, broadcasting final scores.")
