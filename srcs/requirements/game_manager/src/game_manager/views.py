@@ -12,7 +12,6 @@ import json
 
 @auth_required
 async def get_history(request, username=None):
-	logger.debug(f"Hello 1")
 	if request.method != "GET":
 		return JsonResponse({"error": "Method not allowed"}, status=405)
 	game_manager_instance = Game_manager.game_manager_instance
@@ -21,10 +20,7 @@ async def get_history(request, username=None):
 	try :
 		await game_manager_instance.create_new_player_instance(username)
 		game_history = await game_manager_instance.get_game_history(username)
-		if game_history:
-			return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
-		else:
-			return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
 	except Exception as e:
 		logger.error(f"Error in get_game_history for user {username}: {str(e)}")
 		return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

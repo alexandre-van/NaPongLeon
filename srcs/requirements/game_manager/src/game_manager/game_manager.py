@@ -68,52 +68,20 @@ class Game_manager:
 					'players': players_list
 				}
 			
-	@sync_to_async
-	def fetch_player(self, username):
-		"""Récupère un joueur de la base de données de manière synchrone."""
-		return Player.objects.get(username=username)
-
-	@sync_to_async
-	def fetch_history(self, player):
-		"""Récupère l'historique des parties d'un joueur de manière synchrone."""
-		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
-
-	@sync_to_async
-	def extract_game_ids(self, history):
-		"""Extrait les game_id de l'historique et retourne une liste de tuples (game_date, game_id)."""
-		return [(entry.game_date, entry.game.game_id) for entry in history]
-
 	async def get_game_history(self, username):
-		logger.debug("Hello 2")
-		try:
-			player = await self.fetch_player(username)
-			logger.debug("Hello 3")
-			
-			# Récupérer l'historique
-			history = await self.fetch_history(player)
-			logger.debug("Hello 4")
-			
-			# Extraire les game_id
-			game_entries = await self.extract_game_ids(history)
-			logger.debug(f"Extracted game entries: {game_entries}")
-
-			# Construire l'historique avec les données de jeu
-			history_dict = {}
-			for game_date, game_id in game_entries:
-				logger.debug("Hello 5")
-				game_data = await self.get_game_data(game_id)
-				if game_data:
-					date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
-					history_dict[date_key] = game_data
-				logger.debug("Hello 6")
-			
-			return history_dict
-		except Player.DoesNotExist:
-			logger.error(f"Player '{username}' does not exist.")
-			return None
-		except Exception as e:
-			logger.error(f"Error fetching game history for player '{username}': {e}")
-			return None
+		player = await self.fetch_player(username)
+		history = await self.fetch_history(player)
+		if not history:
+			return {}
+		game_entries = await self.extract_game_ids(history)
+		logger.debug(f"Extracted game entries: {game_entries}")
+		history_dict = {}
+		for game_date, game_id in game_entries:
+			game_data = await self.get_game_data(game_id)
+			if game_data:
+				date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
+				history_dict[date_key] = game_data
+		return history_dict
 
 	async def create_game(self, game_mode, modifiers, players_list, teams_list, ia_authorizes, special_id):
 		# pars game_mode
@@ -381,7 +349,12 @@ class Game_manager:
 
 	@sync_to_async
 	def fetch_history(self, player):
-		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
+		history = list(PlayerGameHistory.objects.filter(player=player).order_by('game_date'))
+		if not history:  # Vérifie s'il y a des objets dans l'historique
+			logger.warning(f"No history found for player {player.username}.")
+			return []
+		return history
+
 	
 	@sync_to_async
 	def extract_game_ids(self, history):
