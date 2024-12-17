@@ -39,7 +39,7 @@ class Matchmaking:
 		with self._futures_mutex:
 				self._futures[username] = future
 		queue_name = self.generate_queue_name(game_mode, modifiers, number_of_players)
-		if number_of_players == None:
+		if number_of_players == '':
 			number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
 		else:
 			number_of_players *= self.GAME_MODES.get(game_mode).get('team_size')
@@ -57,7 +57,7 @@ class Matchmaking:
 
 	def generate_queue_name(self, game_mode, modifiers_list, number_of_players):
 		queue_name = ""
-		queue_name += chr(number_of_players)
+		queue_name += number_of_players
 		for i, gm in enumerate(self.GAME_MODES):
 			if gm == game_mode:
 				queue_name = chr(i + ord('0'))
@@ -80,7 +80,8 @@ class Matchmaking:
 					queue_selected.append(player_request)
 					game_mode = player_request.get('game_mode')
 					modifiers = player_request.get('modifiers')
-					if len(queue_selected) == self.GAME_MODES.get(game_mode).get('number_of_players'):
+					number_of_players = player_request.get('number_of_players')
+					if len(queue_selected) == number_of_players:
 						await self.notify(game_mode, modifiers, queue_selected)
 						if not self._queue[queue]:
 							del self._queue[queue]
@@ -148,7 +149,7 @@ class Matchmaking:
 						future = self._futures[username]
 						if not future.done() and not future.cancelled():
 							continue
-				await self.update_player_status(username, 'inactive')
+				await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 			await self._remove_player_request_in_queue(username)
 			logger.debug(f"{username} is removed")
 
