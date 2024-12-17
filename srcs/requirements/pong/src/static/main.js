@@ -33,6 +33,7 @@ socket.onmessage = function(event) {
 			break;
 		case "export_data":
 			console.log("Game created! \nGame ID :", gameId);
+			//console.log("DATA : ", data)
 			init(data.data, socket);
 			break;
 		case "game_start":
