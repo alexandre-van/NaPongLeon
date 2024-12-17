@@ -95,7 +95,7 @@ class Matchmaking:
 		if await self.check_futures(queue_selected):
 			game_connected = await Game_manager.game_manager_instance.connect_to_game(game_id, admin_id, game_mode, modifiers, players)
 		if game_connected and await self.check_futures(queue_selected):
-			game = await Game_manager.game_manager_instance.create_new_game_instance(game_id, game_mode, players)
+			game = await Game_manager.game_manager_instance.create_new_game_instance(game_id, game_mode, modifiers, players)
 		if game and await self.check_futures(queue_selected):
 			players_connected = await self.send_result(game_id, queue_selected, game_mode)
 		await self.remove_disconnected_client(queue_selected, players_connected)
