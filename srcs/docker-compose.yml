@@ -192,7 +192,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ./srcs/requirements/frontend/data
+      device: ./requirements/frontend/data
       o: bind
   postgres_data:
   media_vol:
