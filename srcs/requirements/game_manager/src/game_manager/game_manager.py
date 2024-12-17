@@ -8,6 +8,7 @@ from django.apps import apps
 from django.db import connection
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.utils import timezone
 import threading
 import asyncio
 import httpx
@@ -360,7 +361,10 @@ class Game_manager:
 	
 	@sync_to_async
 	def extract_game_ids(self, history):
-		return [(entry.game_date, entry.game.game_id) for entry in history]
+		return [
+			(timezone.localtime(entry.game_date), entry.game.game_id) 
+			for entry in history
+		]
 
 	@sync_to_async
 	def get_game_data(self, game_id):

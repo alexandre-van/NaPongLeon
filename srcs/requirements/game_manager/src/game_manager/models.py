@@ -70,7 +70,7 @@ class Player(models.Model):
 class PlayerGameHistory(models.Model):
 	player = models.ForeignKey(Player, on_delete=models.CASCADE)
 	game = models.ForeignKey('GameInstance', on_delete=models.CASCADE)
-	game_date = models.DateTimeField(default=timezone.now)
+	game_date = models.DateTimeField(default=timezone.now())
 
 	class Meta:
 		unique_together = ('player', 'game')
@@ -89,7 +89,7 @@ class GameInstance(models.Model):
 	game_id = models.CharField(max_length=100, unique=True)
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
 	winner = models.CharField(max_length=20, blank=True, null=True)
-	game_date = models.DateTimeField(default=timezone.now)
+	game_date = models.DateTimeField(default=timezone.now())
 	game_mode = models.CharField(max_length=30)
 
 	def __str__(self):
