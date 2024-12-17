@@ -132,7 +132,7 @@ class Game_manager:
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		game = None
-		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list, special_id)
+		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list, teams_list, special_id)
 		if game_connected:
 			game = await self.create_new_game_instance(game_id, game_mode, players_list)
 			if not game:
@@ -164,7 +164,7 @@ class Game_manager:
 
 	# game notify
 
-	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
+	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
 		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
 		logger.debug(f"send to {game_service_url}: {send}")
@@ -176,6 +176,7 @@ class Game_manager:
 					'gameMode': game_mode,
 					'modifiers': modifiers,
 					'playersList': players,
+					'teamsList': teams_list,
 					'special_id': special_id
 				})
 			if response and response.status_code == 201 :
@@ -205,8 +206,8 @@ class Game_manager:
 
 	# game connection
 
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
-		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, special_id)
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
+		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
