@@ -303,12 +303,12 @@ class CsrfAsgiMiddleware:
             'path': scope.get('path', '')
         })
 
-        logger.debug(f'\nCSRF ASGI MIDDLEWARE\nexempt_path: {request.path}')
+        logger.debug(f'\nCSRF ASGI MIDDLEWARE\nexempt_path: {request.path}\n\nCOOKIES:{cookies}')
 
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
-            '/api/authentication/users/',
+#            '/api/authentication/users/',
             '/api/authentication/users/password-reset/',
             '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
             '/api/authentication/oauth/42/callback/',
