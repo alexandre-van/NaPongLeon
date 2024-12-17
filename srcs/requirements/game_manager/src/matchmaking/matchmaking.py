@@ -39,6 +39,7 @@ class Matchmaking:
 		with self._futures_mutex:
 				self._futures[username] = future
 		queue_name = self.generate_queue_name(game_mode, modifiers, number_of_players)
+		logger.debug("hello")
 		if number_of_players == '':
 			number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
 		else:
@@ -61,11 +62,12 @@ class Matchmaking:
 		for i, gm in enumerate(self.GAME_MODES):
 			if gm == game_mode:
 				queue_name = chr(i + ord('0'))
-				valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
-				for y, m in enumerate(valid_modifiers):
-					if m in modifiers_list:
-						queue_name += chr(y + ord('0'))
-				break
+				if self.GAME_MODES[game_mode]['modifier_list']:
+					valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
+					for y, m in enumerate(valid_modifiers):
+						if m in modifiers_list:
+							queue_name += chr(y + ord('0'))
+					break
 		return queue_name
 
 

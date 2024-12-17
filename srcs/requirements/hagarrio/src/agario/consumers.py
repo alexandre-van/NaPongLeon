@@ -2,8 +2,6 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .decorators import auth_required
 from .Game import Game
-import uuid
-import asyncio
 from .logger import setup_logger
 
 logger = setup_logger()
@@ -20,6 +18,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	@auth_required
 	async def connect(self, username=None, nickname=None):
+		path = self.scope['path']
+		segments = path.split('/')
+		game_id = None
+		special_id = None
+		if len(segments) >= 4:
+			game_id = segments[3]
+		if len(segments) >= 6:
+			special_id = segments[4]
+		if game_id and special_id:
+			await self.special_connection(game_id, special_id)
+			return 
 		if username is None:
 			logger.warning(f'An unauthorized connection has been received')
 			return
@@ -31,6 +40,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 		# Envoyer la liste des parties disponibles
 		await self.send_games_info()
+
+	async def special_connection(self, game_id, special_id):
+		game = GameConsumer.active_games.get(game_id)
+		if game:
+			if game.admin_id == special_id:
+				await self.accept()
+				game.admin_consumer = self
+				await game.start_game_loop(self.broadcast_game_state)
 
 	async def disconnect(self, close_code):
 		logger.info(f"Player {self.player_id} disconnected with code {close_code}")
@@ -249,50 +266,4 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 		# Log de création de la partie
 		logger.info(f"New game created with ID: {game_id}")
-
-		# Lancer la boucle du jeu dans un thread asyncio
-		asyncio.create_task(cls.start_game_loop(game_id))
-
 		return game_id
-
-	@classmethod
-	async def start_game_loop(cls, game_id):
-		"""
-		Démarre la boucle du jeu pour une partie donnée.
-		Cette méthode sera exécutée après la création d'une nouvelle partie.
-		"""
-		game = cls.active_games.get(game_id)
-		if game:
-			logger.info(f"Starting game loop for game {game_id}")
-
-			# On peut ajouter ici la logique pour la boucle de jeu
-			await game.start_game_loop()  # Assure-toi que `start_game_loop` est une méthode asynchrone
-
-			# Exemple : boucle de jeu, tu peux ajuster la logique de la boucle en fonction de ton jeu
-			while game.status == "in_progress":
-				# Logique de mise à jour du jeu, gestion des événements, etc.
-				await asyncio.sleep(1)  # Simule l'attente d'une seconde entre chaque mise à jour
-				game.update_game_state()
-
-			# Après la fin du jeu, envoie des informations sur la fin du jeu
-			await cls.broadcast_game_end(game_id)
-
-	@classmethod
-	async def broadcast_game_end(cls, game_id):
-		"""
-		Diffuse les informations de fin de jeu à tous les joueurs.
-		"""
-		game = cls.active_games.get(game_id)
-		if game:
-			message = {
-				'type': 'game_ended',
-				'game_id': game_id,
-				'players': game.players,
-				'final_scores': game.get_scores()
-			}
-			# Diffuser à tous les joueurs dans cette partie
-			for player_id in game.players:
-				if player_id in cls.players:
-					await cls.players[player_id].send(text_data=json.dumps(message))
-
-			logger.info(f"Game {game_id} ended, broadcasting final scores.")

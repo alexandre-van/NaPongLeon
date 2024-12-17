@@ -157,7 +157,7 @@ export async function startGame() {
 		console.error('Socket not ready');
 		return;
 	}
-	fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=hagarrio`)
+	fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=HAGARRIO`)
   		.then(response => {
   			if (!response.ok) {
   				throw new Error('Network response was not ok');
