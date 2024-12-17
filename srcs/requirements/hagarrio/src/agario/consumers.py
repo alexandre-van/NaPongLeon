@@ -131,7 +131,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 		elif data['type'] == 'use_power_up':
 			if self.current_game_id in GameConsumer.active_games:
 				game = GameConsumer.active_games[self.current_game_id]
-				game.use_power_up(self.player_id, data['slot'])
+				# Récupérer le résultat de use_power_up
+				power_up_state = game.use_power_up(self.player_id, data['slot'])
+				if power_up_state:  # Si un power-up a été utilisé avec succès
+					# Broadcast l'état mis à jour à tous les joueurs
+					await self.broadcast_game_state(self.current_game_id, power_up_state)
 
 	async def send_games_info(self):
 		"""Envoie la liste des parties disponibles à tous les joueurs"""
@@ -164,6 +168,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			await player.send(text_data=json.dumps({
 				'type': 'update_waiting_room',
 				'games': games_info,
+				'players': game.players
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
@@ -192,6 +197,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				})
 			elif state_update['type'] == 'power_up_used':
 				message.update({
+					'slot_index': state_update['slot_index'],
 					'power_up': state_update['power_up']
 				})
 			elif state_update['type'] == 'player_eat_other_player':

@@ -47,6 +47,6 @@ export function startGameLoop(initialGameState) {
     window.addEventListener('beforeunload', () => {
         cleanup();
     });
-    const throttledGameLoop = throttle(gameLoop, 16); // 60 FPS
+    const throttledGameLoop = throttle(gameLoop, 16);// 60 FPS
     throttledGameLoop();
 }
