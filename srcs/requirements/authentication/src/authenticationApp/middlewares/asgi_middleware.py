@@ -186,6 +186,7 @@ class AsyncJWTAuthMiddleware:
 
 
 '''
+'''
 @sync_and_async_middleware
 class AsyncJWTAuthMiddleware:
     def __init__(self, inner):
@@ -211,7 +212,6 @@ class AsyncJWTAuthMiddleware:
             access_token = request.COOKIES.get('access_token')
             refresh_token = request.COOKIES.get('refresh_token')
 
-            # D'abord essayer l'access_token existant
             if access_token or refresh_token:
                 try:
                     user, validated_token = await sync_to_async(self.auth.authenticate)(request)
@@ -260,6 +260,103 @@ class AsyncJWTAuthMiddleware:
                 message['headers'] = headers
             await send(message)
         return send_wrapper
+'''
+
+
+
+
+
+
+
+
+
+
+@sync_and_async_middleware
+class AsyncJWTAuthMiddleware:
+    def __init__(self, inner):
+        from authenticationApp.auth_middleware import AsyncCustomJWTAuthentication
+        self.inner = inner
+        self.auth = AsyncCustomJWTAuthentication()
+
+    async def __call__(self, scope, receive, send):
+        from django.utils import timezone
+        from datetime import timedelta
+        headers = dict(scope['headers'])
+        if b'cookie' not in headers:
+            scope['user'] = AnonymousUser()
+            return await self.inner(scope, receive, send)
+
+        try:
+            cookies = parse_cookies(headers.get(b'cookie', b'').decode())
+            request = type('MockRequest', (), {
+                'COOKIES': cookies,
+                'META': normalize_headers(scope['headers']),
+                'method': scope.get('method', ''),
+                'path': scope.get('path', '')
+            })
+
+            access_token = request.COOKIES.get('access_token')
+            refresh_token = request.COOKIES.get('refresh_token')
+
+            if access_token or refresh_token:
+                try:
+                    user, validated_token = await self.auth.authenticate(request)
+                    scope['user'] = user
+                    return await self.inner(scope, receive, send)
+                except Exception as e:
+                    logger.warning(f"Access token validation failed: {str(e)}")
+                    # Si l'access_token est invalide/expiré, on essaie le refresh
+                    if refresh_token:
+                        try:
+                            from rest_framework_simplejwt.tokens import RefreshToken
+                            refresh = RefreshToken(refresh_token)
+
+                            new_access_token = refresh.access_token
+                            new_access_token.set_exp(from_time=timezone.now(), lifetime=timedelta(minutes=5))
+
+
+                            scope['access_token'] = str(new_access_token)
+                            request.COOKIES['access_token'] = scope['access_token']
+                            user, validated_token = await self.auth.authenticate(request)
+                            scope['user'] = user
+                        except Exception as refresh_error:
+                            logger.warning(f"Refresh token validation failed: {str(refresh_error)}")
+                            scope['user'] = AnonymousUser()
+                            scope['clear_tokens'] = True
+                    else:
+                        scope['user'] = AnonymousUser()
+            else:
+                scope['user'] = AnonymousUser()
+
+        except Exception as e:
+            logger.warning(f"Error processing request: {str(e)}")
+            scope['user'] = AnonymousUser()
+
+        return await self.inner(scope, receive, self.get_send_wrapper(send, scope))
+
+    def get_send_wrapper(self, send, scope):
+        async def send_wrapper(message):
+            if message['type'] == 'http.response.start':
+                headers = list(message.get('headers', []))
+                if 'access_token' in scope:
+                    headers.append((
+                        b'set-cookie',
+                        f"access_token={scope['access_token']}; HttpOnly; SameSite=Strict; Max-Age=300; Path=/".encode()
+                    ))
+                elif scope.get('clear_tokens'):
+                    headers.extend([
+                        (b'set-cookie', b'access_token=; Max-Age=0; Path=/'),
+                        (b'set-cookie', b'refresh_token=; Max-Age=0; Path=/')
+                    ])
+                message['headers'] = headers
+            await send(message)
+        return send_wrapper
+
+
+
+
+
+
 
 
 
@@ -272,7 +369,6 @@ class CsrfAsgiMiddleware:
         self.get_response = get_response
     
     def path_matches_pattern(self, path, pattern):
-    # Vérifie si le chemin correspond au modèle, en tenant compte des segments variables
         path_parts = path.split('/')
         pattern_parts = pattern.split('/')
         
@@ -280,7 +376,7 @@ class CsrfAsgiMiddleware:
             return False
             
         for path_part, pattern_part in zip(path_parts, pattern_parts):
-            # Si le segment du pattern contient {}, c'est un paramètre variable
+            # If pattern of the segment has {}, it is a variable
             if pattern_part.startswith('{') and pattern_part.endswith('}'):
                 continue
             if path_part != pattern_part:
