@@ -120,7 +120,8 @@ class Game_manager:
 		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
 			ai_id = {
 				'private': str(uuid.uuid4()),
-				'public': str(uuid.uuid4())
+				'public': str(uuid.uuid4()),
+				'nickname': 'AI'
 			}
 			all_ai.append(ai_id)
 			special_id.append(ai_id)

@@ -86,6 +86,32 @@ class GameConsumer(AsyncWebsocketConsumer):
 			await self.channel_layer.group_add(self.game_id, self.room['spectator'][spectator].channel_name)
 		await self.send_game_status(admin['id'], self.game_id, 'loading')
 		game_data = self.room['game_instance'].export_data()
+  
+
+		# Remplacement des IDs par les nicknames
+		special_ids = self.room.get('special_id', [])
+		id_to_nickname = {id_map['public']: id_map['nickname'] for id_map in special_ids if 'public' in id_map and 'nickname' in id_map}
+		
+		logger.debug(f"ID TO NICKNAME : {id_to_nickname}")
+		logger.debug(f"GAME DATA : {game_data}")
+  
+		def replace_ids_with_nicknames(data):
+			if isinstance(data, dict):
+				# Parcourt récursivement les dictionnaires
+				return {k: replace_ids_with_nicknames(v) for k, v in data.items()}
+			elif isinstance(data, list):
+				# Parcourt récursivement les listes et remplace les IDs
+				return [id_to_nickname.get(item, item) for item in data]
+			return data
+
+		# Application à `game_data`
+		game_data['teams'] = {k: replace_ids_with_nicknames(v) for k, v in game_data['teams'].items()}
+	
+		#game_data = replace_ids_with_nicknames(game_data)
+		logger.debug(f"GAME DATA : {game_data}")
+	
+		#faire en sorte de chamger game_data pour que je puisse remplacer l'id par le nickname present dans le dictionnaire special id
+  
 		await self.send_export_teams(admin['id'], game_data['teams'])
 		await self.send_export_data(self.game_id, game_data)
 		logger.debug(f'Export data')
