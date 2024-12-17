@@ -76,7 +76,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			})
 
 	async def startup(self):
-		logger.debug("startup")
+		logger.debug(" admin as been disconnected")
 		game_manager.update_status('loading', self.game_id)
 		admin = self.room['admin']
 		for player in self.room['players']:

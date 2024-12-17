@@ -20,7 +20,7 @@ def HttpResponseJD(message, status, additionnal_data=None):
         status=status,
         content_type='application/json'
     )
-    (f"HttpResponseJD = {response}")
+    logger.debug(f"HttpResponseJD = {response}")
     return response
 
 

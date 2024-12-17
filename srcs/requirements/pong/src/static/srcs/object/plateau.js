@@ -17,5 +17,4 @@ async function createPlateau(data) {
     }
 }
 
-
 export { createPlateau };

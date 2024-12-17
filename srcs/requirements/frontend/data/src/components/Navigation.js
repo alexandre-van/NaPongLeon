@@ -17,7 +17,7 @@ function Navigation() {
         <Link className="active" to="/"><img className="logo" src={logo}/></Link>
         <Link to="/news">News</Link>
         <Link to="/game-modes">Game Modes</Link>
-        <Link to="/leaderboard">Learderboard</Link>
+        <Link to="/gamehistory">Game History</Link>
         <Link to="/login">Log in</Link>
         <Link to="/register">Register</Link>
         <Link onClick={handleLogout}>Logout</Link>

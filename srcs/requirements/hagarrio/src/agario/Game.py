@@ -11,20 +11,58 @@ FOOD_TYPES = {
     'epic': {'value': 10, 'probability': 0.05, 'color': '#FF00FF'}
 }
 
+POWER_UPS = {
+    'speed_boost': {
+        'duration': 10,
+        'probability': 0.1,
+        'color': '#FFFFFF',
+        'text_color': '#32CD32',
+        'effect': 'speed_multiplier',
+        'value': 1.25
+    },
+    'slow_zone': {
+        'duration': 10,
+        'probability': 0.1,
+        'color': '#FFFFFF',
+        'text_color': '#FF6B6B',
+        'effect': 'speed_multiplier',
+        'value': 0.7
+    },
+    'shield': {
+        'duration': 8,
+        'probability': 0.05,
+        'color': '#FFFFFF',
+        'text_color': '#C0C0C0',
+        'effect': 'invulnerable',
+        'value': True
+    },
+    'point_multiplier': {
+        'duration': 10,
+        'probability': 0.08,
+        'color': '#FFFFFF',
+        'text_color': '#FFA500',
+        'effect': 'score_multiplier',
+        'value': 2
+    }
+}
+
 class Game:
     def __init__(self, game_id):
         self.game_id = game_id
         self.players = {}
         self.food = []
-        self.map_width = 20000
-        self.map_height = 20000
+        self.map_width = 10000
+        self.map_height = 10000
         self.max_food = 2500
         self.player_inputs = {}
         self.player_movements = {}
-        self.PLAYER_SPEED = 300
+        self.PLAYER_SPEED = 600
         self.status = "custom"
         self.game_loop_task = None
         self.initialize_food()
+        self.power_ups = []
+        self.power_up_spawn_timer = 0
+        self.power_up_spawn_interval = 5  # secondes
 
     def initialize_food(self):
         """Initialise la nourriture sur la carte"""
@@ -69,8 +107,8 @@ class Game:
         
         for food in self.food[:]:
             if self.distance(player, food) < player['size'] * 0.9:
-                player['size'] += food['value']
-                player['score'] += food['value']
+                player['size'] += food['value'] * player['score_multiplier']
+                player['score'] += food['value'] * player['score_multiplier']
                 self.food.remove(food)
                 new_food = self.add_food()
                 if new_food:
@@ -92,10 +130,6 @@ class Game:
                 food_changes.extend(changes)
         return len(food_changes) > 0
 
-    def is_game_active(self):
-        """Vérifie si la partie est active"""
-        return self.status == "in_progress"
-
     def add_player(self, player_id, player_name):
         """Ajoute un joueur à la partie"""
         self.players[player_id] = {
@@ -105,11 +139,15 @@ class Game:
             'y': random.randint(0, self.map_height),
             'size': 30,
             'score': 0,
-            'color': f'#{random.randint(0, 0xFFFFFF):06x}'
+            'color': f'#{random.randint(0, 0xFFFFFF):06x}',
+            'speed_multiplier': 1,
+            'invulnerable': False,
+            'score_multiplier': 1,
+            'inventory': []
         }
         if len(self.players) > 4:
             self.status = "in_progress"
-            
+
     def remove_player(self, player_id):
         """Retire un joueur de la partie"""
         if player_id in self.players:
@@ -170,11 +208,52 @@ class Game:
                 if positions_updated:
                     await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
 
+                player_ids = list(self.players.keys())     # Créer une copie des IDs des joueurs pour l'itération
+                players_eaten = []                        # Liste pour stocker les joueurs qui se font manger
+                # Vérifier les collisions entre les joueurs
+                for player_id in player_ids:
+                    if player_id not in self.players:  # Le joueur a peut-être été mangé
+                        continue
+                    for other_player_id in player_ids:
+                        if player_id != other_player_id and other_player_id in self.players:
+                            if self.player_eat_other_player(player_id, other_player_id):
+                                players_eaten.append((player_id, other_player_id))
+                                break  # Sortir de la boucle interne car le joueur a été mangé
+
+                # Traiter les joueurs mangés après la boucle
+                for player_id, other_player_id in players_eaten:
+                    await broadcast_callback(self.game_id, self.state_player_eat_other_player(player_id, other_player_id))
+
                 player_food_changes = self.check_all_food_collisions()
                 if player_food_changes:
-                    await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send only food changes to all players
+                    await broadcast_callback(self.game_id, self.update_state(food_changes=True)) # Send food changes to all players
 
+                # Vérifier les collisions avec les power-ups
+                for player_id in self.players:
+                    collected_power_up = self.check_power_up_collision(player_id)
+                    if collected_power_up:
+                        await broadcast_callback(self.game_id, {
+                            'type': 'power_up_collected',
+                            'game_id': self.game_id,
+                            'players': self.players,
+                            'power_up': collected_power_up,
+                            'power_ups': self.power_ups
+                        })
+                # Gestion des power-ups
+                self.power_up_spawn_timer += delta_time
+                if self.power_up_spawn_timer >= self.power_up_spawn_interval:
+                    self.power_up_spawn_timer = 0
+                    new_power_up = self.spawn_power_up()
+                    if new_power_up:
+                        await broadcast_callback(self.game_id, {
+                            'type': 'power_up_spawned',
+                            'game_id': self.game_id,
+                            'players': self.players,
+                            'power_up': new_power_up,
+                            'power_ups': self.power_ups
+                        })
                 await asyncio.sleep(1/60)
+
             if self.status == "finished":
                 """TODO: Send final state to all players"""
         except Exception as e:
@@ -195,13 +274,20 @@ class Game:
 
             if dx != 0 or dy != 0:
                 player = self.players[player_id]
-                base_speed = self.PLAYER_SPEED
-
-                if player['score'] <= 250:
-                    speed_factor = max(0.4, 1 - (player['score'] / 500))
+                base_speed = self.PLAYER_SPEED * player['speed_multiplier']
+                if player['score'] <= 200:
+                    speed_factor = max(0.9, 1 - (player['score'] / 2300))
                     speed = base_speed * speed_factor
+                elif player['score'] <= 400:
+                    speed_factor = max(0.8, 1 - (player['score'] / 2300))
+                    speed = base_speed * speed_factor
+                elif player['score'] <= 800:
+                    speed_factor = max(0.6, 1 - (player['score'] / 2300))
+                    speed = base_speed * speed_factor
+                elif player['score'] <= 1000:
+                    speed = base_speed * 0.6
                 else:
-                    speed = base_speed * 0.4
+                    speed = base_speed * 0.5
                 
                 new_x = player['x'] + dx * speed * delta_time
                 new_y = player['y'] + dy * speed * delta_time
@@ -209,14 +295,105 @@ class Game:
                 new_x = max(0, min(new_x, self.map_width))
                 new_y = max(0, min(new_y, self.map_height))
                 
-                if abs(new_x - player['x']) > 0.1 or abs(new_y - player['y']) > 0.1:
+                if abs(new_x - player['x']) > 0.01 or abs(new_y - player['y']) > 0.01:
                     player['x'] = new_x
                     player['y'] = new_y
                     positions_updated = True
-                    
                 player['current_speed'] = round(speed)
-                    
         return positions_updated
+
+    def spawn_power_up(self):
+        power_up_type = random.choice(list(POWER_UPS.keys()))
+        power_up = {
+            'id': str(uuid.uuid4()),
+            'type': power_up_type,
+            'x': random.randint(0, self.map_width),
+            'y': random.randint(0, self.map_height),
+            'properties': POWER_UPS[power_up_type]
+        }
+        self.power_ups.append(power_up)
+        return power_up
+
+    def check_power_up_collision(self, player_id):
+        player = self.players.get(player_id)
+        if not player:
+            return False
+        
+        for power_up in self.power_ups[:]:
+            if self.distance(player, power_up) < player['size']:
+                if len(player['inventory']) < 3:  # Vérifier si l'inventaire n'est pas plein
+                    collected_power_up = power_up
+                    player['inventory'].append(power_up)
+                    self.power_ups.remove(power_up)
+                    return {'type': 'power_up_collected', 'power_up': collected_power_up}
+        return False
+
+    def apply_power_up(self, player_id, power_up):
+        player = self.players[player_id]
+        effect = power_up['properties']['effect']
+        value = power_up['properties']['value']
+        duration = power_up['properties']['duration']
+        
+        if effect == 'speed_multiplier':
+            player['speed_multiplier'] = value
+        elif effect == 'invulnerable':
+            player['invulnerable'] = value
+        elif effect == 'score_multiplier':
+            player['score_multiplier'] = value
+        
+        # Planifier la fin de l'effet
+        asyncio.create_task(self.remove_power_up_effect(player_id, effect, duration))
+
+    async def remove_power_up_effect(self, player_id, effect, duration):
+        await asyncio.sleep(duration)
+        if player_id in self.players:
+            player = self.players[player_id]
+            if effect == 'speed_multiplier':
+                player['speed_multiplier'] = 1
+            elif effect == 'invulnerable':
+                player['invulnerable'] = False
+            elif effect == 'score_multiplier':
+                player['score_multiplier'] = 1
+
+    def use_power_up(self, player_id, slot_index):
+        player = self.players.get(player_id)
+        if not player or slot_index >= len(player['inventory']):
+            return False
+        
+        power_up = player['inventory'].pop(slot_index)
+        self.apply_power_up(player_id, power_up)
+        return {'type': 'power_up_used', 'power_up': power_up}
+
+    def state_player_eat_other_player(self, player_id, other_player_id):
+        return {
+            'type': 'player_eat_other_player',
+            'game_id': self.game_id,
+            'players': self.players,
+            'player_id': player_id,
+            'other_player_id': other_player_id
+        }
+
+    def player_eat_other_player(self, player_id, other_player_id):
+        player = self.players.get(player_id)
+        other_player = self.players.get(other_player_id)
+        if not player or not other_player:
+            return False
+
+        # Vérifier si les joueurs se touchent
+        if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
+            if player['size'] > other_player['size'] * 1.2:
+                # Stocker les informations avant de supprimer le joueur
+                eaten_player_info = {
+                    'eaten': True,
+                    'score': other_player['score']
+                }
+                # Mettre à jour le joueur qui mange
+                player['size'] += other_player['size'] * 0.25
+                player['score'] += other_player['score'] * 0.25
+                # Supprimer le joueur mangé
+                self.remove_player(other_player_id)
+                return eaten_player_info
+        return False
 
     async def cleanup(self):
         """Nettoie les ressources de la partie"""

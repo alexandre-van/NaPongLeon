@@ -1,9 +1,24 @@
 import { updatePlayers, removePlayer } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
-import { updateGameInfo } from './utils.js';
+import { updateGameInfo, showGameOverMessage } from './utils.js';
+import { updatePowerUps, displayPowerUpEffect, createNewPowerUp, usePowerUp } from './powers.js';
+import { updateHotbar } from './hotbar.js';
 
 let socket;
+
+document.addEventListener('keydown', (event) => {
+    const keyToSlot = {
+        '1': 0,
+        '2': 1,
+        '3': 2
+    };
+
+    if (keyToSlot.hasOwnProperty(event.key)) {
+        const slotIndex = keyToSlot[event.key];
+        usePowerUp(socket, slotIndex);
+    }
+});
 
 export function initNetwork() {
     console.log('Initializing network connection...');
@@ -11,9 +26,10 @@ export function initNetwork() {
 }
 
 function connectWebSocket() {
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
     const port = window.location.port;
-    const wsUrl = `ws://${host}:${port}/ws/hagarrio/`;
+    const wsUrl = `${wsProtocol}//${host}:${port}/ws/hagarrio/`;
     console.log('Attempting WebSocket connection to:', wsUrl);
     
     try {
@@ -73,6 +89,33 @@ function connectWebSocket() {
                     break;
                 case 'player_disconnected':
                     removePlayer(data.playerId);
+                    console.log('Game stopped');
+                    updateGameInfo(data);
+                    break;
+                case 'power_up_spawned':
+                    console.log('Power-up spawned:', data);
+                    createNewPowerUp(data.power_up);
+                    updatePowerUps(data.power_ups);
+                    break;
+                case 'power_up_collected':
+                    console.log('Power-up collected:', data);
+                    updatePowerUps(data.power_ups);
+                    updateHotbar(data.players[data.yourPlayerId].inventory);
+                    break;
+                case 'power_up_used':
+                    console.log('Power-up used:', data);
+                    updateHotbar(data.players[data.yourPlayerId].inventory);
+                    displayPowerUpEffect(data.power_up);
+                    break;
+                case 'player_eat_other_player':
+                    console.log('Player ate other player:', data);
+                    updatePlayers(data.players, data.yourPlayerId);
+                    removePlayer(data.player_eaten);
+                    break;
+                case 'return_to_waiting_room':
+                    console.log('Returning to waiting room:', data);
+                    showGameOverMessage(data.message);
+                    updateGameInfo(data);
                     break;
                 default:
                     console.log('Unknown message type:', data.type);

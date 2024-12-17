@@ -13,12 +13,25 @@ class Tournament_manager:
 		logger.debug("\n\ntournament_manager initialised\n\n")
 
 	def add_tournaments_room(self, tournament_id, admin_id, game_mode, modifiers, players_list, special_id):
-		if (game_mode not in game_modes_data):
-			logger.debug(f"Error: Wrong tournament_mode: {game_mode}")
+		logger.debug("Attempting to create a tournament room...")
+		logger.debug(f"Tournament ID: {tournament_id}")
+		logger.debug(f"Admin ID: {admin_id}")
+		logger.debug(f"Game mode: {game_mode}")
+		logger.debug(f"Modifiers: {modifiers}")
+		logger.debug(f"Players list: {players_list}")
+		logger.debug(f"Special ID: {special_id}")
+	
+		if game_mode not in game_modes_data:
+			logger.error(f"Error: Invalid game mode '{game_mode}'. Available modes: {list(game_modes_data.keys())}")
 			return None
-		if len(players_list) * 8 != game_modes_data[game_mode]['players'] * 4:
-			logger.debug(f"Error: Wrong nomber of players for the tournament mode {game_mode}: {len(players_list)}")
+	
+		expected_players_count = game_modes_data[game_mode]['players'] * 2
+		if len(players_list) != expected_players_count:
+			logger.error(f"Error: Incorrect number of players for game mode '{game_mode}'. Expected: {expected_players_count}, Received: {len(players_list)}")
 			return None
+	
+		logger.debug(f"Creating tournament room with {expected_players_count} expected players...")
+	
 		self.tournaments_room[tournament_id] = {
 			'status': 'waiting',
 			'game_mode': game_mode,
@@ -33,6 +46,8 @@ class Tournament_manager:
 			'special_id': special_id,
 			'tournament_instance': None
 		}
+	
+		logger.info(f"Tournament room created successfully. Room details: {self.tournaments_room[tournament_id]}")
 		return self.tournaments_room[tournament_id]
 
 	def special_connection(self, special_id, tournament_id):
@@ -51,7 +66,7 @@ class Tournament_manager:
 					return None
 		return None
 
-	def add_user(self, username, consumer, tournament_id):
+	def add_user(self, username, nickname, consumer, tournament_id):
 		if tournament_id not in self.tournaments_room:
 			return None
 		room = self.tournaments_room[tournament_id]
@@ -63,27 +78,30 @@ class Tournament_manager:
 			users = room['spectator']
 			log_user = 'Spectator'
 		logger.debug(f"{log_user}: {username} is in waiting room !")
-		users[username] = consumer
-		logger.debug(f"players: {room['players']}")
+		users[username] = {
+			'consumer': consumer,
+			'nickname': nickname
+		}
 		game_mode = room['game_mode']
 		modifiers = room['modifiers']
 		if room['status'] == 'waiting'\
-			and len(room['players']) * 8 is game_modes_data[game_mode]['players'] * 4:
-			logger.debug('player start the tournament')
+			and len(room['players']) is game_modes_data[game_mode]['players'] * 2:
 			room['status'] = 'startup'
-			players_test = {
-				username: room['players'][username],
-				'fake_user_1': None,
-				'fake_user_2': None,
-				'fake_user_3': None,
-				'fake_user_4': None,
-				'fake_user_5': None,
-				'fake_user_6': None,
-				'fake_user_7': None,
-			}
+			players_test = room['players']#self.generatePlayers(16)
 			new_tournament = Tournament(players_test, game_mode, modifiers)
 			room['tournament_instance'] = new_tournament
 		return room
+
+	def generatePlayers(self, n):
+		players_test = {}
+		i = 1
+		while i < n + 1:
+			players_test[f"un_{str(i)}"] = {
+				'consumer': None,
+				'nickname': f"nn_{str(i)}"
+			}
+			i += 1
+		return players_test
 
 	def add_admin(self, admin_id, consumer, tournament_id):
 		if tournament_id not in self.tournaments_room:
@@ -99,7 +117,6 @@ class Tournament_manager:
 		if room['status'] == 'waiting'\
 			and len(room['players']) is game_modes_data[game_mode]['players'] \
 			and room['admin']['consumer']:
-			logger.debug('admin start the tournament')
 			room['status'] = 'startup'
 			new_tournament = Tournament(room['players'])
 			room['tournament_instance'] = new_tournament

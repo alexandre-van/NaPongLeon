@@ -31,7 +31,7 @@ export default function ConnectedNavigation() {
         <Link className="active" to="/"><img className="logo" src={logo}/></Link>
         <Link to="/pong">Pong</Link>
         <Link to="/hagarrio">Hagarrio</Link>
-        <Link to="/leaderboard">Learderboard</Link>
+        <Link to="/gamehistory">Game History</Link>
         <Link onClick={handleLogout}>Logout</Link>
         <div className="right-profile">
           <Link className="avatarprofile" to="/profile"><Avatar user={{ ...user, avatar_url: getAvatarUrl() }} /></Link>

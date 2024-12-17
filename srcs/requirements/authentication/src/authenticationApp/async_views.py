@@ -3,6 +3,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 #from rest_framework import status
 from asgiref.sync import sync_to_async
+from .models import CustomUser
 
 # for LoginView and Setup2FAView
 from django_otp import user_has_device
@@ -25,6 +26,8 @@ async def LoginView(request):
         totp_token = data.get('totpToken') # Optional 2FA token
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
+
+    #    if not check_password(password):
 
     user = await database_sync_to_async(authenticate)(username=username, password=password)
 
@@ -350,3 +353,141 @@ async def WebSocketTokenView(request):
         #return Response({'token': str(token)})
         return HttpResponseJD('Access Token provided', 200, { 'token': str(token) })
     return HttpResponseJD('Method not allowed', 405)
+
+
+
+async def VerifyFriendsView(request):
+    user = await sync_to_async(lambda: request.user)
+    if user == AnonymousUser:
+        return HttpResponseJD('Unknown user', 401)
+    
+
+
+async def PasswordResetView(request):
+    from django.contrib.auth.tokens import default_token_generator
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.encoding import force_bytes
+    from django.utils.http import urlsafe_base64_encode
+    from django.urls import reverse
+    import os
+    from django.conf import settings
+
+    if request.method != 'POST':
+        return HttpResponseJD('Method not allowed', 405)
+
+    logger.debug('\nPasswordResetView\n')
+    logger.debug(f"Current directory: {os.getcwd()}")
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+
+        try:
+            user = await database_sync_to_async(CustomUser.objects.get)(email=email)
+        except CustomUser.DoesNotExist:
+            return HttpResponseJD('If this email address exists, you will receive the password reset instructions', 200)
+        
+        token = await database_sync_to_async(default_token_generator.make_token)(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        '''
+        reset_url = request.build_absolute_uri(
+            reverse('password_reset_confirmation', kwargs={'uidb64': uid, 'token': token})
+        )
+        '''
+        reset_url = f"{settings.SITE_URL}/reset-password/{uid}/{token}"
+        logger.debug(f"reset_url={reset_url}")
+        context = {
+            'user': user,
+            'reset_url': reset_url,
+        }
+
+
+        template_name = 'authenticationApp/password_reset_email.html'
+        
+        logger.debug(f"Template name: {template_name}")
+        logger.debug(f"Context: {context}")
+        logger.debug(f"Template directories: {settings.TEMPLATES[0]['DIRS']}")
+        logger.debug(f"\n\nEmail_host_password={settings.EMAIL_HOST_PASSWORD}")
+        
+        # Try to list template directory contents
+        template_dir = '/app/authenticationApp/templates/authenticationApp'
+        if os.path.exists(template_dir):
+            logger.debug(f"Template directory contents: {os.listdir(template_dir)}")
+        else:
+            logger.debug(f"Template directory does not exist: {template_dir}")
+
+        try:
+            email_html = render_to_string(template_name, context)
+            logger.debug("Successfully rendered email template")
+        except Exception as template_error:
+            logger.error(f"Template rendering error: {str(template_error)}")
+            raise
+
+        email_subject = 'Reinitiatize your password'
+        '''
+        logger.debug(f'email_subject={email_subject}')
+
+        email_html = render_to_string('authenticationApp/password_reset_email.html', context)
+        '''
+
+        logger.debug(f'email_html={email_html}')
+        
+
+        await database_sync_to_async(send_mail)(
+            subject=email_subject,
+            message=email_html,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+            html_message=email_html,
+            fail_silently=False,
+        )
+
+        return HttpResponseJD('If this email address exists, you will receive the password reset instructions', 200)
+
+    except Exception as e:
+        logger.error(f"Erreur lors du rendu du template: {str(e)}")
+        logger.error(f"Template dirs: {settings.TEMPLATES[0]['DIRS']}")
+        logger.error(f"App Dirs enabled: {settings.TEMPLATES[0]['APP_DIRS']}")
+        return HttpResponseJDexception(e)
+
+
+async def PasswordResetConfirmationView(request, uidb64, token):
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_decode
+    from .serializers import UserSerializer
+    from rest_framework import serializers
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = await database_sync_to_async(CustomUser.objects.get)(pk=uid)
+        is_token_valid = await database_sync_to_async(default_token_generator.check_token)(user, token)
+
+        if is_token_valid:
+            if request.method == 'POST':
+                try:
+                    data = json.loads(request.body)
+                    new_password = data.get('new_password')
+
+                    serializer = UserSerializer()
+                    try:
+                        await database_sync_to_async(serializer.validate_password)(new_password)
+                    except serializers.ValidationError as e:
+                        return HttpResponseJD('Password validation failed', 400, {'errors': e.detail})
+
+                    await database_sync_to_async(user.set_password)(new_password)
+                    await database_sync_to_async(user.save)()
+                    return HttpResponseJD('Password modified', 200)
+                
+                except json.JSONDecodeError:
+                    return HttpResponseBadRequestJD('Invalid JSON')
+
+            else:
+                return HttpResponseJD('Invalid Token', 200)
+
+        else:
+            return HttpResponseJD('Invalid or expired Token', 400)
+
+    
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return HttpResponseJD('Could not reset password', 403)

@@ -36,7 +36,7 @@ def aborttournament(request):
 	if request.method == 'POST':
 		try:
 			data = json.loads(request.body)
-			tournament_id = data.get('adminId')
+			tournament_id = data.get('gameId')
 			if tournament_manager.aborttournament(tournament_id) is False:
 				return JsonResponse({'error': 'Invalid tournament id'}, status=406)
 			logger.debug(f"Abort: tournamentId={tournament_id}")

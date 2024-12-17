@@ -51,24 +51,36 @@ Form {
 }
 
 .backgroundpage{
+  width:100%;
+  height: 100%;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)),
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
     url("./elements/background.jpg");
     background-size: cover;
-    height: 100vh;  /* Assurer que le body prend toute la hauteur de la fenêtre */
+    height: 90.8948vh;
     background-position: center;
-    background-attachment: fixed;  /* Optionnel, si tu veux que l'image reste fixe lors du défilement */
-    margin: 0;  /* Éviter les marges par défaut */
-  
+    background-attachment: fixed;
+     margin: 0;  /*Éviter les marges par défaut */
 }
 
 .play-button {
   font-size: 3.5rem; /* Agrandit le texte */
-  margin-top: 100px;
+  margin-top: 125px;
   padding-left: 20px;
   padding-right: 20px;
   border-radius: 10px; /* Optionnel : rend les coins arrondis */
   font-weight: bold;
+  color: white;
+  border-color: #FC0;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.play-button:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
 }
 
 .title-home{
@@ -81,13 +93,23 @@ Form {
 
 .play-button-mode {
   font-size: 3.5rem; /* Agrandit le texte */
+  color: white;
   margin-top: 100px;
   padding-left: 20px;
   padding-right: 20px;
   border-radius: 10px; /* Optionnel : rend les coins arrondis */
   font-weight: bold;
   margin-top: 200px;
-  margin-left: 30px;
+  margin-left: 50px;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.play-button-mode:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
 }
 
 .arrow {

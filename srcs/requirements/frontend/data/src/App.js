@@ -12,8 +12,10 @@ import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
-import Leaderboard from './pages/LeaderboardPage.js';
+import GameHistory from './pages/GameHistoryPage.js';
 import LoginPage from './pages/LoginPage.js';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.js';
+import ResetPasswordPage from './pages/ResetPasswordPage.js';
 import HagarrioPage from './pages/HagarrioPage.js';
 import Auth42Success from './components/Auth42Success.js';
 import UserPersonalizationPage from './pages/UserPersonalizationPage.js';
@@ -30,6 +32,7 @@ import ClassicTournament from './pages/ClassicTournament.js';
 import DuoTournament from './pages/DuoTournament.js';
 import CreateGameButton from './components/CreateGameButton.js';
 import AIpong from './pages/AIpong.js';
+import InGame from './pages/InGame.js';
 //import './assets/App.css';
 
 function AppContent() {
@@ -46,12 +49,13 @@ function AppContent() {
 
   return (
       <Routes>
+        <Route path="reset-password/:uid/:token" element={<ResetPasswordPage />}/>
         <Route element={isAuthenticated ? <ConnectedLayout /> : <LoginPage />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
           <Route path="pong" element={<PongPage />} />
           <Route path="hagarrio" element={<HagarrioPage />} />
-          <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="gamehistory" element={<GameHistory />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
@@ -71,11 +75,13 @@ function AppContent() {
           <Route path="classic-tournament" element={<ClassicTournament />}/>
           <Route path="duo-tournament" element={<DuoTournament />}/>
           <Route path="login" element={<LoginPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />}/>
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
           <Route path="matchmaking" element={<WaitMatchmaking />} />
           <Route path="ai-pong" element={<AIpong />} />
+          <Route path="ingame" element={<InGame />} />
 
         </Route>
       </Routes>
