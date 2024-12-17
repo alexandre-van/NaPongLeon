@@ -1,12 +1,12 @@
-#from ..utils.logger import logger
-#from ..tournament_manager.data import game_modes_data
-from data import modifiers_data
-from team import Team
-from tree import Tree
-from player import Player
+from ..utils.logger import logger
+from ..tournament_manager.data import game_modes_data
+from .data import modifiers_data
+from .team import Team
+from .tree import Tree
+from .player import Player
 import random
 #todoremove
-from data import game_modes_data
+#from data import game_modes_data
 
 class Tournament:
 	def __init__(self, players_dict, game_mode, modifiers_list):
@@ -17,35 +17,42 @@ class Tournament:
 		self.players = self.init_players(players_dict)
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
+		self.tree.init_matchs(game_mode, self.game_modifiers)
+		#self.matchs = self.tree.get_all_()
 
 	#tournament update
 
-	def update(self):
+	async def update(self):
+		await self.tree.update()
 		return {
 			'type': 'tournament_update',
+			'tree': self.tree.export(),
+			'teams': list(team.export() for team in self.teams),
 		}
 
 	# export data
 
 	def export_data(self):
 		return {
-			'game_mode': self.game_mode,
-			'modifers': self.modifers,
+			'game_mode': game_modes_data[self.game_mode],
+			'modifers': self.modifiers,
+			'tree': self.tree.export(),
+			'teams': list(team.export() for team in self.teams)
 		}
 
 	# init
 
 	def init_players(self, players_dict):
-		print("Player init")
 		usernames = list(players_dict.keys())
 		random.shuffle(usernames)
 		players = {username: players_dict[username] for username in usernames}
 		for username in players_dict:
-			players[username] = Player(username, players_dict[username])
+			nickname = players_dict[username]['nickname']
+			consumer = players_dict[username]['consumer']
+			players[username] = Player(username, nickname, consumer)
 		return players
 
 	def init_teams(self):
-		print("Team distrib")
 		teams = []
 		teams_distrib = []
 		i_distrib = 0
@@ -72,7 +79,7 @@ class Tournament:
 			return modifiers
 		for mod in modifiers_list:
 			if mod in modifiers_data:
-				modifiers_data['tournament'].append(mod)
+				modifiers['tournament'].append(mod)
 			else:
-				modifiers_data['game'].append(mod)
+				modifiers['game'].append(mod)
 		return modifiers

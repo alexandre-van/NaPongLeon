@@ -13,6 +13,8 @@ services:
   nginx:
     build: ./nginx
     container_name: nginx
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       - init_media
     restart: on-failure
@@ -55,11 +57,12 @@ services:
       - db_password
       - oauth_42_client_id
       - oauth_42_client_secret
+      - gmail_app_password
+      - gmail_host_user
     env_file:
       - .env/.env.web
     depends_on:
       - postgres
-        #        condition: service_healthy
       - redis
     networks:
       - backend
@@ -100,9 +103,9 @@ services:
     networks:
       - backend
     
-  game_manager:
+  gamemanager:
     build: ./requirements/game_manager
-    container_name: game_manager
+    container_name: gamemanager
     secrets:
       - db_user
       - db_password
@@ -139,7 +142,7 @@ services:
       - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
-    command: # pour les logs
+    command:
       - "postgres"
       - "-c"
       - "log_statement=all"
@@ -173,9 +176,8 @@ services:
     networks:
       - backend
     ports:
-    - "5000:5000"  # Expose le port 8000 de l'API à l'extérieur du conteneur
+    - "5000:5000"
     command: python manage.py runserver 0.0.0.0:5000
-    #command: ["python", "IAapp/run_ia.py"]  # Ajout de la commande pour exécuter le script
 
   
     
@@ -206,4 +208,8 @@ secrets:
     file: ./.secrets/oauth_42_client_id
   oauth_42_client_secret:
     file: ./.secrets/oauth_42_client_secret
+  gmail_app_password:
+    file: ./.secrets/gmail_app_password
+  gmail_host_user:
+    file: ./.secrets/gmail_host_user
   

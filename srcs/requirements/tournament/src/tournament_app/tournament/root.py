@@ -1,16 +1,18 @@
-#from ..utils.logger import logger
-from branch import Branch
+from ..utils.logger import logger
+from .branch import Branch
 
 class Root:
 	def __init__(self, leaf_number):
 		self.level_max = self.init_level_max(leaf_number)
-		print(f"create root || levelmax : {self.level_max}")
+		logger.debug(f"create root || levelmax : {self.level_max}")
 		self.level = 0
+		self.id = 0
 		self.prev_branch = None
 		self.next_branch = None
+		self.id_set = set()
 		self.bench = None
 		if self.level < self.level_max:
-			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self)
+			self.next_branch = Branch(self.level_max, level=self.level+1, prev_branch=self, id=1, id_set=self.id_set)
 
 	def init_level_max(self, leaf_number):
 		level_max = 1
@@ -37,20 +39,30 @@ class Root:
 		return self.next_branch.get_free_branch(level)
 	
 	def get_branches(self, level):
-		if level == self.level:
-			if self.bench:
-				return [self]
-		if not self.next_branch or level > self.level_max:
-			return None
 		branches = []
-		self.next_branch.get_branches(branches, level)
+		if level == self.level:
+			branches.append(self)
+			return branches
+		elif not self.next_branch or level > self.level_max:
+			return None
+		else :
+			self.next_branch.get_branches(branches, level)
 		return branches
 	
-	def print(self):
+	async def update(self):
 		if self.bench:
-			return [self.bench.name]
-		return []
+			await self.bench.update()
+
+	def is_free(self):
+		return self.bench is None
+
+	def export(self):
+		return {
+			'id': self.id,
+			'level': self.level,
+			'match': None,
+			'bench': self.bench.export() if self.bench else None
+		}
 	
 	def init_bench(self, team):
-		print(f"Create bench || team : {team.name}")
 		self.bench = team

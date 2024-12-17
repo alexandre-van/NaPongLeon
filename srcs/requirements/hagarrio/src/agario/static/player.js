@@ -4,28 +4,12 @@ import * as THREE from './three/three.module.js';
 
 let players = {};
 let myPlayerId = null;
+let playerAnimations = new Map();
+let animationFrame;
 
 export function updatePlayers(newPlayers, newMyPlayerId) {
     const currentScene = getScene();
     if (!currentScene) return;
-
-    // Supprimer les joueurs qui ne sont plus présents
-    Object.keys(players).forEach(playerId => {
-        if (!newPlayers[playerId]) {
-            const playerSprite = currentScene.getObjectByName(`player_${playerId}`);
-            const textSprite = currentScene.getObjectByName(`text_${playerId}`);
-            
-            if (playerSprite) {
-                playerSprite.material.dispose();
-                playerSprite.removeFromParent();
-            }
-            if (textSprite) {
-                textSprite.material.dispose();
-                textSprite.removeFromParent();
-            }
-        }
-    });
-
     // Mettre à jour les joueurs
     if (newPlayers && Object.keys(newPlayers).length > 0) {
         players = newPlayers;
@@ -34,53 +18,93 @@ export function updatePlayers(newPlayers, newMyPlayerId) {
     }
 }
 
+function updatePlayerSprite(player, scene) {
+    let playerSprite = scene.getObjectByName(`player_${player.id}`);
+    let textSprite = scene.getObjectByName(`text_${player.id}`);
+
+    if (!playerSprite) {
+        playerSprite = createPlayerSprite(player);
+        scene.add(playerSprite);
+        playerAnimations.set(player.id, {
+            currentSize: player.size,
+            targetSize: player.size
+        });
+    } else {
+        const currentAnim = playerAnimations.get(player.id);
+        currentAnim.targetSize = player.size;
+    }
+    if (!textSprite) {
+        textSprite = createTextSprite(player);
+        scene.add(textSprite);
+    }
+    playerSprite.position.set(player.x, player.y, 1);
+    textSprite.position.set(player.x, player.y, 1.1);
+}
+
 export function createPlayerSprite(player) {
     const playerCanvas = document.createElement('canvas');
-    const playerContext = playerCanvas.getContext('2d');
-    const size = player.size * 2;
+    const playerContext = playerCanvas.getContext('2d', {
+        antialias: true,
+        alpha: true
+    });
+    
+    // Augmenter significativement la taille du canvas pour un meilleur rendu
+    const size = player.size * 16;
     playerCanvas.width = size;
     playerCanvas.height = size;
+    
+    // Activer l'anti-aliasing
+    playerContext.imageSmoothingEnabled = true;
+    playerContext.imageSmoothingQuality = 'high';
+    
+    function shadeColor(color, percent) {
+        const f = parseInt(color.slice(1), 16);
+        const t = percent < 0 ? 0 : 255;
+        const p = percent < 0 ? percent * -1 : percent;
+        const R = f >> 16;
+        const G = f >> 8 & 0x00FF;
+        const B = f & 0x0000FF;
+        const newColor = `#${(0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1)}`;
+        return newColor;
+    }
     
     // Gradient de fond
     const gradient = playerContext.createRadialGradient(
         size/2, size/2, 0,
         size/2, size/2, size/2
     );
-    gradient.addColorStop(0, player.color || getRandomColor());
-    gradient.addColorStop(0.8, player.color || getRandomColor());
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+    gradient.addColorStop(0, player.color);
+    gradient.addColorStop(0.8, player.color);
+    gradient.addColorStop(1, shadeColor(player.color, 0.3));
 
-    // Cercle principal
+    // Dessiner le cercle avec anti-aliasing amélioré
     playerContext.beginPath();
-    playerContext.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+    playerContext.arc(size/2, size/2, size/2 - 2, 0, 2 * Math.PI);
     playerContext.fillStyle = gradient;
-    playerContext.fill();
-
-    // Effet de brillance
-    const highlight = playerContext.createRadialGradient(
-        size/3, size/3, 0,
-        size/3, size/3, size/3
-    );
-    highlight.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-    highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
     
-    playerContext.beginPath();
-    playerContext.arc(size/3, size/3, size/3, 0, 2 * Math.PI);
-    playerContext.fillStyle = highlight;
+    // Ajouter un effet de lissage supplémentaire
+    playerContext.shadowColor = player.color;
+    playerContext.shadowBlur = 5;
     playerContext.fill();
-
-    // // Bordure
-    // playerContext.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    // playerContext.lineWidth = size/20;
-    // playerContext.stroke();
+    
+    // Ajouter un contour subtil
+    playerContext.strokeStyle = shadeColor(player.color, -0.2);
+    playerContext.lineWidth = 2;
+    playerContext.stroke();
 
     const playerTexture = new THREE.CanvasTexture(playerCanvas);
-    playerTexture.minFilter = THREE.LinearFilter;
+    playerTexture.minFilter = THREE.LinearMipmapLinearFilter;
     playerTexture.magFilter = THREE.LinearFilter;
+    playerTexture.anisotropy = 16;
+
     const playerMaterial = new THREE.SpriteMaterial({ 
         map: playerTexture,
-        transparent: true
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        renderOrder: 0
     });
+
     const playerSprite = new THREE.Sprite(playerMaterial);
     playerSprite.name = `player_${player.id}`;
     playerSprite.scale.set(player.size * 2, player.size * 2, 1);
@@ -88,33 +112,11 @@ export function createPlayerSprite(player) {
     return playerSprite;
 }
 
-function updatePlayerSprite(player, scene) {
-    let playerSprite = scene.getObjectByName(`player_${player.id}`);
-    let textSprite = scene.getObjectByName(`text_${player.id}`);
-    
-    if (!playerSprite) {
-        playerSprite = createPlayerSprite(player);
-        scene.add(playerSprite);
-    }
-    if (!textSprite) {
-        textSprite = createTextSprite(player);
-        scene.add(textSprite);
-    }
-    
-    playerSprite.position.set(player.x, player.y, 0);
-    playerSprite.scale.set(player.size * 2, player.size * 2, 1);
-    
-
-    const textScale = player.size / 40;//Math.min(7, Math.max(1, player.size / 20));
-    textSprite.position.set(player.x, player.y, 0.1);
-    textSprite.scale.set(120 * textScale, 30 * textScale, 1);
-}
-
 function createTextSprite(player) {
     const textCanvas = document.createElement('canvas');
     const textContext = textCanvas.getContext('2d');
     const baseTextSize = 70;
-    
+
     const scaleFactor = player.size / 40;//Math.min(7, Math.max(1, player.size / 20));
     const actualTextSize = baseTextSize * scaleFactor;
     
@@ -149,11 +151,13 @@ function createTextSprite(player) {
     const textMaterial = new THREE.SpriteMaterial({ 
         map: textTexture,
         transparent: true,
-        depthTest: false
+        depthTest: false,
+        depthWrite: false,
+        renderOrder: 1
     });
     const textSprite = new THREE.Sprite(textMaterial);
     textSprite.name = `text_${player.id}`;
-    
+    textSprite.scale.set(120 * scaleFactor, 30 * scaleFactor, 1.1);
     return textSprite;
 }
 
@@ -182,6 +186,14 @@ export function removePlayer(playerId) {
     if (players[playerId]) {
         delete players[playerId];
     }
+    
+    if (playerAnimations.has(playerId)) {
+        const playerAnim = playerAnimations.get(playerId);
+        if (playerAnim.animation) {
+            cancelAnimationFrame(playerAnim.animation);
+        }
+        playerAnimations.delete(playerId);
+    }
 }
 
 export function getPlayers() {
@@ -190,4 +202,43 @@ export function getPlayers() {
 
 export function getMyPlayerId() {
     return myPlayerId;
+}
+
+function updateAnimations() {
+    const currentScene = getScene();
+    if (!currentScene) return;
+
+    playerAnimations.forEach((anim, playerId) => {
+        if (anim.targetSize && anim.targetSize !== anim.currentSize) {
+            const playerSprite = currentScene.getObjectByName(`player_${playerId}`);
+            const textSprite = currentScene.getObjectByName(`text_${playerId}`);
+            if (!playerSprite) return;
+
+            const delta = (anim.targetSize - anim.currentSize) * 0.1;
+            anim.currentSize += delta;
+            if (Math.abs(anim.targetSize - anim.currentSize) < 0.01) {
+                anim.currentSize = anim.targetSize;
+                anim.targetSize = null;
+            }
+            playerSprite.scale.set(anim.currentSize * 2, anim.currentSize * 2, 1);
+            if (textSprite) {
+                const textScale = anim.currentSize / 40;
+                textSprite.scale.set(120 * textScale, 30 * textScale, 1.1);
+            }
+        }
+    });
+    animationFrame = requestAnimationFrame(updateAnimations);
+}
+
+export function initPlayers() {
+    updateAnimations();
+}
+
+export function cleanup() {
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+    }
+    playerAnimations.clear();
+    players = {};
+    myPlayerId = null;
 }

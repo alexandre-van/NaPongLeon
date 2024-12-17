@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView
-from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView
+from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView, PasswordResetView, PasswordResetConfirmationView
 from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 
 # for development
@@ -11,6 +11,8 @@ urlpatterns = [
     # User management
     path('users/', UserView.as_view(), name='user_create'),
     path('users/me/', UserView.as_view(), name='user_detail'),
+    path('users/password-reset/', PasswordResetView, name='password_reset'),
+    path('users/password-reset-confirmation/<uidb64>/<token>/', PasswordResetConfirmationView, name='password_reset_confirmation'),
 
     # User profile management
     path('users/me/avatar/', UserAvatarView, name='user_avatar'),
@@ -28,7 +30,9 @@ urlpatterns = [
     # Notifications
     path('notifications/', NotificationsView, name='notifications'),
 
+    # For backends
     path('verify_token/', VerifyTokenView.as_view(), name='verify_token'),
+    path('verify_friends/', VerifyFriendsView, name='verify_friends'),
 
     #path('auth/token/get-access/', WebSocketTokenView.as_view(), name='get_websocket_token'),
     path('auth/token/get-access/', WebSocketTokenView, name='get_websocket_token'),

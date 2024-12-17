@@ -11,7 +11,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 	# CONNECT
 	@auth_required
-	async def connect(self, username=None):
+	async def connect(self, username=None, nickname=None):
 		path = self.scope['path']
 		segments = path.split('/')
 		self.room = None
@@ -19,13 +19,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		self.is_closed = False
 		self.admin_id = None
 		self.username = username
+		self.nickname = nickname
+		self.game_private_id = None
 		self.can_be_disconnected = True
 		special_id = None
 		if len(segments) >= 4:
 			self.tournament_id = segments[3]
 		if len(segments) >= 6:
 			special_id = segments[4]
-			logger.debug(f'special_id = {special_id}')
 		if special_id:
 			self.username = tournament_manager.special_connection(special_id, self.tournament_id)
 			if not self.username:
@@ -45,7 +46,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			})
 
 	async def new_users(self):
-		logger.debug("new_user")
 		self.ready = False
 		if self.admin_id:
 			self.room = tournament_manager.add_admin(self.admin_id, self, self.tournament_id)
@@ -58,7 +58,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 			return
 		else:
-			self.room = tournament_manager.add_user(self.username, self, self.tournament_id)
+			self.room = tournament_manager.add_user(self.username, self.nickname, self, self.tournament_id)
 			if self.room is None:
 				return
 			await self.send_user_connection()
@@ -75,22 +75,20 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			})
 
 	async def startup(self):
-		logger.debug("startup")
 		tournament_manager.update_status('loading', self.tournament_id)
 		admin = self.room['admin']
 		for player in self.room['players']:
-			logger.debug(f"add {player} to channel")
-			await self.channel_layer.group_add(self.tournament_id, self.room['players'][player].channel_name)
+			playerConsumer = self.room['players'][player]['consumer']
+			await self.channel_layer.group_add(self.tournament_id, playerConsumer.channel_name)
 		for spectator in self.room['spectator']:
-			await self.channel_layer.group_add(self.tournament_id, self.room['spectator'][spectator].channel_name)
+			spectatorConsumer = self.room['spectator'][spectator]['consumer']
+			await self.channel_layer.group_add(self.tournament_id, spectatorConsumer.channel_name)
 		await self.send_tournament_status(admin['id'], self.tournament_id, 'loading')
 		tournament_data = self.room['tournament_instance'].export_data()
 		#await self.send_export_teams(admin['id'], tournament_data['teams'])
 		await self.send_export_data(self.tournament_id, tournament_data)
-		logger.debug(f'Export data')
 
 	async def add_spectator(self):
-		logger.debug(f"{self.username} is here")
 		await self.send_message({
 			'type': "export_data",
 			'data': self.room['tournament_instance'].export_data()
@@ -134,16 +132,18 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		logger.debug('disconnect_all_user')
 		for player in self.room['players']:
 			try:
-				self.room['players'][player].is_closed = True
-				await self.channel_layer.group_discard(self.tournament_id, self.room['players'][player].channel_name)
-				await self.room['players'][player].close()
+				player_consumer = self.room['players'][player]['consumer']
+				player_consumer.is_closed = True
+				await self.channel_layer.group_discard(self.tournament_id, player_consumer.channel_name)
+				await player_consumer.close()
 			except Exception as e:
 				logger.error(f"Error closing player connection: {e}")
 		for spectator in self.room['spectator']:
 			try:
-				self.room['spectator'][spectator].is_closed = True
-				await self.channel_layer.group_discard(self.tournament_id, self.room['spectator'][spectator].channel_name)
-				await self.room['spectator'][spectator].close()
+				spectatorConsumer = self.room['spectator'][spectator]['consumer']
+				spectatorConsumer.is_closed = True
+				await self.channel_layer.group_discard(self.tournament_id, spectatorConsumer.channel_name)
+				await spectatorConsumer.close()
 			except Exception as e:
 				logger.error(f"Error closing spectator connection: {e}")
 
@@ -211,7 +211,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	async def tournament_start(self):
 		self.ready = True
 		for player in self.room['players']:
-			if self.room['players'][player].ready == False:
+			playerConsumer = self.room['players'][player]['consumer']
+			if playerConsumer.ready == False:
 				return
 		if self.room['status'] == 'loading':
 			tournament_manager.update_status('running', self.tournament_id)
@@ -242,11 +243,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	async def tournament_loop(self, tournament_id):
 		if not self.room:
 			return
-		logger.debug("tournament loop is running")
 		while tournament_manager.get_room(self.tournament_id):
 			tournament = self.room['tournament_instance']
 			if tournament:
-				tournament_state = tournament.update()
+				tournament_state = await tournament.update()
 				await self.channel_layer.group_send(
 					tournament_id,
 					{
@@ -255,14 +255,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					}
 				)
 				if tournament_state['type'] == 'scored':
-					logger.debug('scored')
 					await self.send_update_score(tournament_state['team'], tournament_state['score'])
 				elif tournament_state['type'] == 'tournament_end':
 					tournament_manager.update_status('finished', self.tournament_id)
 					await self.send_tournament_finished(tournament_state['team'], tournament_state['score'])
 					await self.tournament_end()
 					return
-				await asyncio.sleep(0.025)
+				await asyncio.sleep(3)
 			else:
 				break
 
@@ -293,7 +292,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	# STATUS_LOOP
 	async def status_loop(self):
 		while self.room['status'] != 'aborted':
-			#logger.debug("status_loop")
 			await asyncio.sleep(1)
 		await self.tournament_end()
 
@@ -334,7 +332,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		for group in groups:
 			if group:  # S'assurer que le nom du groupe est valide
 				try:
-					logger.debug(f"Sending message to group: {group} || message: {message}")
 					await self.channel_layer.group_send(
 						group, {
 							'type': 'send_state',
@@ -360,11 +357,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
-					logger.debug(f"{self.username} receive export data")
+					event['state']['nickname'] = self.username
+				event['state']['game_private_id'] = self.game_private_id
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True
 			else:
 				logger.debug(f"{self.username} consumer want send new statde but is closed")
 		except Exception as e:
 			logger.warning(f"{self.username}: Failed to send state: {e}")
+		self.game_private_id = None
 
