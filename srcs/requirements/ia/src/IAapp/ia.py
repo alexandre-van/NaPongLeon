@@ -19,7 +19,7 @@ class IA:
 
 		# info sur joueur droit ou gauche
 		self.paddle_hit = False
-		self.player = ia_id
+		self.player = 'AI'
 
 		# delai de 1 seconde a respecter
 		self.last_message_time = 0

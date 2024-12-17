@@ -1,13 +1,15 @@
 import * as THREE from '../../js/three.module.js';
 import { get_scene } from '../scene.js';
+import { updateBranchParchment } from './parchment.js'
 
-let scene = null
+let scene = null;
+let current_branch_inspect = null;
 
-const boxWidth = 10; // Largeur des rectangles
-const boxHeight = 6; // Hauteur des rectangles
-const boxDepth = 1.5; // Profondeur des rectangles
-const verticalSpacing = 10; // Espacement vertical
-const horizontalSpacing = 10; // Espacement horizontal
+const boxWidth = 10;
+const boxHeight = 6;
+const boxDepth = 1.5;
+const verticalSpacing = 10;
+const horizontalSpacing = 10;
 let team_size = 1
 let tree = []
 
@@ -22,23 +24,21 @@ export function generateTree(newtree, nickname, data_team_size=null) {
 	}
 	for (let level = 0; level < tree.length; level++) {
 		const currentLevel = tree[level];
-		const y = -level * verticalSpacing; // Position verticale de ce niveau
+		const y = -level * verticalSpacing;
 
 		const totalWidth = currentLevel.length * (boxWidth * team_size + horizontalSpacing) - horizontalSpacing;
-		const startX = -totalWidth / 2; // Centrer les rectangles
+		const startX = -totalWidth / 2;
 
 		currentLevel.forEach((branch, index) => {
 			const x = startX + index * (boxWidth * team_size + horizontalSpacing);
 			createMatchBox(branch, x, y, nickname);
 
-			// Connecter avec le niveau précédent
 			if (level > 0) {
-				const parentIndex = Math.floor(index / 2); // Trouver le parent
+				const parentIndex = Math.floor(index / 2);
 				const previousLevel = tree[level - 1];
 				const totalParentWidth = previousLevel.length * (boxWidth * team_size + horizontalSpacing) - horizontalSpacing;
 				const parentX = -totalParentWidth / 2 + parentIndex * (boxWidth * team_size + horizontalSpacing);
 
-				// Dessiner une ligne entre le parent et l'enfant
 				drawConnection(parentX, -(level - 1) * verticalSpacing, x, y);
 			}
 		});
@@ -50,7 +50,6 @@ function createMatchBox(branch, x, y, nickname) {
 	const playerStatus = determinePlayerStatus(branch, nickname);
 	const color = getBoxColor(branch, playerStatus);
 
-	// Adjust box size for player's team
 	const playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2
 		|| playerStatus.isPlayerInBench? 1.2 : 1;
 	const boxGeometry = new THREE.BoxGeometry(
@@ -100,33 +99,28 @@ function getBoxColor(branch) {
     if (branch.match) {
         switch (branch.match.status) {
             case 'Game in progress':
-                return 0xffe333; // Jaune par défaut
+                return 0xffe333;
             case 'Game aborted':
-                return 0xff4444; // Rouge pour un match annulé
+                return 0xff4444;
             case 'Game finished':
-                return 0x4CAF50; // Vert pour un match terminé
+                return 0x4CAF50;
             default:
-                return 0xffe333; // Jaune par défaut si statut inconnu
+                return 0xffe333;
         }
     }
-    if (branch.bench) return 0xADD8E6; // Bleu clair pour le bench
-    return 0xA9A9A9; // Gris par défaut pour les cellules vides
+    if (branch.bench) return 0xADD8E6;
+    return 0xA9A9A9;
 }
 
 function drawConnection(x1, y1, x2, y2) {
-	// Matériau de la ligne avec une épaisseur augmentée
 	const lineMaterial = new THREE.LineBasicMaterial({
 		color: 0xffffff,
-		linewidth: 100, // Épaisseur de la ligne
+		linewidth: 100,
 	});
-
-	// Points de la ligne : du centre du parent au centre de l'enfant
 	const points = [
 		new THREE.Vector3(x1, y1, 0),
 		new THREE.Vector3(x2, y2, 0),
 	];
-
-	// Créer et ajouter la ligne à la scène
 	const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 	const line = new THREE.Line(lineGeometry, lineMaterial);
 	scene = get_scene()
@@ -138,7 +132,6 @@ export function clearTree() {
 	scene = get_scene()
     if (scene == null)
         return;
-	// Supprimer les anciens objets de la scène
 	const objectsToRemove = scene.children.filter(child => child instanceof THREE.Mesh || child instanceof THREE.Line);
 	objectsToRemove.forEach(object => {
 		scene.remove(object);
@@ -153,7 +146,6 @@ export function updateTree(newtree, nickname) {
 	scene = get_scene()
     if (scene == null)
         return;
-	// Met à jour le contenu des branches sans recréer les objets
 	tree.forEach((level, levelIndex) => {
 		level.forEach((branch, index) => {
 
@@ -161,55 +153,18 @@ export function updateTree(newtree, nickname) {
 			const existingBox = scene.children.find(child => child.userData.branch && child.userData.branch.id === branch.id);
 
 			if (existingBox) {
-				// Mise à jour de la couleur et de la taille de la boîte
+				if (current_branch_inspect && existingBox.userData.branch.id == current_branch_inspect)
+					updateBranchParchment(branch);
 				const color = getBoxColor(branch);
 				existingBox.userData.branch = branch
 				existingBox.material.color.setHex(color);
 				let playerTeamMultiplier = playerStatus.isPlayerInTeam1 || playerStatus.isPlayerInTeam2 || playerStatus.isPlayerInBench ? 1.25 : 1;
 				existingBox.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
-
-				// Mise à jour du texte
 				updateBoxText(existingBox, branch, playerStatus, playerTeamMultiplier);
-			} else {
-				// Si la boîte n'existe pas, crée-la
-				//const x = calculateXForBranch(level, index, levelIndex);
-				//const y = -levelIndex * verticalSpacing;
-				//createMatchBox(branch, x, y, nickname);
 			}
 		});
 	});
-
-	// Met à jour les connexions entre les niveaux
-	//updateConnections(tree);
 }
-
-// Fonction pour déterminer si une équipe est perdante
-const isLosingTeam = (teamName, winner, status) => {
-    return (status === "Game aborted" || status === "Game finished") && teamName !== winner;
-};
-
-// Fonction pour dessiner du texte avec style spécifique
-const drawText = (ctx, text, x, y, options = {}) => {
-    const {
-        font = '30px Dancing Script',
-        color = 'black',
-        strikeThrough = false
-    } = options;
-
-    ctx.font = font;
-    ctx.fillStyle = color;
-    ctx.fillText(text, x, y);
-
-    if (strikeThrough) {
-        const textWidth = ctx.measureText(text).width;
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.moveTo(x, y - 15); // Ligne au milieu du texte
-        ctx.lineTo(x + textWidth, y - 15);
-        ctx.stroke();
-    }
-};
 
 function renderMatchText(ctx, textCanvas, playerStatus, match) {
     const isLoserTeam = (teamName) => 
@@ -270,7 +225,6 @@ function renderMatchText(ctx, textCanvas, playerStatus, match) {
 
 
 function updateBoxText(box, branch, playerStatus, playerTeamMultiplier) {
-	// Créez un nouveau canevas pour le texte
 	const textCanvas = document.createElement('canvas');
 	const ctx = textCanvas.getContext('2d');
 	textCanvas.width = 256;
@@ -318,7 +272,6 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 	const buttonColor = '#F08080';
 
 	if (matchInProgress && playerTeamMultiplier == 1) {
-		// Agrandir la boîte pour faire de la place au bouton
 		playerTeamMultiplier = 1.25;
 		box.scale.set(playerTeamMultiplier, playerTeamMultiplier, playerTeamMultiplier);
 		const zOffset = box.position.z + box.geometry.parameters.depth / 2 + 0.2;
@@ -328,15 +281,13 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 		}
 
 		if (!box.spectateButton) {
-			// Créer la géométrie du bouton avec une épaisseur
-			const buttonGeometry = new THREE.BoxGeometry(boxWidth, boxHeight / 4, 0.2); // 0.2 pour l'épaisseur
+			const buttonGeometry = new THREE.BoxGeometry(boxWidth, boxHeight / 4, 0.2);
 			const buttonCanvas = document.createElement('canvas');
 			const ctx = buttonCanvas.getContext('2d');
 			buttonCanvas.width = 128;
 			buttonCanvas.height = 64;
 
-			// Style du bouton
-			ctx.fillStyle = buttonColor; // Couleur de fond du bouton
+			ctx.fillStyle = buttonColor;
 			ctx.fillRect(0, 0, buttonCanvas.width, buttonCanvas.height);
 			ctx.font = 'bold 35px Dancing Script';
 			ctx.fillStyle = 'black';
@@ -348,25 +299,23 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 			const buttonMaterial = new THREE.MeshStandardMaterial({
 				map: buttonTexture,
 				color: buttonColor,
-				emissive: new THREE.Color(buttonColor), // Couleur émissive
-				emissiveIntensity: 0.1, // Intensité de l'émissivité
+				emissive: new THREE.Color(buttonColor),
+				emissiveIntensity: 0.1,
 				transparent: true,
 				side: THREE.FrontSide
 			});
-
-			// Matériaux pour toutes les faces du bouton
 			const materials = [
-				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-				new THREE.MeshStandardMaterial({ color: buttonColor }), // Faces latérales
-				buttonMaterial, // Face supérieure (avec texte)
-				new THREE.MeshStandardMaterial({ color: buttonColor })  // Face inférieure
+				new THREE.MeshStandardMaterial({ color: buttonColor }),
+				new THREE.MeshStandardMaterial({ color: buttonColor }),
+				new THREE.MeshStandardMaterial({ color: buttonColor }),
+				new THREE.MeshStandardMaterial({ color: buttonColor }),
+				buttonMaterial,
+				new THREE.MeshStandardMaterial({ color: buttonColor })
 			];
 
 			box.spectateButton = new THREE.Mesh(buttonGeometry, materials);
 			box.spectateButton.position.set(box.position.x, box.position.y - boxHeight / 2.25, zOffset);
-			box.spectateButton.userData.isSpectateButton = true; // Identifie le bouton
+			box.spectateButton.userData.isSpectateButton = true;
 			scene = get_scene()
     		if (scene)
 				scene.add(box.spectateButton);
@@ -386,19 +335,18 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 
 export function findCellByCellId(cell_id) {
 	console.log(tree)
-	// Parcours de tous les niveaux de l'arbre
 	for (const level of tree) {
-		// Vérification que le niveau est bien un tableau
 		if (Array.isArray(level)) {
-			// Parcours des cellules du niveau
 			for (const cell of level) {
-				// Vérification de l'ID du jeu dans la cellule
 				if (cell.id === cell_id) {
-					return cell; // Cellule trouvée
+					return cell;
 				}
 			}
 		}
 	}
-	// Si aucune correspondance n'a été trouvée
 	return null;
+}
+
+export function set_current_branch_inspect(branch) {
+	current_branch_inspect = branch.id;
 }

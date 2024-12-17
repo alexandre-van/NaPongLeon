@@ -126,19 +126,17 @@ class GameInstance(models.Model):
 				logger.debug(f"Player {player.username} is already part of the game {self.game_id}.")
 
 	def clean(self):
-		"""Validation pour l'unicité des usernames."""
 		usernames = GamePlayer.objects.filter(game=self).values_list('player__username', flat=True)
 		if len(usernames) != len(set(usernames)):
 			raise ValidationError("Usernames must be unique.")
 
 	def save(self, *args, **kwargs):
-		self.clean()  # Appeler la validation avant de sauvegarder
+		self.clean()
 		super(GameInstance, self).save(*args, **kwargs)
 
 	@classmethod
-	def create_game(cls, game_id, game_mode, usernames):
+	def create_game(cls, game_id, game_mode, modifiers, usernames):
 		try:
-			# Créer l'instance de jeu
 			new_game = cls(
 				game_id=game_id,
 				status='waiting',
@@ -146,20 +144,22 @@ class GameInstance(models.Model):
 				game_mode=game_mode
 			)
 			new_game.save()
-
-			# Ajouter chaque joueur au jeu et à l'historique
 			for username in usernames:
 				player = Player.get_player(username)
 				if player:
 					PlayerGameHistory.objects.get_or_create(player=player, game=new_game)
-
+			for modifier_name in modifiers:
+				modifier, _ = Modifiers.objects.get_or_create(name=modifier_name)
+				ModifiersHistory.objects.get_or_create(game=new_game, modifier=modifier)
+			logger.info(f"Game '{game_id}' created successfully with modifiers {modifiers}.")
 			return new_game
 		except IntegrityError as e:
-			logger.error(f"Integrity error while creating game: {e}")
+			logger.error(f"Integrity error while creating game '{game_id}': {e}")
 			return None
 		except DatabaseError as e:
-			logger.error(f"Database error while creating game: {e}")
+			logger.error(f"Database error while creating game '{game_id}': {e}")
 			return None
+
 
 
 	@classmethod
@@ -185,3 +185,26 @@ class GameScore(models.Model):
 	class Meta:
 		unique_together = ('game', 'team_name')
 
+class Modifiers(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def get_modifier(cls, name):
+        try:
+            return cls.objects.get(name=name)
+        except cls.DoesNotExist:
+            logger.warning(f"Modifier '{name}' introuvable.")
+            return None
+
+
+class ModifiersHistory(models.Model):
+    game = models.ForeignKey(GameInstance, on_delete=models.CASCADE)
+    modifier = models.ForeignKey(Modifiers, on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('game', 'modifier')
+
+    def __str__(self):
+        return f"Game: {self.game.game_id}, Modifier: {self.modifier.name}"

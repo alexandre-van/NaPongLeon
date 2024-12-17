@@ -10,6 +10,13 @@ export default function ClassicTournament() {
 
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
 
+    const [checkedBox, setCheckedBox] = useState(null);
+
+    const handleCheckboxChange = (box) => {
+        setCheckedBox(checkedBox === box ? null : box); // Décoche si on reclique sur la même box
+    };
+
+
     // Gérer la sélection des modificateurs
     const handleModifierChange = (modifier) => {
         setModifiers((prevModifiers) =>
@@ -40,10 +47,30 @@ export default function ClassicTournament() {
                         </li>
                     ))}
                 </ul>
+
+            </div>
+            <div>
+                <h3>Choisissez le nombre de competiteurs :</h3>
+                <label>
+                    <input
+                    type="checkbox"
+                    checked={checkedBox === "4"}
+                    onChange={() => handleCheckboxChange("4")}
+                    />
+                    4
+                </label>
+                <label>
+                    <input
+                    type="checkbox"
+                    checked={checkedBox === "8"}
+                    onChange={() => handleCheckboxChange("8")}
+                    />
+                    8
+                </label>
             </div>
             <div>
 
-                <Link to="/matchmaking"><PlayButton gameMode="PONG_CLASSIC_TOURNAMENT" modifiers={modifiers} /></Link>
+                <Link to="/matchmaking"><PlayButton gameMode="PONG_CLASSIC_TOURNAMENT" modifiers={modifiers} number={checkedBox}/></Link>
             </div>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>

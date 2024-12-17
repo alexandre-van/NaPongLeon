@@ -1,6 +1,10 @@
 import { findCellByCellId } from './object/tree.js';
 
 function launch_game(teams, nickname, game_private_id){
+	const parchmentDiv = document.getElementById('parchment');
+	const teamParchment = document.getElementById('teamParchment');
+    parchmentDiv.style.display = 'none';
+	teamParchment.style.display = 'none';
 	let current_team = null
 	let branch = null
 	teams.forEach(team => {

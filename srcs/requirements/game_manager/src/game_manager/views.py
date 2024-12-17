@@ -10,9 +10,9 @@ from rest_framework import status
 import asyncio
 import json
 
+@async_csrf_exempt
 @auth_required
 async def get_history(request, username=None):
-	logger.debug(f"Hello 1")
 	if request.method != "GET":
 		return JsonResponse({"error": "Method not allowed"}, status=405)
 	game_manager_instance = Game_manager.game_manager_instance
@@ -21,15 +21,12 @@ async def get_history(request, username=None):
 	try :
 		await game_manager_instance.create_new_player_instance(username)
 		game_history = await game_manager_instance.get_game_history(username)
-		if game_history:
-			return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
-		else:
-			return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
 	except Exception as e:
 		logger.error(f"Error in get_game_history for user {username}: {str(e)}")
 		return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
-
+@async_csrf_exempt
 @auth_required
 async def get_in_matchmaking(request, game_mode, username=None):
 	if request.method != "GET":
@@ -45,6 +42,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 	if settings.GAME_MODES.get(game_mode) is None:
 		return JsonResponse({"message": "Wrong game mode"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 	modifiers = request.GET.get("mods", "")
+	number_of_players = request.GET.get("playernumber", "")
 	modifier_list = game_manager_instance.parse_modifier(modifiers, game_mode)
 	if modifier_list is None:
 		return JsonResponse({"message": "Wrong game modifier"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -52,7 +50,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 	future = None
 	try:
 		await game_manager_instance.create_new_player_instance(username)
-		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list)
+		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list, number_of_players)
 		game_data = await asyncio.wait_for(future, timeout=3600)
 		return JsonResponse({"message": "Matchmaking succeeded", "data": game_data}, status=status.HTTP_200_OK)
 	except asyncio.TimeoutError:
@@ -74,7 +72,8 @@ async def get_out_matchmaking(username, game_manager_instance, matchmaking_insta
 	except Exception as e:
 		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-	
+
+@async_csrf_exempt
 @auth_required
 async def create_game(request, username=None):
 	game_manager_instance = Game_manager.game_manager_instance

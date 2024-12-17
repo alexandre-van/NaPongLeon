@@ -11,6 +11,7 @@ import { createCoins } from './object/coin.js';
 import { createStatue } from './object/statue.js';
 import { renderer, camera, scene } from './renderer.js';
 import { createScore } from './object/score.js';
+import { createName } from './object/name.js';
 
 async function init_map1()
 {
@@ -44,6 +45,7 @@ async function init(data, ws){
 	createSunlight();
 	createPlateauLight();
 	createScore();
+	createName(data.teams);
 	await padels_init(data.padel, data.game_mode);
 	await createPlateau(data.arena);
 	await map_choice(data.map);

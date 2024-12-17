@@ -27,9 +27,7 @@ for mode in game_mode_config.sections():
 	if not service_name:
 		raise Exception(f"{game_mode_file}: service name is missing for {mode} game mode")
 	number_of_players = game_mode_config[mode].get('number_of_players')
-	if not number_of_players:
-		raise Exception(f"{game_mode_file}: number_of_players is missing for {mode} game mode")
-	if not number_of_players.isdigit() or int(number_of_players) <= 0:
+	if number_of_players and (not number_of_players.isdigit() or int(number_of_players) <= 0):
 		raise Exception(f"{game_mode_file}: number_of_players must be a positive integer for {mode} game mode")
 	number_of_players = int(number_of_players)
 	team_names = game_mode_config[mode].get('team_names')

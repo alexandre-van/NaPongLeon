@@ -33,6 +33,7 @@ socket.onmessage = function(event) {
 			break;
 		case "export_data":
 			console.log("Game created! \nGame ID :", gameId);
+			//console.log("DATA : ", data)
 			init(data.data, socket);
 			break;
 		case "game_start":
@@ -40,11 +41,11 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			//console.log("Game state updated:", data);
+			console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":
-			console.log("CSSSSSSSSSSSSSSSSS", data);
+			console.log("Scored :", data);
 			if (data.team === "left") {
 				playerLscore++;
 			} else {

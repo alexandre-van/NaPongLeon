@@ -1,13 +1,13 @@
 from django.conf import settings
 from .models import Player, GameInstance, PlayerGameHistory, GamePlayer, GameScore
 from .utils.logger import logger
-from .private_room.private_room import PrivateRoom, GenerateUsername
 from admin_manager.admin_manager import AdminManager
 from .utils.timer import Timer
 from django.apps import apps
 from django.db import connection
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.utils import timezone
 import threading
 import asyncio
 import httpx
@@ -19,8 +19,6 @@ class Game_manager:
 
 	def __init__(self):
 		self.update_databases()
-		self.private_rooms = {}
-		self.username_generator = GenerateUsername()
 		self._task = None
 		self._is_running_mutex = threading.Lock()
 		self._current_games = {}
@@ -44,14 +42,6 @@ class Game_manager:
 						and  game_instance.status != 'aborted':
 						game_instance.abort_game()
 
-	def generate_username(self):
-		logger.debug("generate new username")
-		return self.username_generator.generate()
-
-	def add_private_room(self, username):
-		self.private_rooms[username] = PrivateRoom(username)
-		return self.private_rooms[username]
-
 	def add_new_game(self, game_id):
 		game = GameInstance.get_game(game_id)
 		if game.status and game.status not in ['finished', 'aborted']:
@@ -68,52 +58,20 @@ class Game_manager:
 					'players': players_list
 				}
 			
-	@sync_to_async
-	def fetch_player(self, username):
-		"""Récupère un joueur de la base de données de manière synchrone."""
-		return Player.objects.get(username=username)
-
-	@sync_to_async
-	def fetch_history(self, player):
-		"""Récupère l'historique des parties d'un joueur de manière synchrone."""
-		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
-
-	@sync_to_async
-	def extract_game_ids(self, history):
-		"""Extrait les game_id de l'historique et retourne une liste de tuples (game_date, game_id)."""
-		return [(entry.game_date, entry.game.game_id) for entry in history]
-
 	async def get_game_history(self, username):
-		logger.debug("Hello 2")
-		try:
-			player = await self.fetch_player(username)
-			logger.debug("Hello 3")
-			
-			# Récupérer l'historique
-			history = await self.fetch_history(player)
-			logger.debug("Hello 4")
-			
-			# Extraire les game_id
-			game_entries = await self.extract_game_ids(history)
-			logger.debug(f"Extracted game entries: {game_entries}")
-
-			# Construire l'historique avec les données de jeu
-			history_dict = {}
-			for game_date, game_id in game_entries:
-				logger.debug("Hello 5")
-				game_data = await self.get_game_data(game_id)
-				if game_data:
-					date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
-					history_dict[date_key] = game_data
-				logger.debug("Hello 6")
-			
-			return history_dict
-		except Player.DoesNotExist:
-			logger.error(f"Player '{username}' does not exist.")
-			return None
-		except Exception as e:
-			logger.error(f"Error fetching game history for player '{username}': {e}")
-			return None
+		player = await self.fetch_player(username)
+		history = await self.fetch_history(player)
+		if not history:
+			return {}
+		game_entries = await self.extract_game_ids(history)
+		logger.debug(f"Extracted game entries: {game_entries}")
+		history_dict = {}
+		for game_date, game_id in game_entries:
+			game_data = await self.get_game_data(game_id)
+			if game_data:
+				date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
+				history_dict[date_key] = game_data
+		return history_dict
 
 	async def create_game(self, game_mode, modifiers, players_list, teams_list, ia_authorizes, special_id):
 		# pars game_mode
@@ -152,7 +110,8 @@ class Game_manager:
 		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
 			ai_id = {
 				'private': str(uuid.uuid4()),
-				'public': str(uuid.uuid4())
+				'public': str(uuid.uuid4()),
+				'nickname': 'AI'
 			}
 			all_ai.append(ai_id)
 			special_id.append(ai_id)
@@ -164,9 +123,9 @@ class Game_manager:
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		game = None
-		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list, special_id)
+		game_connected = await self.connect_to_game(game_id, admin_id, game_mode, modifiers, players_list, teams_list, special_id)
 		if game_connected:
-			game = await self.create_new_game_instance(game_id, game_mode, players_list)
+			game = await self.create_new_game_instance(game_id, game_mode, modifiers_list, players_list)
 			if not game:
 				await self.disconnect_to_game(game_id, game_mode)
 		else:
@@ -179,9 +138,9 @@ class Game_manager:
 					'ai_id': ai_id,
 				}
 				async with httpx.AsyncClient() as client:
-					response = await client.post(ai_url, json=ids)  # Utilisation du paramètre json
+					response = await client.post(ai_url, json=ids)
 
-				if response.status_code == 200:  # Succès explicite
+				if response.status_code == 200:
 					continue
 				else:
 					logger.error(f"Failed to create AI {ai_id}: {response.status_code} - {response.text}")
@@ -196,7 +155,7 @@ class Game_manager:
 
 	# game notify
 
-	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
+	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
 		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
 		logger.debug(f"send to {game_service_url}: {send}")
@@ -208,6 +167,7 @@ class Game_manager:
 					'gameMode': game_mode,
 					'modifiers': modifiers,
 					'playersList': players,
+					'teamsList': teams_list,
 					'special_id': special_id
 				})
 			if response and response.status_code == 201 :
@@ -237,8 +197,8 @@ class Game_manager:
 
 	# game connection
 
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, special_id=None):
-		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, special_id)
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list=None, special_id=None):
+		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)
@@ -290,7 +250,6 @@ class Game_manager:
 	async def _game_manager_logic(self):
 		with self._current_games_mutex:
 			for game_id in self._current_games:
-				#logger.debug(f"{game_id} check status...")
 				result = await self._set_current_game_status(game_id)
 				if result:
 					game_id, game_mode = result
@@ -306,7 +265,6 @@ class Game_manager:
 			with self._is_running_mutex:
 				if not self._is_running:
 					break
-			#logger.debug("game_manager loop is running...")
 			await self._game_manager_logic()
 			await asyncio.sleep(1)
 
@@ -330,8 +288,8 @@ class Game_manager:
 
 	# db
 
-	async def create_new_game_instance(self, game_id, game_mode, players):
-		game = await self.create_game_instance(game_id, game_mode, players)
+	async def create_new_game_instance(self, game_id, game_mode, modifiers, players):
+		game = await self.create_game_instance(game_id, game_mode, modifiers, players)
 		if game:
 			for username in players:
 				await self.update_player_status(username, 'pending')
@@ -343,9 +301,9 @@ class Game_manager:
 		await self.create_player_instance(username)
 
 	@sync_to_async
-	def create_game_instance(self, game_id, game_mode, players):
+	def create_game_instance(self, game_id, game_mode, modifiers, players):
 		with transaction.atomic():
-			game_instance = GameInstance.create_game(game_id, game_mode, players)
+			game_instance = GameInstance.create_game(game_id, game_mode, modifiers, players)
 			Game_manager.game_manager_instance.add_new_game(game_id)
 			return game_instance
 		return None
@@ -381,33 +339,34 @@ class Game_manager:
 
 	@sync_to_async
 	def fetch_history(self, player):
-		return PlayerGameHistory.objects.filter(player=player).order_by('game_date')
+		history = list(PlayerGameHistory.objects.filter(player=player).order_by('game_date'))
+		if not history:
+			logger.warning(f"No history found for player {player.username}.")
+			return []
+		return history
+
 	
 	@sync_to_async
 	def extract_game_ids(self, history):
-		return [(entry.game_date, entry.game.game_id) for entry in history]
+		return [
+			(timezone.localtime(entry.game_date), entry.game.game_id) 
+			for entry in history
+		]
 
 	@sync_to_async
 	def get_game_data(self, game_id):
 		try:
-			# Récupérer l'instance du jeu
 			game_instance = GameInstance.get_game(game_id)
 			if not game_instance:
 				return None
-	
-			# Récupérer les joueurs et leur répartition par équipe
 			game_players = GamePlayer.objects.filter(game=game_instance)
 			teams_distribution = {}
 			for player_entry in game_players:
 				if player_entry.team_name not in teams_distribution:
 					teams_distribution[player_entry.team_name] = []
 				teams_distribution[player_entry.team_name].append(player_entry.player.username)
-	
-			# Récupérer les scores des équipes
 			game_scores = GameScore.objects.filter(game=game_instance)
 			teams_scores = {score.team_name: score.score for score in game_scores}
-	
-			# Construire les données du jeu
 			game_data = {
 				"game_id": game_instance.game_id,
 				"status": game_instance.status,
