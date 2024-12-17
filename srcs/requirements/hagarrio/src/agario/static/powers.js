@@ -86,7 +86,7 @@ export function displayPowerUpCollected(powerUp, isCollected = false) {
             effectText = isCollected ? 'Speed boost collected!' : 'Speed boost activated!';
             break;
         case 'slow_zone':
-            emoji = '🐌';
+            emoji = '🐢';
             effectText = isCollected ? 'Slow zone collected!' : 'Speed slowed!';
             break;
         case 'shield':
