@@ -41,6 +41,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 	if settings.GAME_MODES.get(game_mode) is None:
 		return JsonResponse({"message": "Wrong game mode"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 	modifiers = request.GET.get("mods", "")
+	number_of_players = request.GET.get("playernumber", "")
 	modifier_list = game_manager_instance.parse_modifier(modifiers, game_mode)
 	if modifier_list is None:
 		return JsonResponse({"message": "Wrong game modifier"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -48,7 +49,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 	future = None
 	try:
 		await game_manager_instance.create_new_player_instance(username)
-		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list)
+		future = await matchmaking_instance.add_player_request(username, game_mode, modifier_list, number_of_players)
 		game_data = await asyncio.wait_for(future, timeout=3600)
 		return JsonResponse({"message": "Matchmaking succeeded", "data": game_data}, status=status.HTTP_200_OK)
 	except asyncio.TimeoutError:

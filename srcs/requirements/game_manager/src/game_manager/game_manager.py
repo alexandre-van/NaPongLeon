@@ -206,7 +206,7 @@ class Game_manager:
 
 	# game connection
 
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list=None, special_id=None):
 		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
