@@ -44,6 +44,7 @@ async function init(data, ws){
 	createSunlight();
 	createPlateauLight();
 	createScore();
+	createName();
 	await padels_init(data.padel, data.game_mode);
 	await createPlateau(data.arena);
 	await map_choice(data.map);

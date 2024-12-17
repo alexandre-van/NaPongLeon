@@ -38,11 +38,11 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			//console.log("Game state updated:", data);
+			console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":
-			console.log("CSSSSSSSSSSSSSSSSS", data);
+			console.log("Scored :", data);
 			if (data.team === "left") {
 				playerLscore++;
 			} else {
