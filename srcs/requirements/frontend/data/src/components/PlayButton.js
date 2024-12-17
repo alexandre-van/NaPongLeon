@@ -13,8 +13,10 @@ const PlayButton = ({ gameMode, modifiers, number=0 }) => {
 			setLoading(true);
 			setErrorMessage(null); // Reset error message before starting
 
-			const mods = modifiers.join(",");
-			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}?playernumber=${number}`, 3600000);
+			let mods = modifiers.join(",");
+			if (mods === '')
+				mods = 'null';
+			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}&playernumber=${number}`, 3600000);
 			const gameId = response.data['data']['game_id'];
 			if (!gameId) throw new Error('Game ID is missing from the response.');
 			const gameServiceName = response.data['data']['service_name'];
