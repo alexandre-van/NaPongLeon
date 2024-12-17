@@ -198,7 +198,7 @@ class Matchmaking:
 		if player_request is None:
 			return None
 		with self._futures_mutex:
-			queue = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'])
+			queue = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'], player_request['number_of_players'])
 			self._queue[queue].remove(player_request)
 			if self._futures[username]:
 				future = self._futures[username]

@@ -166,7 +166,7 @@ export async function startGame() {
   		})
   		.then(data => {
   			console.log(data);
-			const gameId = response.data['data']['game_id'];
+			const gameId = data.data.game_id;
 			if (!gameId) throw new Error('Game ID is missing from the response.');
 			socket.send(JSON.stringify({
 				type: 'start_game',
