@@ -8,9 +8,25 @@ logger = logging.getLogger(__name__)
 
 async def send_notification(receiver_id, notification):
     channel_layer = get_channel_layer()
+    logger.debug(f"Sending notification to group user_{receiver_id}:\n\n\n\n\n\n\n")
     await channel_layer.group_send(
         f"user_{receiver_id}",
         notification.to_group_send_format()
+    )
+
+async def send_user_info(receiver_id, user_info):
+    channel_layer = get_channel_layer()
+    logger.debug(f"Sending user_info to group user_{receiver_id}:\n\n\n\n\n\n\n")
+    await channel_layer.group_send(
+        f"user_{receiver_id}",
+        {
+            'type': "friend_list_user_update",
+            "user": {
+                "id": user_info.id,
+                "username": user_info.username,
+                "status": True,
+            }
+        }
     )
 
 @database_sync_to_async
@@ -36,9 +52,9 @@ class FriendRequestService:
     async def accept_friend_request(user, notification_id):
         notification, from_user = await get_notification_and_sender(notification_id)
         if from_user:
+            await send_user_info(from_user.id, user)
             notification = await user.accept_friend_request(from_user, notification)
             if notification:
-                (f'if notification\nfrom_user = {from_user.username}\nfrom_user.id = {from_user.id}\n')
                 await send_notification(from_user.id, notification)
                 return True
         return False

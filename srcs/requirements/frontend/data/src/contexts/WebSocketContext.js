@@ -76,10 +76,9 @@ const getWindowURLinfo = () => {
 
 export const WebSocketProvider = ({ children }) => {
   const [friends, setFriends] = useState([]);
-  const [onlineFriends, setOnlineFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { isAuthenticated, logout } = useUser();
+  const { user, isAuthenticated, logout, updateUser, checkFriends } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -106,8 +105,18 @@ export const WebSocketProvider = ({ children }) => {
         console.log('data: ', data);
 
         switch (data.type) {
-          case 'friend_list_update':
-            setFriends(data.friends);
+          case 'friend_list_user_update':
+            console.log('friend_list_user_update', data.user);
+            if (user && user.friends) {
+              const updatedFriends = user.friends.map(friend => 
+                friend.id === data.id ? {
+                  ...friend, username: data.username, status: data.status
+                } : friend
+              );
+
+              updateUser({ friends: updatedFriends });
+            }
+            checkFriends();
             break;
           case 'notification':
             console.log('notification_type = ', data.notification_type);

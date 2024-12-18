@@ -130,7 +130,6 @@ class CustomUser(AbstractUser):
                 status=FriendshipStatus.PENDING
             ).first()
             if friendship:
-                (f"dans le if de friendship friendship.status={friendship.status}\n")
                 friendship.status = FriendshipStatus.ACCEPTED
                 friendship.save()
             if notification:
