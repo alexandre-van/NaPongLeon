@@ -48,7 +48,7 @@
             z-index: 1000;
             border-radius: 0;
         }
-        #createGameBtn {
+        #joinMatchmakingBtn {
             padding: 15px 30px;
             font-size: 1.2em;
             background-color: #4CAF50;
@@ -65,10 +65,34 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-        #createGameBtn:hover {
+        #leaveMatchmakingBtn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            outline: none;
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #joinMatchmakingBtn:hover {
             background-color: #45a049;
             transform: translate(-50%, -50%) scale(1.1);
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }
+
+        #leaveMatchmakingBtn:hover {
+            background-color: #f44336;
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 20px rgba(211, 47, 47, 0.8);
         }
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -357,7 +381,8 @@
         <div id="waitingRoomTitle">
             <h1>Waiting Room</h1>
         </div>
-        <button id="createGameBtn">Create New Game</button>
+        <button id="joinMatchmakingBtn">Join matchmaking</button>
+        <button id="leaveMatchmakingBtn" style="display: none;">Leave matchmaking</button>
         <div id="gameInfoContainer">
             <table class="gameList">
                 <thead>
