@@ -99,7 +99,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def receive(self, text_data):
 		data = json.loads(text_data)
-		
+
 		if data['type'] == 'start_game':
 			self.current_game_id = data['game_id']
 			# Recuperer la partie demander

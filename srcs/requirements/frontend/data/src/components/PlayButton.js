@@ -11,50 +11,44 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 	const handlePlayButton = async () => {
 		try {
 			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
+			setErrorMessage(null);
 
 			let mods = modifiers.join(",");
 			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}&playernumber=${number}`, 3600000);
 			const gameId = response.data['data']['game_id'];
-			if (!gameId) throw new Error('Game ID is missing from the response.');
+			if (!gameId) return;
 			const gameServiceName = response.data['data']['service_name'];
 			if (!gameServiceName) throw new Error('Game service name is missing from the response.');
-			// Stocker le gameId dans window.gameInfo
 			if (!window.gameInfo) {
 				window.gameInfo = {};
 			}
 			window.gameInfo.gameId = gameId;
 
-			// Construire l'URL du jeu avec le gameId
 			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
 
 			navigate("/ingame");
 
 			console.log(gameUrl);
-			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;
-			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
-			iframe.style.top = "75px";                 // Aligner en haut de la page
-			iframe.style.left = "0";                // Aligner à gauche de la page
-			iframe.style.width = "100vw";           // Largeur : 100% de la fenêtre
-			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
-			iframe.style.border = "none";           // Supprimer les bordures
-			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
-			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+			iframe.style.position = "fixed";
+			iframe.style.top = "75px";
+			iframe.style.left = "0";
+			iframe.style.width = "100vw";
+			iframe.style.height = "93vh";
+			iframe.style.border = "none";
+			iframe.style.zIndex = "9999";
+			iframe.sandbox = "allow-scripts allow-same-origin";
 
-
-			// Supprimer l'ancienne iframe s'il en existe une
 			const existingIframe = document.querySelector('#gameFrame');
 			if (existingIframe) {
 				existingIframe.remove();
 			}
-
 			iframe.id = "gameFrame";
 			document.body.appendChild(iframe);
 		} catch (error) {
 			console.error(error.message);
-			setErrorMessage(error.message); // Afficher l'erreur à l'utilisateur
+			setErrorMessage(error.message);
 		} finally {
 			setLoading(false);
 		}
@@ -63,11 +57,9 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 	const handleCancelMatchmaking = async () => {
 		try {
 			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
+			setErrorMessage(null);
 			const game_mode = "";
 			await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
-
-			// Optionnel : retirer l'iframe en cas d'annulation
 			const iframe = document.querySelector('#gameFrame');
 			if (iframe) {
 				iframe.remove();

@@ -63,12 +63,13 @@ async def get_in_matchmaking(request, game_mode, username=None):
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 async def get_out_matchmaking(username, game_manager_instance, matchmaking_instance):
+	logger.debug("get_out_matchmaking")
 	if matchmaking_instance is None:
 		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	try:
 		await game_manager_instance.create_new_player_instance(username)
 		await matchmaking_instance.remove_player_request(username)
-		return JsonResponse({"message": "Get out matchmaking succeeded"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		return JsonResponse({"message": "Get out matchmaking succeeded"}, status=status.HTTP_200_OK)
 	except Exception as e:
 		logger.error(f"Error to get out matchmaking for user {username}: {str(e)}")
 		return JsonResponse({"message": "Matchmaking error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
