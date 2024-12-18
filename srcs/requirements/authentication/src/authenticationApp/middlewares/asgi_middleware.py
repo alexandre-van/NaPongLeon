@@ -404,7 +404,7 @@ class CsrfAsgiMiddleware:
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
-#            '/api/authentication/users/',
+            '/api/authentication/users/', #TO DO REMOVE ???
             '/api/authentication/users/password-reset/',
             '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
             '/api/authentication/oauth/42/callback/',
