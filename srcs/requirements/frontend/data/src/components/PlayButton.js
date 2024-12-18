@@ -34,7 +34,7 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
 			iframe.style.top = "75px";                 // Aligner en haut de la page
 			iframe.style.left = "0";                // Aligner à gauche de la page
-			iframe.style.width = "80vw";           // Largeur : 100% de la fenêtre
+			iframe.style.width = "100vw";           // Largeur : 100% de la fenêtre
 			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
 			iframe.style.border = "none";           // Supprimer les bordures
 			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
