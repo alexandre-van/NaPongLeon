@@ -1,9 +1,4 @@
-import Avatar from '../components/Avatar.js';
-import PlayButton from '../components/PlayButton.js';
-
 import { Link } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext.js';
-import FriendsList from '../components/FriendsList.js';
 import logo from '../elements/logo.png'
 import { useNavigate } from "react-router-dom";
 
@@ -11,13 +6,15 @@ export default function InGame() {
     const navigate = useNavigate();
 
     const Cancel = async () => {
-        const iframe = document.querySelector('#gameFrame');
-		if (iframe) {
-			iframe.remove();
-		}
-        navigate("/");
-
-	};
+      const iframe = document.querySelector('#gameFrame');
+      if (iframe) {
+          iframe.contentWindow.postMessage('stop_game', '*');
+          await new Promise(resolve => setTimeout(resolve, 100));
+          iframe.remove();
+      }
+      navigate("/");
+    };
+  
 
 
   return (

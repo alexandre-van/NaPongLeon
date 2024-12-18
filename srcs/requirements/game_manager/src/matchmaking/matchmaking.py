@@ -26,7 +26,8 @@ class Matchmaking:
 		with self._queue_mutex:
 			await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 			future = await self._remove_player_request_in_queue(username)
-			future.set_result({'game_id': None})
+			if future:
+				future.set_result({'game_id': None})
 
 	async def add_player_request(self, username, game_mode, modifiers, number_of_players):
 		future = asyncio.Future()
@@ -39,10 +40,6 @@ class Matchmaking:
 		with self._futures_mutex:
 				self._futures[username] = future
 		queue_name = self.generate_queue_name(game_mode, modifiers, number_of_players)
-		if number_of_players == '':
-			number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
-		else:
-			number_of_players *= self.GAME_MODES.get(game_mode).get('team_size')
 		with self._queue_mutex:
 			if queue_name not in self._queue:
 				self._queue[queue_name] = []
@@ -61,11 +58,12 @@ class Matchmaking:
 		for i, gm in enumerate(self.GAME_MODES):
 			if gm == game_mode:
 				queue_name = chr(i + ord('0'))
-				valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
-				for y, m in enumerate(valid_modifiers):
-					if m in modifiers_list:
-						queue_name += chr(y + ord('0'))
-				break
+				if self.GAME_MODES[game_mode]['modifier_list']:
+					valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
+					for y, m in enumerate(valid_modifiers):
+						if m in modifiers_list:
+							queue_name += chr(y + ord('0'))
+					break
 		return queue_name
 
 
@@ -80,7 +78,9 @@ class Matchmaking:
 					queue_selected.append(player_request)
 					game_mode = player_request.get('game_mode')
 					modifiers = player_request.get('modifiers')
-					number_of_players = player_request.get('number_of_players')
+					number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
+					if not number_of_players:
+						number_of_players = player_request.get('number_of_players')
 					if len(queue_selected) == number_of_players:
 						await self.notify(game_mode, modifiers, queue_selected)
 						if not self._queue[queue]:
@@ -196,11 +196,14 @@ class Matchmaking:
 		if player_request is None:
 			return None
 		with self._futures_mutex:
-			queue = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'])
-			self._queue[queue].remove(player_request)
+			queuename = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'], player_request['number_of_players'])
+			queue = self._queue.get(queuename)
+			if queue:
+				queue.remove(player_request)
 			if self._futures[username]:
-				future = self._futures[username]
-				del self._futures[username]
+				future = self._futures.get(username)
+				if future:
+					del self._futures[username]
 				return future
 
 # Initialisation singleton

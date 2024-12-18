@@ -54,9 +54,9 @@ socket.onmessage = function(event) {
 			updateScore(playerLscore, playerRscore);
 			break;
 		case "game_end":
-			//socket.close();
 			console.log("Game ended. Reason:", data.reason);
-			stopGame()
+			if (socket.readyState === WebSocket.OPEN)
+				socket.close();
 			break;
 		default:
 			console.log("Unknown message type:", data.type);
@@ -65,23 +65,18 @@ socket.onmessage = function(event) {
 
 socket.onclose = function(event) {
 	console.log("WebSocket connection closed.", event);
-	stopGame()
 }; 
 
 socket.onerror = function(error) {
 	console.error("WebSocket error:", error);
-	stopGame()
 };
 
 function stopGame() {
-	console.log("Jeu terminé.");
-	socket.close();
-	stopAnimation();
-	cleanup();
-	
-	window.parent.postMessage('game_end', '*');
+    if (socket.readyState === WebSocket.OPEN)
+        socket.close();
+    stopAnimation();
+    cleanup();
 }
-
 
 
 function sendMove(input) {
@@ -90,5 +85,12 @@ function sendMove(input) {
 		input: input
 	}));
 }
+
+window.addEventListener('message', (event) => {
+    if (event.data === 'stop_game') {
+        stopGame();
+    }
+});
+
 
 export { sendMove };

@@ -11,27 +11,24 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 	const handlePlayButton = async () => {
 		try {
 			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
+			setErrorMessage(null);
 
 			let mods = modifiers.join(",");
 			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}&playernumber=${number}`, 3600000);
 			const gameId = response.data['data']['game_id'];
-			if (!gameId) throw new Error('Game ID is missing from the response.');
+			if (!gameId) return;
 			const gameServiceName = response.data['data']['service_name'];
 			if (!gameServiceName) throw new Error('Game service name is missing from the response.');
-			// Stocker le gameId dans window.gameInfo
 			if (!window.gameInfo) {
 				window.gameInfo = {};
 			}
 			window.gameInfo.gameId = gameId;
 
-			// Construire l'URL du jeu avec le gameId
 			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
 
 			navigate("/ingame");
 
 			console.log(gameUrl);
-			// Créer une iframe pour afficher le jeu
 			const iframe = document.createElement('iframe');
 			iframe.src = gameUrl;
 			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
@@ -51,12 +48,11 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 			if (existingIframe) {
 				existingIframe.remove();
 			}
-
 			iframe.id = "gameFrame";
 			document.body.appendChild(iframe);
 		} catch (error) {
 			console.error(error.message);
-			setErrorMessage(error.message); // Afficher l'erreur à l'utilisateur
+			setErrorMessage(error.message);
 		} finally {
 			setLoading(false);
 		}
@@ -65,11 +61,9 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 	const handleCancelMatchmaking = async () => {
 		try {
 			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
+			setErrorMessage(null);
 			const game_mode = "";
 			await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
-
-			// Optionnel : retirer l'iframe en cas d'annulation
 			const iframe = document.querySelector('#gameFrame');
 			if (iframe) {
 				iframe.remove();
