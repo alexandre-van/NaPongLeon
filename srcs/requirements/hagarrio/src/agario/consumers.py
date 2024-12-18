@@ -15,6 +15,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		super().__init__(*args, **kwargs)
 		self.player_id = None
 		self.current_game_id = None
+		self.last_status = None
 
 	@auth_required
 	async def connect(self, username=None, nickname=None):
@@ -28,7 +29,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			special_id = segments[4]
 		if game_id and special_id:
 			await self.special_connection(game_id, special_id)
-			return 
+			return
 		if username is None:
 			logger.warning(f'An unauthorized connection has been received')
 			return
@@ -51,7 +52,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect(self, close_code):
 		logger.info(f"Player {self.player_id} disconnected with code {close_code}")
-		
+
 		if self.player_id in GameConsumer.players:
 			GameConsumer.player_count -= 1
 			del GameConsumer.players[self.player_id]
@@ -91,11 +92,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 				# Informer les autres joueurs de la déconnexion
 				logger.debug(f"Broadcasting updated game info after player disconnect")
 				await self.broadcast_games_info_waitingroom()
-				
-				# Si la partie n'a plus qu'un joueur, on met à jour son statut
-				if len(game.players) == 1:
-					game.status = "custom"
-					logger.info(f"Game {self.current_game_id} returned to custom status")
 
 	async def receive(self, text_data):
 		data = json.loads(text_data)
@@ -108,6 +104,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				# Se connecter a la partie
 				authorized = game.add_player(self.player_id, self.player_name)
 				if authorized:
+					await self.notify_admin_player_connection(self.current_game_id, self.player_id)
 					await self.broadcast_games_info_waitingroom()
 					await self.send(text_data=json.dumps({
 						'type': 'game_started',
@@ -178,22 +175,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if game_id not in GameConsumer.active_games:
 			logger.error(f"Game {game_id} not found in active games.")
 			return
-	
 		game = GameConsumer.active_games[game_id]
-	
-		# Assurez-vous que self.player_id existe dans les joueurs
-		if self.player_id not in game.players:
-			logger.error(f"Player {self.player_id} not found in game {game_id}.")
-			return
-	
+		if game.status != self.last_status:
+			win_team = None
+			score = None
+			if game.status == 'finished':
+				win_team = None
+				score = None
+			await self.notify_admin_game_status(game_id, game.status, win_team, score)
 		message = {
 			'type': state_update.get('type'),
 			'game_id': state_update.get('game_id'),
 			'players': state_update.get('players', {}),
-			'yourPlayerName': game.players[self.player_id].get('name', 'Unknown'),
-			'yourPlayerId': self.player_id
 		}
-	
+
 		# Ajout des mises à jour spécifiques
 		if state_update['type'] == 'food_update':
 			message.update({'food': state_update.get('food', [])})
@@ -209,11 +204,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 			})
 		elif state_update['type'] == 'player_eat_other_player':
 			eaten_player_id = state_update.get('other_player_id')
-			
+
 			if not eaten_player_id:
 				logger.error("Missing 'other_player_id' in state update.")
 				return
-	
+
 			# Notifier les joueurs restants
 			for player_id in game.players:
 				if player_id in GameConsumer.players:
@@ -223,12 +218,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 						'players': game.players,
 						'player_eaten': eaten_player_id
 					}))
-	
+
 			# Gérer le joueur mangé
 			if eaten_player_id in GameConsumer.players:
 				eaten_player = GameConsumer.players[eaten_player_id]
 				eaten_player.current_game_id = None
-				
+
 				# Retourner le joueur dans la salle d'attente
 				await eaten_player.send(text_data=json.dumps({
 					'type': 'return_to_waiting_room',
@@ -237,9 +232,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 				await eaten_player.send_games_info()
 			else:
 				logger.warning(f"Eaten player {eaten_player_id} not found in active players.")
-	
+
 			return  # Sortir après avoir géré ce type d'update
-	
+
 		# Envoie la mise à jour à tous les joueurs
 		for player_id in game.players:
 			if player_id in GameConsumer.players:
@@ -260,3 +255,78 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# Log de création de la partie
 		logger.info(f"New game created with ID: {game_id}")
 		return game_id
+
+	async def notify_admin_player_connection(self, game_id, username, connection_type='player'):
+		game = GameConsumer.active_games.get(game_id)
+		if not game:
+			logger.warning(f"Game {game_id} not found.")
+			return
+	
+		admin_consumer = getattr(game, 'admin_consumer', None)
+		if admin_consumer:
+			message_type = f'{connection_type}_connection'
+			await admin_consumer.send(text_data=json.dumps({
+				'type': message_type,
+				'username': username,
+			}))
+			logger.info(f"Notified admin of game {game_id} about {message_type} of {username}.")
+		else:
+			logger.warning(f"Admin for game {game_id} is not connected.")
+
+	async def notify_admin_player_disconnection(self, game_id, username, disconnection_type='player'):
+		game = GameConsumer.active_games.get(game_id)
+		if not game:
+			logger.warning(f"Game {game_id} not found.")
+			return
+	
+		admin_consumer = getattr(game, 'admin_consumer', None)
+		if admin_consumer:
+			message_type = f'{disconnection_type}_disconnection'
+			await admin_consumer.send(text_data=json.dumps({
+				'type': message_type,
+				'username': username,
+			}))
+			logger.info(f"Notified admin of game {game_id} about {message_type} of {username}.")
+		else:
+			logger.warning(f"Admin for game {game_id} is not connected.")
+
+	async def notify_admin_game_status(self, game_id, status, win_team=None, score=None):
+		game = GameConsumer.active_games.get(game_id)
+		if not game:
+			logger.warning(f"Game {game_id} not found.")
+			return
+
+		admin_consumer = getattr(game, 'admin_consumer', None)
+		if admin_consumer:
+			payload = {
+				'type': 'export_status',
+				'status': status,
+			}
+
+			if status == 'finished' or status == 'aborted':
+				if win_team:
+					payload['team'] = win_team
+				if score is not None:
+					payload['score'] = score
+
+			await admin_consumer.send(text_data=json.dumps(payload))
+			logger.info(f"Notified admin of game {game_id} about game status: {status}.")
+		else:
+			logger.warning(f"Admin for game {game_id} is not connected.")
+
+	async def notify_admin_score_update(self, game_id, team, score):
+		game = GameConsumer.active_games.get(game_id)
+		if not game:
+			logger.warning(f"Game {game_id} not found.")
+			return
+
+		admin_consumer = getattr(game, 'admin_consumer', None)
+		if admin_consumer:
+			await admin_consumer.send(text_data=json.dumps({
+				'type': 'update_score',
+				'team': team,
+				'score': score
+			}))
+			logger.info(f"Notified admin of game {game_id} about score update for team {team}.")
+		else:
+			logger.warning(f"Admin for game {game_id} is not connected.")
