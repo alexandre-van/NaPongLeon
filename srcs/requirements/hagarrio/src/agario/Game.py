@@ -60,7 +60,7 @@ class Game:
 		self.player_inputs = {}
 		self.player_movements = {}
 		self.PLAYER_SPEED = 600
-		self.status = "custom"
+		self.status = "waiting"
 		self.game_loop_task = None
 		self.initialize_food()
 		self.power_ups = []
@@ -136,6 +136,7 @@ class Game:
 	def add_player(self, player_id, player_name):
 		if player_id not in self.expected_players:
 			return False
+		logger.debug(f"{player_id} : {player_name}")
 		self.players[player_id] = {
 			'id': player_id,
 			'name': player_name,
@@ -149,8 +150,8 @@ class Game:
 			'score_multiplier': 1,
 			'inventory': []
 		}
-		if len(self.players) > 4:
-			self.status = "in_progress"
+		if len(self.players) == len(self.expected_players):
+			self.status = 'in_progress'
 		return True
 
 	def remove_player(self, player_id):
@@ -161,7 +162,7 @@ class Game:
 				del self.player_inputs[player_id]
 			if player_id in self.player_movements:
 				del self.player_movements[player_id]
-		if len(self.players) == 0:
+		if len(self.players) <= 1:
 			self.status = "finished"
 
 	def get_food_state(self):
@@ -184,7 +185,6 @@ class Game:
 	def update_state(self, food_changes=None):
 		"""Retourne l'état mis à jour soit des joueurs soit de la nourriture"""
 		game_state = self.get_food_state() if food_changes == True else self.get_players_state()
-		logger.debug(f"game_state = {game_state}")
 		return game_state
 
 	def handle_player_input(self, player_id, key, is_key_down):
@@ -209,18 +209,15 @@ class Game:
 			logger.debug("broadcast_callback...")
 			await broadcast_callback(self.game_id, self.update_state(food_changes=True))
 			logger.debug("game loop started !")
-			while self.status != "finished":
-				while len(self.players) != 2:
-					logger.debug(f"players : {self.players}")
+			while self.status != "finished" and self.status != 'aborted':
+				while self.status == 'waiting':
 					await asyncio.sleep(1/60)
 				current_time = asyncio.get_event_loop().time()
 				delta_time = current_time - last_update
 				last_update = current_time
-
 				positions_updated = self.update_positions(delta_time)
 				if positions_updated:
 					await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
-
 				player_ids = list(self.players.keys())     # Créer une copie des IDs des joueurs pour l'itération
 				players_eaten = []                        # Liste pour stocker les joueurs qui se font manger
 				# Vérifier les collisions entre les joueurs
@@ -266,9 +263,8 @@ class Game:
 							'power_ups': self.power_ups
 						})
 				await asyncio.sleep(1/60)
-
-			if self.status == "finished":
-				"""TODO: Send final state to all players"""
+			self.status = 'finished'
+			await broadcast_callback(self.game_id, self.update_state(food_changes=False))
 		except Exception as e:
 			logger.error(f"Error in game loop for game {self.game_id}: {e}")
 
@@ -431,7 +427,8 @@ class Game:
 				pass
 			except Exception as e:
 				logger.error(f"Error while cancelling game loop for game {self.game_id}: {e}")
-		self.status = "finished"
+		if self.status != "finished":
+			self.status = "aborted"
 		self.players.clear()
 		self.food.clear()
 		self.player_inputs.clear()

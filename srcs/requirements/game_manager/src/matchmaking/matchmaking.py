@@ -162,7 +162,7 @@ class Matchmaking:
 				if not self._is_running:
 					break
 			await self.matchmaking_logic()
-			await asyncio.sleep(1)
+			await asyncio.sleep(0.5)
 
 	async def start_matchmaking_loop(self):
 		with self._is_running_mutex:

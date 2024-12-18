@@ -404,7 +404,7 @@ class CsrfAsgiMiddleware:
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
-            '/api/authentication/users/', #TO DO REMOVE ???
+            '/api/authentication/users/',
             '/api/authentication/users/password-reset/',
             '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
             '/api/authentication/oauth/42/callback/',
@@ -419,6 +419,7 @@ class CsrfAsgiMiddleware:
         
             # Vérifie si le chemin correspond à l'un des patterns exemptés
         for pattern in exempt_patterns:
+            logger.debug(f'DANS LE FOR LOOP: pattern: {pattern}')
             if self.path_matches_pattern(request.path, pattern):
                 logger.debug(f'Path matches exempt pattern: {pattern}')
                 return await self.get_response(scope, receive, send)

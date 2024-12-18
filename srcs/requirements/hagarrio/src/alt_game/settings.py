@@ -194,6 +194,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'debug.log'),
             'formatter': 'verbose',
+            'mode': 'w',
         },
     },
     'loggers': {
