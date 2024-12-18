@@ -27,9 +27,7 @@ SECRET_KEY = 'django-insecure-5hkm+*+le7-gi=x^&&o4s2vk7@g2qb89+yl=a@z8*pykf26*9p
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '*',
-    #'localhost',
-    #'authentication', # Name of this container's service
+	'*',
 ]
 
 # Application definition
@@ -221,7 +219,7 @@ LANGUAGE_CODE = 'en-us'
 
 SITE_URL = 'http://localhost:8080'
 
-TIME_ZONE = 'Europe/Paris'
+TIME_ZONE = 'CET'
 
 USE_I18N = True
 

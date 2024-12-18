@@ -3,11 +3,13 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.core.serializers.json import DjangoJSONEncoder
 
 import logging
+from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 def HttpResponseJD(message, status, additionnal_data=None):
     key = 'message' if status in [200, 201] else 'error'
     response_data = {key: message}
+    current_time = timezone.now()
 
     if additionnal_data is not None:
         if isinstance(additionnal_data, dict):
@@ -21,6 +23,7 @@ def HttpResponseJD(message, status, additionnal_data=None):
         content_type='application/json'
     )
     logger.debug(f"HttpResponseJD = {response}")
+    logger.debug(f"HttpResponseJD at {current_time} = {response}")
     return response
 
 
