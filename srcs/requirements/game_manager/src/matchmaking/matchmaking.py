@@ -25,6 +25,7 @@ class Matchmaking:
 	async def remove_player_request(self, username):
 		with self._queue_mutex:
 			await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
+			logger.debug("user as really get out the matchmaking")
 			future = await self._remove_player_request_in_queue(username)
 			if future:
 				future.set_result({'game_id': None})
