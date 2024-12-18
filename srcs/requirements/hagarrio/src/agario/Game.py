@@ -211,7 +211,7 @@ class Game:
 			logger.debug("game loop started !")
 			while self.status != "finished":
 				while len(self.players) != 2:
-					logger.debug("waiting")
+					logger.debug(f"players : {self.players}")
 					await asyncio.sleep(1/60)
 				current_time = asyncio.get_event_loop().time()
 				delta_time = current_time - last_update

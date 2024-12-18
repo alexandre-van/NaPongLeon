@@ -125,28 +125,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 						'message': 'Unauthorized'
 					}))
 
-		elif data['type'] == 'join_game':
-			game_id = data['gameId']
-			if game_id in GameConsumer.active_games:
-				game = GameConsumer.active_games[game_id]
-				if game.status == "custom":
-					self.current_game_id = game_id
-					game.add_player(self.player_id, self.player_name)
-					await self.broadcast_games_info_waitingroom()
-					
-					# Envoyer l'état initial au joueur qui rejoint
-					await self.send(text_data=json.dumps({
-						'type': 'game_joined',
-						'gameId': game_id,
-						'mapWidth': game.map_width,
-						'mapHeight': game.map_height,
-						'maxFood': game.max_food,
-						'players': game.players,
-						'food': game.food,
-						'yourPlayerName': self.player_name,
-						'yourPlayerId': self.player_id
-					}))
-
 		elif data['type'] == 'input':
 			if self.current_game_id in GameConsumer.active_games:
 				game = GameConsumer.active_games[self.current_game_id]
