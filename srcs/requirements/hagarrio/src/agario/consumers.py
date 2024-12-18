@@ -171,6 +171,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
+		logger.debug("broadcast_game_state")
 		"""Diffuse les mises à jour du jeu aux joueurs"""
 		if game_id not in GameConsumer.active_games:
 			logger.error(f"Game {game_id} not found in active games.")

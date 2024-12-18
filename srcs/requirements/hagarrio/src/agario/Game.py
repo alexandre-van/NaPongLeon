@@ -150,6 +150,8 @@ class Game:
 			'score_multiplier': 1,
 			'inventory': []
 		}
+		if len(self.players) == len(self.expected_players):
+			self.status = 'in_progress'
 		return True
 
 	def remove_player(self, player_id):
@@ -207,10 +209,9 @@ class Game:
 			logger.debug("broadcast_callback...")
 			await broadcast_callback(self.game_id, self.update_state(food_changes=True))
 			logger.debug("game loop started !")
-			while self.status != "finished" or self.status != 'aborted':
-				while len(self.players) < 2:
+			while self.status != "finished" and self.status != 'aborted':
+				while self.status == 'waiting':
 					await asyncio.sleep(1/60)
-				self.status = "in_progress"
 				current_time = asyncio.get_event_loop().time()
 				delta_time = current_time - last_update
 				last_update = current_time
@@ -262,6 +263,8 @@ class Game:
 							'power_ups': self.power_ups
 						})
 				await asyncio.sleep(1/60)
+			self.status = 'finished'
+			await broadcast_callback(self.game_id, self.update_state(food_changes=False))
 		except Exception as e:
 			logger.error(f"Error in game loop for game {self.game_id}: {e}")
 
