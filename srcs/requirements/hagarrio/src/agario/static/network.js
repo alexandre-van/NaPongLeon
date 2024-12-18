@@ -152,27 +152,54 @@ export function sendPlayerMove(playerId, key, isKeyDown) {
 	}
 }
 
-export async function startGame() {
+
+export async function startMatchmaking() {
 	if (!socket || socket.readyState !== WebSocket.OPEN) {
 		console.error('Socket not ready');
-		return;
+		return false;
 	}
-	fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=HAGARRIO`)
-  		.then(response => {
-  			if (!response.ok) {
-  				throw new Error('Network response was not ok');
-  			}
-  				return response.json();
-  		})
-  		.then(data => {
-  			console.log(data);
-			const gameId = data.data.game_id;
-			if (!gameId) throw new Error('Game ID is missing from the response.');
-			socket.send(JSON.stringify({
-				type: 'start_game',
-				game_id: gameId
-			}));
-  		})
+	try {
+		const response = await fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=HAGARRIO`);
+		if (!response.ok) {
+			console.error('Network response was not ok');
+			return false;
+		}
+		const data = await response.json();
+		console.log(data);
+		const gameId = data.data.game_id;
+		if (!gameId) {
+			console.error('Game ID is missing from the response.');
+			return false;
+		}
+		socket.send(JSON.stringify({
+			type: 'start_game',
+			game_id: gameId
+		}));
+		return true;
+	} catch (error) {
+		console.error('An error occurred:', error);
+		return false;
+	}
+}
+
+export async function stopMatchmaking() {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		console.error('Socket not ready');
+		return false; // Retourne false si le socket n'est pas prêt
+	}
+	try {
+		const response = await fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=`);
+		if (!response.ok) {
+			console.error('Network response was not ok');
+			return false; // Retourne false si la réponse réseau est invalide
+		}
+		const data = await response.json();
+		console.log(data);
+		return true; // Retourne true si tout s'est bien passé
+	} catch (error) {
+		console.error('An error occurred:', error);
+		return false; // Retourne false en cas d'erreur
+	}
 }
 
 export function joinGame(gameId) {
