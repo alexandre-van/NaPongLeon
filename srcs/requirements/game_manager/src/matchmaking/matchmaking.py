@@ -32,7 +32,9 @@ class Matchmaking:
 	async def add_player_request(self, username, game_mode, modifiers, number_of_players):
 		future = asyncio.Future()
 		status = await Game_manager.game_manager_instance.get_player_status(username)
-		if (status != 'inactive'):
+		if (status != 'in_queue'):
+			await self.remove_player_request(username)
+		elif (status != 'inactive'):
 			logger.debug(f"Player {username} cannot join the matchmaking queue because their current status is '{status}'. Status must be 'inactive' to join.")
 			future.set_result({'game_id': None})
 			return future
