@@ -1,8 +1,6 @@
 from ..utils.logger import logger
 from .data import game_modes_data
 from ..tournament.tournament import Tournament
-import uuid
-import copy
 
 class Tournament_manager:
 	def __init__(self) :
