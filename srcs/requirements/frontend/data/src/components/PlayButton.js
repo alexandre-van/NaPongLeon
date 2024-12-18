@@ -37,11 +37,13 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
 			iframe.style.top = "75px";                 // Aligner en haut de la page
 			iframe.style.left = "0";                // Aligner à gauche de la page
-			iframe.style.width = "100vw";           // Largeur : 100% de la fenêtre
+			iframe.style.width = "80vw";           // Largeur : 100% de la fenêtre
 			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
 			iframe.style.border = "none";           // Supprimer les bordures
 			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
 			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+
+			iframe.scrolling = "no";
 
 
 			// Supprimer l'ancienne iframe s'il en existe une
@@ -108,7 +110,7 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 		<>
 			{/* Bouton "Play" visible uniquement quand pas en chargement */}
 			{!loading && (
-				<button onClick={handlePlayButton} style={{ marginTop: "10px" }}>
+				<button className="play-button-mode btn btn-outline-warning" onClick={handlePlayButton} style={{ marginTop: "10px" }}>
 					Play {gameMode}
 				</button>
 			)}
@@ -117,7 +119,7 @@ const PlayButton = ({ gameMode, modifiers, number='' }) => {
 			{loading && (
 				<>
 					<p>Waiting...
-					<button
+					<button 
 						onClick={handleCancelMatchmaking}
 						style={{
 							marginLeft: "10px",

@@ -24,8 +24,8 @@ export default function InGame() {
     <div>
       <div className="topnav">
         <Link className="active"><img className="logo" src={logo}/></Link>
-        <button onClick={Cancel} >EXIT</button>
-        <h1>Wait the game please</h1>
+        <button className="exit-button btn btn-outline-warning" type="button" onClick={Cancel} >EXIT</button>
+        <h1 className="wait">Wait the game please</h1>
       </div>
     </div>
   );
