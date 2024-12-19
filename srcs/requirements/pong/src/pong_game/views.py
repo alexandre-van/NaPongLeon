@@ -19,8 +19,11 @@ def newgame(request):
 			modifiers = data.get('modifiers')
 			players_list = data.get('playersList')
 			teamsList = data.get('teamsList')
+   
+   
+   
 			special_id = data.get('special_id')
-			if game_manager.add_games_room(game_id, admin_id, game_mode, modifiers, players_list, special_id) is None:
+			if game_manager.add_games_room(game_id, admin_id, game_mode, modifiers, players_list, special_id, teamsList) is None:
 				return JsonResponse({'error': 'Invalid game mode'}, status=406)
 			logger.debug(f"Reçu: gameId={game_id}, adminId={admin_id}, gameMode={game_mode}, playersList={players_list}")
 			return JsonResponse({'status': 'success'}, status=201)

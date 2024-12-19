@@ -54,6 +54,7 @@ socket.onmessage = function(event) {
 			updateScore(playerLscore, playerRscore);
 			break;
 		case "game_end":
+			//printWinner(data.winner);
 			console.log("Game ended. Reason:", data.reason);
 			if (socket.readyState === WebSocket.OPEN)
 				socket.close();

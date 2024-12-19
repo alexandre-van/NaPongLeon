@@ -4,12 +4,14 @@ from ..utils.logger import logger
 from .getdata import get_data
 
 class Game:
-	def __init__(self, players, game_mode, modifiers):
+	def __init__(self, players, game_mode, modifiers, teamlist): # add teams list
 		from .timer import Timer
 		import random
 
 		sides = ['left', 'right']
-		random.shuffle(sides)  # Mélange aléatoire des côtés
+		logger.debug(f"TEAM LIST DANS LA CLASSE GAME: {teamlist}")
+		if teamlist is None:
+			random.shuffle(sides)
 		self.game_mode = game_mode
 		self.modifiers = modifiers
 		self.players = {}
@@ -26,6 +28,8 @@ class Game:
 			self.players[username] = Player(player_consumer, side, game_mode, modifiers)
 			self.players_in_side[side].append(self.players[username])
 			logger.debug(f"{username} is the {side} player !")
+		logger.debug(f"player_username: {self.players[username]}")
+		#logger.debug(f"self.players_in_side: {self.players_in_side}")
 		self.ball = Ball(modifiers)
 		self.timer = Timer()
 		self.timer.settup(None)
