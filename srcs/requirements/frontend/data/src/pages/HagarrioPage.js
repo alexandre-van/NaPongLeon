@@ -16,7 +16,7 @@ export default function HagarrioPage() {
     iframe.style.height = "93vh";                       // Hauteur : 100% de la fenêtre moins la hauteur de la barre
     iframe.style.border = "none";                       // Supprimer les bordures
     iframe.style.zIndex = "9999";                       // Mettre l'iframe au premier plan
-    iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+    iframe.sandbox = "allow-scripts allow-same-origin allow-forms allow-popups";
     iframe.id = "gameFrame";
 
     // Ajouter l'iframe au body

@@ -159,19 +159,19 @@ class Game:
 		if player_id in self.players:
 			del self.players[player_id]
 			if player_id in self.player_inputs:
-                del self.player_inputs[player_id]
-            if player_id in self.player_movements:
-                del self.player_movements[player_id]
-        if len(self.players) <= 1:
-            self.status = "finished"
-				remaining_player = list(self.players.values())[0]
-				return {
-					'type': 'game_over',
-					'winner': remaining_player['id'],
-					'loser': player_id,  # celui qui s'est déconnecté
-					'message': f"Victoire par forfait ! Score: {remaining_player['score']}",
-					'reason': 'forfeit'
-				}
+				del self.player_inputs[player_id]
+			if player_id in self.player_movements:
+				del self.player_movements[player_id]
+		if len(self.players) <= 1:
+			self.status = "finished"
+			remaining_player = list(self.players.values())[0]
+			return {
+				'type': 'game_over',
+				'winner': remaining_player['id'],
+				'loser': player_id,  # celui qui s'est déconnecté
+				'message': f"Victoire par forfait ! Score: {remaining_player['score']}",
+				'reason': 'forfeit'
+			}
 		return None
 
 	def get_food_state(self):

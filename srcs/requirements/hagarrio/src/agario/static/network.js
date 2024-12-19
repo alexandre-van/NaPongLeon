@@ -1,7 +1,7 @@
 import { updatePlayers, removePlayer, getMyPlayerId } from './player.js';
 import { updateFood } from './food.js';
 import { startGameLoop } from './main.js';
-import { updateGameInfo, showGameOverMessage, cleanupGame } from './utils.js';
+import { updateGameInfo, showGameEndScreen } from './utils.js';
 import { updatePowerUps, displayPowerUpCollected, createNewPowerUp, usePowerUp } from './powers.js';
 import { updateHotbar } from './hotbar.js';
 
@@ -117,7 +117,7 @@ function connectWebSocket() {
 					updatePlayers(data.players, data.yourPlayerId);
 					removePlayer(data.player_eaten);
 					break;
-				case 'return_to_waiting_room':
+				case 'game_over':
 					console.log('Game ending:', data);
 					showGameEndScreen(data);
 					updateGameInfo(data);
