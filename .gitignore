@@ -1,3 +1,6 @@
 *.pyc
 *.log
 migrations
+srcs/ssl/*crt
+srcs/ssl/*key
+srcs/ssl/*pem
