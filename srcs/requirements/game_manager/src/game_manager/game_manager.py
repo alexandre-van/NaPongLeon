@@ -157,7 +157,7 @@ class Game_manager:
 	
 	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
-		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
+		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players, 'teamsList': teams_list, 'special_id': special_id}
 		logger.debug(f"send to {game_service_url}: {send}")
 		try:
 			async with httpx.AsyncClient() as client:
