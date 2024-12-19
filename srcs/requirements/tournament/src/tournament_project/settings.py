@@ -27,7 +27,6 @@ SECRET_KEY = 'django-insecure-96g9x-miw#=a!lql&#jsh!@umdr(ess*dlt6f1hslksct)ohaj
 DEBUG = True
 
 ALLOWED_HOSTS = [
-	'tournament',
 	'*',
 ]
 
@@ -160,8 +159,6 @@ CACHES = {
 		}
 	}
 }
-
-#CSP TO DO REMOVE
 
 X_FRAME_OPTIONS = 'SAMEORIGIN' 
 CSP_FRAME_ANCESTORS = ['*']

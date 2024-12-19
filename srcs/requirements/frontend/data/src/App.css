@@ -11,6 +11,10 @@ body {
   font-size: 70px;
 }
 
+.wait{
+  margin-top: 20%;
+}
+
 Form {
   padding-left: 5%;
   padding-right: 5%;
@@ -89,6 +93,24 @@ Form {
   letter-spacing: 1px;
   font-size: 70px;
   font-weight: bold;
+}
+
+.exit-button {
+  margin-left: -70px;
+  text-align: center;
+  color: white;
+  margin-top: 10px;
+  border-radius: 10px; /* Optionnel : rend les coins arrondis */
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.exit-button:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
 }
 
 .play-button-mode {

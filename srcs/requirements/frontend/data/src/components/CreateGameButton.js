@@ -4,146 +4,156 @@ import api from '../services/api.js';
 import { useNavigate } from "react-router-dom";
 
 const CreateGameButton = ({ gameMode, modifiers }) => {
-	const [loading, setLoading] = useState(false);
-	const [errorMessage, setErrorMessage] = useState(null);
-	const { user, getAvatarUrl } = useUser();
-	const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const { user } = useUser();
+    const navigate = useNavigate();
 
-	const handlePlayButton = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
+    const handlePlayButton = async () => {
+        try {
+            setLoading(true);
+            setErrorMessage(null); // Reset error message before starting
 
-			const mods = modifiers.join(",");
-			const game_params = {
-				'gameMode': 'PONG_CLASSIC',
-				'modifiers': mods,
-				'playersList': [user.username],
-				'teamsList': [[user.username],[]],
-				'ia_authorizes': true
-			};
-			const response = await api.post('/game_manager/create_game/', game_params)
-			const gameId = response.data['data']['game_id'];
-			if (!gameId) throw new Error('Game ID is missing from the response.');
-			const gameServiceName = response.data['data']['service_name'];
-			if (!gameServiceName) throw new Error('Game service name is missing from the response.');
-			// Stocker le gameId dans window.gameInfo
-			if (!window.gameInfo) {
-				window.gameInfo = {};
-			}
-			window.gameInfo.gameId = gameId;
+            const mods = modifiers.join(",");
+            const gameParams = {
+                gameMode: 'PONG_CLASSIC',
+                modifiers: mods,
+                playersList: [user.username],
+                teamsList: [[user.username], []],
+                ia_authorizes: true,
+            };
 
-			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
+            const response = await api.post('/game_manager/create_game/', gameParams);
+            const gameId = response.data.data.game_id;
+            if (!gameId) throw new Error('Game ID is missing from the response.');
 
-			//navigate("/ingame");
+            const gameServiceName = response.data.data.service_name;
+            if (!gameServiceName) throw new Error('Game service name is missing from the response.');
 
-			// Créer une iframe pour afficher le jeu
-			const iframe = document.createElement('iframe');
-			iframe.src = gameUrl;
-			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
-			iframe.style.top = "75px";                 // Aligner en haut de la page
-			iframe.style.left = "0";                // Aligner à gauche de la page
-			iframe.style.width = "100vw";           // Largeur : 100% de la fenêtre
-			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
-			iframe.style.border = "none";           // Supprimer les bordures
-			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
+            if (!window.gameInfo) window.gameInfo = {};
+            window.gameInfo.gameId = gameId;
 
+            const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
 
-			// Supprimer l'ancienne iframe s'il en existe une
-			const existingIframe = document.querySelector('#gameFrame');
-			if (existingIframe) {
-				existingIframe.remove();
-			}
+            // Remove existing iframe if any
+            const existingIframe = document.querySelector('#gameFrame');
+            if (existingIframe) existingIframe.remove();
 
-			iframe.id = "gameFrame";
-			document.body.appendChild(iframe);
-		} catch (error) {
-			console.error(error.message);
-			setErrorMessage(error.message); // Afficher l'erreur à l'utilisateur
-		} finally {
-			setLoading(false);
-		}
-	};
+            // Create and configure the iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = gameUrl;
+            iframe.id = "gameFrame";
+            iframe.style.position = "fixed";
+            iframe.style.top = "75px";
+            iframe.style.left = "0";
+            iframe.style.width = "100vw";
+            iframe.style.height = "calc(100vh - 75px)";
+            iframe.style.border = "none";
+            iframe.style.zIndex = "9999";
+            iframe.sandbox = "allow-scripts allow-same-origin";
 
-	const handleCancelMatchmaking = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null); // Reset error message before starting
-			const game_mode = "";
-			await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
+            // Disable scrolling inside the iframe
+            iframe.scrolling = "no";
 
-			// Optionnel : retirer l'iframe en cas d'annulation
-			const iframe = document.querySelector('#gameFrame');
-			if (iframe) {
-				iframe.remove();
-			}
-		} catch (error) {
-			console.error("Failed to cancel matchmaking:", error.message);
-			setErrorMessage(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
+            // Prevent scrolling on the page
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+            document.body.style.margin = "0";
+            document.body.style.padding = "0";
 
-	useEffect(() => {
-		const handleGameFinished = (event) => {
-			if (event.data === 'game_end') {
-				// Supprimer l'iframe lorsque le jeu est terminé
-				const iframe = document.querySelector('#gameFrame');
-				if (iframe) {
-					iframe.remove();
-				}
-			}
-		};
+            // Add the iframe to the document
+            document.body.appendChild(iframe);
+        } catch (error) {
+            console.error(error.message);
+            setErrorMessage(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-		// Ajouter l'écouteur d'événements
-		window.addEventListener('message', handleGameFinished);
+    const handleCancelMatchmaking = async () => {
+        try {
+            setLoading(true);
+            setErrorMessage(null);
+            await api.get('/game_manager/matchmaking/cancel');
+            
+            const iframe = document.querySelector('#gameFrame');
+            if (iframe) iframe.remove();
 
-		// Nettoyer l'écouteur d'événements lorsqu'on quitte le composant
-		return () => {
-			window.removeEventListener('message', handleGameFinished);
-			const existingIframe = document.querySelector('#gameFrame');
-			if (existingIframe) {
-			  existingIframe.remove();
-			}
-		};
-	}, []);
+            // Re-enable scrolling if iframe is removed
+            document.documentElement.style.overflow = "auto";
+            document.body.style.overflow = "auto";
+        } catch (error) {
+            console.error("Failed to cancel matchmaking:", error.message);
+            setErrorMessage(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-	return (
-		<>
-			{/* Bouton "Play" visible uniquement quand pas en chargement */}
-			{!loading && (
-				<button onClick={handlePlayButton} style={{ marginTop: "10px" }}>
-					Play VS AI
-				</button>
-			)}
+    useEffect(() => {
+        const handleGameFinished = (event) => {
+            if (event.data === 'game_end') {
+                const iframe = document.querySelector('#gameFrame');
+                if (iframe) iframe.remove();
 
-			{/* Bouton en croix visible uniquement pendant le chargement */}
-			{loading && (
-				<>
-					<p>Waiting...
-					<button
-						onClick={handleCancelMatchmaking}
-						style={{
-							marginLeft: "10px",
-							background: "red",
-							color: "white",
-							border: "none",
-							borderRadius: "50%",
-							width: "30px",
-							height: "30px",
-							cursor: "pointer",
-						}}
-					>
-						X
-					</button></p>
-				</>
-			)}
+                // Re-enable scrolling when game ends
+                document.documentElement.style.overflow = "auto";
+                document.body.style.overflow = "auto";
+            }
+        };
 
-			{/* Message d'erreur */}
-			{errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
-		</>
-	);
+        window.addEventListener('message', handleGameFinished);
+
+        return () => {
+            window.removeEventListener('message', handleGameFinished);
+            const iframe = document.querySelector('#gameFrame');
+            if (iframe) iframe.remove();
+
+            // Cleanup scrolling behavior
+            document.documentElement.style.overflow = "auto";
+            document.body.style.overflow = "auto";
+        };
+    }, []);
+
+    return (
+        <>
+            {!loading && (
+                <button
+                    className="play-button-mode btn btn-outline-warning"
+                    onClick={handlePlayButton}
+                    style={{ marginTop: "10px" }}
+                >
+                    Play VS AI
+                </button>
+            )}
+
+            {loading && (
+                <>
+                    <p>
+                        Waiting...
+                        <button
+                            onClick={handleCancelMatchmaking}
+                            style={{
+                                marginLeft: "10px",
+                                background: "red",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "30px",
+                                height: "30px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            X
+                        </button>
+                    </p>
+                </>
+            )}
+
+            {errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
+        </>
+    );
 };
 
 export default CreateGameButton;

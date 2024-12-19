@@ -35,6 +35,8 @@ export function UserProvider({ children }) {
 		checkAuth();
 	}, [checkAuth]);
 
+
+
 	const register = async (userData) => {
 		const response = await api.post('/authentication/users/', userData);
 	};
@@ -57,9 +59,9 @@ export function UserProvider({ children }) {
 		window.location.href = '/api/authentication/oauth/42/authorize';
 	};
 
-  const resetPassword = async (email) => {
-    const response = await api.post('/authentication/users/password-reset/', email);
-  };
+  	const resetPassword = async (email) => {
+    	const response = await api.post('/authentication/users/password-reset/', email);
+  	};
 
 	const logout = async () => {
 		await api.post('/authentication/auth/logout/');
@@ -68,6 +70,40 @@ export function UserProvider({ children }) {
 		navigate('/login');
 		await checkAuth();
 	};
+
+	const refreshAccessToken = useCallback(async () => {
+		try {
+		  const response = await api.get('/authentication/auth/token/refresh/');
+		  if (!response.data || response.data.message !== "Token refreshed") {
+			console.warn('Token refresh response invalid');
+			return;
+		  }
+		} catch (error) {
+		  console.error('Heartbeat token refresh failed:', error);
+		  // Si le refresh échoue, déconnecter l'utilisateur
+		  if (error.responsee?.status === 401) {
+		  	await logout();
+		  }
+		}
+	}, [logout]);
+
+	useEffect(() => {
+		let heartbeatInterval;
+	
+		if (isAuthenticated) {
+		  // Lancer le heartbeat toutes les 3 minutes
+		  heartbeatInterval = setInterval(async () => {
+			await refreshAccessToken();
+		  }, 60 * 1000); // 3 minutes en millisecondes
+		}
+	
+		// Cleanup lors du démontage ou de la déconnexion
+		return () => {
+		  if (heartbeatInterval) {
+			clearInterval(heartbeatInterval);
+		  }
+		};
+	}, [isAuthenticated, refreshAccessToken]);
 
 	// Update user's Friends
 	const checkFriends = useCallback(async () => {

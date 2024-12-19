@@ -1,13 +1,13 @@
 from django.conf import settings
 from .models import Player, GameInstance, PlayerGameHistory, GamePlayer, GameScore
 from .utils.logger import logger
-from .private_room.private_room import PrivateRoom, GenerateUsername
 from admin_manager.admin_manager import AdminManager
 from .utils.timer import Timer
 from django.apps import apps
 from django.db import connection
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.utils import timezone
 import threading
 import asyncio
 import httpx
@@ -19,15 +19,13 @@ class Game_manager:
 
 	def __init__(self):
 		self.update_databases()
-		self.private_rooms = {}
-		self.username_generator = GenerateUsername()
 		self._task = None
 		self._is_running_mutex = threading.Lock()
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 60,
-			'loading' : 60,
+			'waiting': 3600,
+			'loading' : 3600,
 			'in_progress': 3600
 		}
 
@@ -43,14 +41,6 @@ class Game_manager:
 					if game_instance.status != 'finished'\
 						and  game_instance.status != 'aborted':
 						game_instance.abort_game()
-
-	def generate_username(self):
-		logger.debug("generate new username")
-		return self.username_generator.generate()
-
-	def add_private_room(self, username):
-		self.private_rooms[username] = PrivateRoom(username)
-		return self.private_rooms[username]
 
 	def add_new_game(self, game_id):
 		game = GameInstance.get_game(game_id)
@@ -148,9 +138,9 @@ class Game_manager:
 					'ai_id': ai_id,
 				}
 				async with httpx.AsyncClient() as client:
-					response = await client.post(ai_url, json=ids)  # Utilisation du paramètre json
+					response = await client.post(ai_url, json=ids)
 
-				if response.status_code == 200:  # Succès explicite
+				if response.status_code == 200:
 					continue
 				else:
 					logger.error(f"Failed to create AI {ai_id}: {response.status_code} - {response.text}")
@@ -207,7 +197,7 @@ class Game_manager:
 
 	# game connection
 
-	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
+	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list=None, special_id=None):
 		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
@@ -260,7 +250,6 @@ class Game_manager:
 	async def _game_manager_logic(self):
 		with self._current_games_mutex:
 			for game_id in self._current_games:
-				#logger.debug(f"{game_id} check status...")
 				result = await self._set_current_game_status(game_id)
 				if result:
 					game_id, game_mode = result
@@ -276,7 +265,6 @@ class Game_manager:
 			with self._is_running_mutex:
 				if not self._is_running:
 					break
-			#logger.debug("game_manager loop is running...")
 			await self._game_manager_logic()
 			await asyncio.sleep(1)
 
@@ -352,7 +340,7 @@ class Game_manager:
 	@sync_to_async
 	def fetch_history(self, player):
 		history = list(PlayerGameHistory.objects.filter(player=player).order_by('game_date'))
-		if not history:  # Vérifie s'il y a des objets dans l'historique
+		if not history:
 			logger.warning(f"No history found for player {player.username}.")
 			return []
 		return history
@@ -360,29 +348,25 @@ class Game_manager:
 	
 	@sync_to_async
 	def extract_game_ids(self, history):
-		return [(entry.game_date, entry.game.game_id) for entry in history]
+		return [
+			(timezone.localtime(entry.game_date), entry.game.game_id) 
+			for entry in history
+		]
 
 	@sync_to_async
 	def get_game_data(self, game_id):
 		try:
-			# Récupérer l'instance du jeu
 			game_instance = GameInstance.get_game(game_id)
 			if not game_instance:
 				return None
-	
-			# Récupérer les joueurs et leur répartition par équipe
 			game_players = GamePlayer.objects.filter(game=game_instance)
 			teams_distribution = {}
 			for player_entry in game_players:
 				if player_entry.team_name not in teams_distribution:
 					teams_distribution[player_entry.team_name] = []
 				teams_distribution[player_entry.team_name].append(player_entry.player.username)
-	
-			# Récupérer les scores des équipes
 			game_scores = GameScore.objects.filter(game=game_instance)
 			teams_scores = {score.team_name: score.score for score in game_scores}
-	
-			# Construire les données du jeu
 			game_data = {
 				"game_id": game_instance.game_id,
 				"status": game_instance.status,

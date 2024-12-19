@@ -44,6 +44,7 @@ class UserView(APIView):
 
 
 
+''' TO REFACTORISER EN ASYNC POUR LE HEARTBEAT
 class TokenRefreshView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get('refresh_token')
@@ -66,6 +67,7 @@ class TokenRefreshView(APIView):
             return response
         except TokenError:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
+'''
 
 
 

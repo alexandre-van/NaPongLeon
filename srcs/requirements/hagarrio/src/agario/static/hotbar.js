@@ -17,7 +17,7 @@ export function createHotbar() {
     document.body.appendChild(hotbarDiv);
 }
 
-export function updateHotbar(inventory = []) {
+export function updateHotbar(inventory = [], slot_index = null) {
     const slots = document.querySelectorAll('.hotbar-slot');
     slots.forEach((slot, index) => {
         const powerUp = inventory[index];
@@ -33,7 +33,13 @@ export function updateHotbar(inventory = []) {
             icon.className = 'power-up-icon';
             icon.innerHTML = getPowerUpIcon(powerUp.type);
             icon.style.color = powerUp.properties.color;
-            slot.appendChild(icon);
+            
+            // Si un slot_index est fourni et correspond au slot actuel, on le vide
+            if (slot_index !== null && slot_index === index) {
+                // Ne pas ajouter l'icône car le power-up a été utilisé
+            } else {
+                slot.appendChild(icon);
+            }
         }
     });
 }
@@ -41,7 +47,7 @@ export function updateHotbar(inventory = []) {
 function getPowerUpIcon(type) {
     const icons = {
         'speed_boost': '🚀',
-        'slow_zone': '🐌',
+        'slow_zone': '🐢',
         'shield': '🛡️',
         'point_multiplier': '✨'
     };

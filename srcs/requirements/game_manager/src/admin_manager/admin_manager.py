@@ -16,7 +16,6 @@ class AdminManager:
 		self._threads_mutex = threading.Lock()
 
 	def connect_to_game(self, game_id, ws_url):
-		# Démarre un nouvel event loop pour chaque thread
 		logger.debug(f'new thread created to {ws_url} !')
 		loop = asyncio.new_event_loop()
 		asyncio.set_event_loop(loop)

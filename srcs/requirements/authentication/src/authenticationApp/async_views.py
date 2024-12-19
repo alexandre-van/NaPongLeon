@@ -491,3 +491,36 @@ async def PasswordResetConfirmationView(request, uidb64, token):
     
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
         return HttpResponseJD('Could not reset password', 403)
+
+async def TokenRefreshView(request):
+    if request.method != 'GET':
+        return HttpResponseJD('Method not allowed', 405)
+
+    refresh_token = request.COOKIES.get('refresh_token')
+    if not refresh_token:
+        return HttpResponseJD('No refresh token provided', 401)
+
+    try:
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from datetime import timedelta
+        from django.utils import timezone
+
+        refresh = RefreshToken(refresh_token)
+        
+        # Créer un nouveau access token avec une durée de 5 minutes
+        access_token = refresh.access_token
+        access_token.set_exp(from_time=timezone.now(), lifetime=timedelta(minutes=5))
+
+        response = HttpResponseJD('Token refreshed', 200)
+        response.set_cookie(
+            'access_token',
+            str(access_token),
+            httponly=True,
+            secure=False,  # True for production
+            samesite='Strict',
+            max_age=300  # 5 minutes
+        )
+        return response
+
+    except Exception as e:
+        return HttpResponseJD('Invalid refresh token', 401)
