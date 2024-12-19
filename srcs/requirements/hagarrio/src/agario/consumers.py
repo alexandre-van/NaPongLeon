@@ -181,8 +181,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 			win_team = None
 			score = None
 			if game.status == 'finished':
-				win_team = None
-				score = None
+				if len(game.players) == 1:
+					player = next(iter(game.players.values()))
+					if player:
+						win_team = player['id']
+						score = player['score']
 			await self.notify_admin_game_status(game_id, game.status, win_team, score)
 		message = {
 			'type': state_update.get('type'),
