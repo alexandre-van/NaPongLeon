@@ -92,6 +92,8 @@ async def create_game_api(request, username=None):
 			modifiers = data.get('modifiers')
 			players_list = data.get('playersList')
 			teams_list = data.get('teamsList')
+			logger.debug(f"TEAM LIST: {teams_list}")
+			#faire le jeu comme contient team list 
 			ia_authorizes = data.get('ia_authorizes')
 			special_id = data.get('special_id')
 			logger.debug(f"Reçu: game_mode={game_mode}, modifiers={modifiers}, players_list={players_list}, teams={teams_list}, ai={ia_authorizes}")
