@@ -18,7 +18,7 @@ export default function HomePage({ isAuthenticated }) {
 function AuthenticatedHomePage() {
 
   return (
-    <div >
+    <div>
       <h1 className="title-home">Welcome to Napongleon</h1>
       <Link to="/pong"><button className="play-button btn btn-outline-warning" type="button">PLAY</button></Link>
     </div>

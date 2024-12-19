@@ -93,6 +93,7 @@ Form {
   letter-spacing: 1px;
   font-size: 70px;
   font-weight: bold;
+  
 }
 
 .exit-button {
@@ -178,4 +179,14 @@ li{
 
 .options{
   margin-top: 10px;
+}
+
+@layer demo {
+  .highlighted-text-shadow {
+    text-shadow:
+      /* regular text-shadow */
+      0 .15ch 15px var(--shadow),
+      /* text-shadow highlight */
+      0 -2px 0 var(--highlight);
+  }
 }

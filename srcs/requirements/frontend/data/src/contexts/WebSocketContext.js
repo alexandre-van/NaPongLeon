@@ -118,6 +118,35 @@ export const WebSocketProvider = ({ children }) => {
             }
             checkFriends();
             break;
+
+          case 'friend_deleted': // Nouveau cas pour les suppressions A AJOUTER EN BACK
+            if (!data.friend_id) {
+                console.error("Invalid friend ID received:", data.friend_id);
+                break;
+            }
+        
+            if (user?.friends) {
+                const updatedFriends = user.friends.filter(
+                    (friend) => friend.id !== data.friend_id
+                );
+        
+                if (updatedFriends.length === user.friends.length) {
+                    console.warn(`Friend with ID ${data.friend_id} not found in the list.`);
+                } else {
+                    console.log(`Friend with ID ${data.friend_id} successfully removed.`);
+                }
+        
+                updateUser({ friends: updatedFriends });
+            } else {
+                console.warn("User does not have a friends list or user object is null.");
+            }
+        
+            // Actualisation de la liste d'amis côté utilisateur
+            checkFriends();
+            break;
+
+
+
           case 'notification':
             console.log('notification_type = ', data.notification_type);
             //setNotifications(prev => [...prev, data.notification]);
