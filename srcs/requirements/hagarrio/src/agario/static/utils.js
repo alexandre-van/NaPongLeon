@@ -1,5 +1,7 @@
 import { joinGame } from './network.js';
 import { getScene } from './scene.js';
+import { stopGameLoop } from './main.js';
+import { cleanup as cleanupPlayers, getMyPlayerId } from './player.js';
 
 export function throttle(func, limit) {
     let lastFunc;
@@ -66,72 +68,97 @@ export function updateGameInfo(data) {
     });
 }
 
-export function showGameOverMessage(message) {
+export function showGameEndScreen(data) {
+    // 1. Nettoyage commun
+    stopGameLoop();
+    cleanupPlayers();
+    cleanupScene();
+    cleanupGameElements();
+
+    // 2. Déterminer le type d'écran à afficher
+    const myId = getMyPlayerId();
+    const isWinner = data.winner === myId;
+    const isForfeit = data.reason === 'forfeit';
+    
+    // 3. Créer l'overlay approprié
     const overlay = document.createElement('div');
-    overlay.className = 'game-over-overlay';
+    overlay.className = isWinner ? 'game-win-overlay' : 'game-over-overlay';
     overlay.style.animation = 'fadeIn 0.5s ease-in';
     
     const content = document.createElement('div');
-    content.className = 'game-over-content';
+    content.className = isWinner ? 'game-win-content' : 'game-over-content';
     
     const title = document.createElement('div');
-    title.className = 'game-over-title';
-    title.textContent = 'GAME OVER';
+    title.className = isWinner ? 'game-win-title' : 'game-over-title';
+    title.textContent = isWinner ? 'VICTORY!' : 'GAME OVER';
     
     const messageText = document.createElement('div');
-    messageText.className = 'game-over-score';
-    messageText.textContent = message;
+    messageText.className = isWinner ? 'game-win-score' : 'game-over-score';
+    
+    // 4. Personnaliser le message selon le cas
+    if (isForfeit) {
+        if (isWinner) {
+            messageText.textContent = `Victoire par forfait! Score: ${data.message}`;
+        }
+    } else {
+        if (isWinner) {
+            messageText.textContent = `Victoire! Score final: ${data.winner_score}`;
+        } else {
+            messageText.textContent = `Défaite! Votre score: ${data.loser_score}`;
+        }
+    }
     
     content.appendChild(title);
     content.appendChild(messageText);
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     
+    // 5. Retour à la waiting room après délai
     setTimeout(() => {
         overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
         overlay.addEventListener('animationend', () => {
             if (overlay && overlay.parentNode) {
                 overlay.remove();
-                
-                // Nettoyer la scène THREE.js
-                const currentScene = getScene();
-                if (currentScene) {
-                    while(currentScene.children.length > 0) { 
-                        currentScene.remove(currentScene.children[0]); 
-                    }
+                const waitingRoom = document.getElementById('waitingRoom');
+                if (waitingRoom) {
+                    waitingRoom.style.display = 'flex';
                 }
-                
-                // Réinitialiser les états du jeu
-                const gameContainer = document.getElementById('gameContainer');
-                gameContainer.style.display = 'none';
-                document.getElementById('hotbar').style.display = 'none';
-                
-                // Vider le contenu du gameContainer
-                gameContainer.innerHTML = `
-                    <div id="scoreboard"></div>
-                    <canvas id="minimap"></canvas>
-                    <div id="speedometer">Speed: 0</div>
-                    <div id="hotbar" style="display: none;">
-                        <div class="hotbar-slot" data-slot="0">
-                            <span class="hotkey">1</span>
-                        </div>
-                        <div class="hotbar-slot" data-slot="1">
-                            <span class="hotkey">2</span>
-                        </div>
-                        <div class="hotbar-slot" data-slot="2">
-                            <span class="hotkey">3</span>
-                        </div>
-                    </div>
-                `;
-                
-                // Réinitialiser les variables globales
-                window.players = {};
-                window.myPlayerId = null;
-                window.playerAnimations = new Map();
-                
-                // Afficher la waiting room
-                document.getElementById('waitingRoom').style.display = 'flex';
             }
         }, { once: true });
     }, 3000);
 }
+
+function cleanupScene() {
+    const currentScene = getScene();
+    if (currentScene) {
+        while(currentScene.children.length > 0) { 
+            const object = currentScene.children[0];
+            if (object.material) {
+                if (Array.isArray(object.material)) {
+                    object.material.forEach(material => material.dispose());
+                } else {
+                    object.material.dispose();
+                }
+            }
+            if (object.geometry) {
+                object.geometry.dispose();
+            }
+            currentScene.remove(object);
+        }
+    }
+}
+
+function cleanupGameElements() {
+    const gameContainer = document.getElementById('gameContainer');
+    const hotbar = document.getElementById('hotbar');
+    const renderer = document.querySelector('canvas');
+    
+    if (hotbar) hotbar.remove();
+    if (renderer) renderer.remove();
+    if (gameContainer) {
+        gameContainer.style.display = 'none';
+        gameContainer.innerHTML = '';
+    }
+}
+
+

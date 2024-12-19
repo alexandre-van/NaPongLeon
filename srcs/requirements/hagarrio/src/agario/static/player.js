@@ -235,10 +235,15 @@ export function initPlayers() {
 }
 
 export function cleanup() {
+    // Arrêter toutes les animations en cours
     if (animationFrame) {
         cancelAnimationFrame(animationFrame);
     }
+    
+    // Nettoyer les animations
     playerAnimations.clear();
+    
+    // Nettoyer les références aux joueurs
     players = {};
     myPlayerId = null;
 }

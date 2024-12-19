@@ -159,11 +159,20 @@ class Game:
 		if player_id in self.players:
 			del self.players[player_id]
 			if player_id in self.player_inputs:
-				del self.player_inputs[player_id]
-			if player_id in self.player_movements:
-				del self.player_movements[player_id]
-		if len(self.players) <= 1:
-			self.status = "finished"
+                del self.player_inputs[player_id]
+            if player_id in self.player_movements:
+                del self.player_movements[player_id]
+        if len(self.players) <= 1:
+            self.status = "finished"
+				remaining_player = list(self.players.values())[0]
+				return {
+					'type': 'game_over',
+					'winner': remaining_player['id'],
+					'loser': player_id,  # celui qui s'est déconnecté
+					'message': f"Victoire par forfait ! Score: {remaining_player['score']}",
+					'reason': 'forfeit'
+				}
+		return None
 
 	def get_food_state(self):
 		"""Retourne l'état complet de la partie"""
@@ -398,20 +407,21 @@ class Game:
 		if not player or not other_player:
 			return False
 
-		# Vérifier si les joueurs se touchent
 		if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
 			if player['size'] > other_player['size'] * 1.2:
-				# Stocker les informations avant de supprimer le joueur
-				eaten_player_info = {
-					'eaten': True,
-					'score': other_player['score']
-				}
 				# Mettre à jour le joueur qui mange
 				player['size'] += other_player['size'] * 0.25
 				player['score'] += other_player['score'] * 0.25
-				# Supprimer le joueur mangé
-				self.remove_player(other_player_id)
-				return eaten_player_info
+				
+				# Supprimer le joueur mangé et retourner le résultat
+				return {
+					'type': 'game_over',
+					'winner': player_id,
+					'loser': other_player_id,
+					'winner_score': player['score'],
+					'loser_score': other_player['score'],
+					'reason': 'victory'
+				}
 		return False
 
 	async def cleanup(self):

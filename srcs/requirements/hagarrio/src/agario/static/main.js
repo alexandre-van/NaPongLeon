@@ -10,6 +10,7 @@ import { createHotbar } from './hotbar.js';
 
 let scene, camera, renderer;
 export let mapHeight, mapWidth, max_food;
+let gameLoopId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const joinBtn = document.getElementById('joinMatchmakingBtn');
@@ -51,8 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateButtons();
 });
 
-
-
 export function startGameLoop(initialGameState) {
     mapHeight = initialGameState.mapHeight;
     mapWidth = initialGameState.mapWidth;
@@ -65,7 +64,7 @@ export function startGameLoop(initialGameState) {
     initPlayers();
     createHotbar();
     function gameLoop() {
-        requestAnimationFrame(gameLoop);
+        gameLoopId = requestAnimationFrame(gameLoop);
         const myPlayer = getPlayers()[getMyPlayerId()];
         if (myPlayer) {
             updateCameraPosition(camera, myPlayer);
@@ -73,9 +72,16 @@ export function startGameLoop(initialGameState) {
         updateUI();
         render(scene, camera, renderer);
     }
-    window.addEventListener('beforeunload', () => {
-        cleanup();
-    });
-    const throttledGameLoop = throttle(gameLoop, 16);// 60 FPS
+    // window.addEventListener('beforeunload', () => {
+    //     cleanup();
+    // });
+    const throttledGameLoop = throttle(gameLoop, 8);// 120 FPS
     throttledGameLoop();
+}
+
+export function stopGameLoop() {
+    if (gameLoopId !== null) {
+        cancelAnimationFrame(gameLoopId);
+        gameLoopId = null;
+    }
 }
