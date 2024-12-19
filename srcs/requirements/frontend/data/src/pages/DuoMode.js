@@ -2,10 +2,11 @@ import { useState } from 'react';
 import arrow from '../elements/arrow.png'
 import vid from '../elements/gif-solo.gif'
 import { Link } from 'react-router-dom';
-
+import { useNavigate } from "react-router-dom";
 
 export default function DuoMode() {
     const [modifiers, setModifiers] = useState([]);
+    const navigate = useNavigate();
 
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
 
@@ -44,9 +45,11 @@ export default function DuoMode() {
                     ))}
                 </ul>
             </div>
+            <div>
             <button className="play-button-mode btn btn-outline-warning" 
                     style={{ marginTop: "10px" }}
-                    onClick={startMatchmaking}>Play PONG CLASSIC</button>
+                    onClick={startMatchmaking}>Play PONG DUO</button>
+            </div>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>
     );

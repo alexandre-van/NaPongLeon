@@ -3,11 +3,12 @@ import { useState } from 'react';
 import arrow from '../elements/arrow.png'
 import vid from '../elements/gif-solo.gif'
 import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 
 export default function DuoTournament() {
     const [modifiers, setModifiers] = useState([]);
-
+    const navigate = useNavigate();
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
 
     // Gérer la sélection des modificateurs
