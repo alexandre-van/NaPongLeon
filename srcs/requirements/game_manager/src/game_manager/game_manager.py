@@ -24,8 +24,8 @@ class Game_manager:
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 3600,
-			'loading' : 3600,
+			'waiting': 15,
+			'loading' : 15,
 			'in_progress': 3600
 		}
 

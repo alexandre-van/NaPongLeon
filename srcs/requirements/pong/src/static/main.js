@@ -69,6 +69,7 @@ socket.onclose = function(event) {
 
 socket.onerror = function(error) {
 	console.error("WebSocket error:", error);
+	stopGame();
 };
 
 function stopGame() {

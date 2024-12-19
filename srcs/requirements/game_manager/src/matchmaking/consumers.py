@@ -8,7 +8,7 @@ import uuid
 class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
 	@auth_required_ws
 	async def connect(self, username=None, nickname=None):
-		
+		logger.debug("hello")
 		self.closed = False
 		self.username = username
 		self.nickname = nickname
@@ -21,8 +21,10 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
 	async def disconnect(self, close_code):
 		self.closed = True
 		try:
-			await Matchmaking.matchmaking_instance.remove_player_request(self.username)
-			await Game_manager.game_manager_instance.update_player_status(self.username, 'inactive')
+			status = await Game_manager.game_manager_instance.get_player_status(self.username)
+			if status == 'in_queue':
+				await Matchmaking.matchmaking_instance.remove_player_request(self.username)
+				await Game_manager.game_manager_instance.update_player_status(self.username, 'inactive')
 		except Exception as e:
 			logger.error(f"Error in disconnect: {str(e)}")
 
@@ -33,6 +35,8 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
 				await self.handle_join_matchmaking(content)
 			elif action == 'leave_matchmaking':
 				await self.handle_leave_matchmaking()
+			else:
+				logger.debug(content)
 				
 		except Exception as e:
 			logger.error(f"Error processing message: {str(e)}")

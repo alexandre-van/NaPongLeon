@@ -19,6 +19,10 @@ export default function DuoTournament() {
         );
     };
 
+    const startMatchmaking = () => {
+        navigate("/matchmaking", { state: { gameMode: "DUO_TOURNAMENT", modifiers } });
+    };
+
     return (
         <div>
             <div className="box">
@@ -42,8 +46,9 @@ export default function DuoTournament() {
                 </ul>
             </div>
             <div>
-
-                <Link to="/matchmaking"><PlayButton gameMode="PONG_DUO_TOURNAMENT" modifiers={modifiers} /></Link>
+                <button className="play-button-mode btn btn-outline-warning" 
+                    style={{ marginTop: "10px" }}
+                    onClick={startMatchmaking}>Join DUO TOURNAMENT</button>
             </div>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>

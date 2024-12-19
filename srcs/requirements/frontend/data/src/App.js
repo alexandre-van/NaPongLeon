@@ -7,6 +7,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext.js';
 import ConnectedLayout from './layouts/ConnectedLayout.js';
 import DefaultLayout from './layouts/DefaultLayout.js';
 import SpecialLayout from './layouts/SpecialLayout.js';
+import RedirectOnRefresh from './RedirectOnRefresh';
 
 import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
@@ -93,6 +94,7 @@ function App() {
     <Router>
       <UserProvider>
         <WebSocketProvider>
+          <RedirectOnRefresh />
           <AppContent />
         </WebSocketProvider>
       </UserProvider>

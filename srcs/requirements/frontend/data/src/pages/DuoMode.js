@@ -1,4 +1,3 @@
-import PlayButton from '../components/PlayButton.js';
 import { useState } from 'react';
 import arrow from '../elements/arrow.png'
 import vid from '../elements/gif-solo.gif'
@@ -17,6 +16,10 @@ export default function DuoMode() {
                 ? prevModifiers.filter((mod) => mod !== modifier)
                 : [...prevModifiers, modifier]
         );
+    };
+
+    const startMatchmaking = () => {
+        navigate("/matchmaking", { state: { gameMode: "PONG_DUO", modifiers } });
     };
 
     return (
@@ -41,10 +44,9 @@ export default function DuoMode() {
                     ))}
                 </ul>
             </div>
-            <div>
-
-                <Link to="/matchmaking"><PlayButton gameMode="PONG_DUO" modifiers={modifiers} /></Link>
-            </div>
+            <button className="play-button-mode btn btn-outline-warning" 
+                    style={{ marginTop: "10px" }}
+                    onClick={startMatchmaking}>Play PONG CLASSIC</button>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>
     );

@@ -1,69 +1,69 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import api from "../services/api";
+import { useNavigate } from 'react-router-dom';
 
 export default function WaitMatchmaking() {
-  const location = useLocation();
+	const navigate = useNavigate();
+    const location = useLocation();
+    const { gameMode, modifiers } = location.state || {};
 
-  const handleCancelMatchmaking = async () => {
-    try {
-      const game_mode = ""; // Ajuste le mode de jeu si nécessaire
-      await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
-      console.log("Matchmaking canceled");
-    } catch (error) {
-      console.error("Failed to cancel matchmaking:", error.message);
-    }
-  };
+    useEffect(() => {
+        const ws = new WebSocket("wss://localhost:8443/ws/matchmaking/");
 
-  useEffect(() => {
-    const handlePopState = () => {
-      if (location.pathname !== "/matchmaking") {
-        handleCancelMatchmaking();
-      }
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+            ws.send(JSON.stringify({ "action": "join_matchmaking", "game_mode": gameMode, "modifiers": modifiers }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+			console.log(data);
+            if (data.status === "game_found") {
+                console.log("game_found:", data);
+                navigate("/ingame", { state: { gameService: `https://localhost:8443/api/${data.service_name}`, gameId: data.game_id } });
+            }
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket closed");
+        };
+
+        return () => {
+            ws.close();
+        };
+    }, [gameMode, modifiers]);
+
+    const handleCancelMatchmaking = () => {
+        console.log("Matchmaking cancelled");
     };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    return () => {
-      // Vérifie si la nouvelle destination n'est pas la page de matchmaking
-      if (location.pathname !== "/matchmaking") {
-        handleCancelMatchmaking();
-      }
-    };
-  }, [location]);
-
-  return (
-    <div>
-      <div>
-        <p>MATCHMAKING...</p>
-      </div>
-      <div>
-        <p>
-          Waiting...
-          <Link to="/">
-            <button
-              onClick={handleCancelMatchmaking}
-              style={{
-                marginLeft: "10px",
-                background: "red",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: "30px",
-                height: "30px",
-                cursor: "pointer",
-              }}
-            >
-              X
-            </button>
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+    return (
+        <div>
+            <div>
+                <p>MATCHMAKING...</p>
+            </div>
+            <div>
+                <p>
+                    Waiting...
+                    <Link to="/">
+                        <button
+                            onClick={handleCancelMatchmaking}
+                            style={{
+                                marginLeft: "10px",
+                                background: "red",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "30px",
+                                height: "30px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            X
+                        </button>
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
 }
