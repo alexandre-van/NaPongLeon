@@ -399,8 +399,6 @@ class CsrfAsgiMiddleware:
             'path': scope.get('path', '')
         })
 
-        logger.debug(f'\nCSRF ASGI MIDDLEWARE\nexempt_path: {request.path}\n\nCOOKIES:{cookies}')
-
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
@@ -419,7 +417,6 @@ class CsrfAsgiMiddleware:
         
             # Vérifie si le chemin correspond à l'un des patterns exemptés
         for pattern in exempt_patterns:
-            logger.debug(f'DANS LE FOR LOOP: pattern: {pattern}')
             if self.path_matches_pattern(request.path, pattern):
                 logger.debug(f'Path matches exempt pattern: {pattern}')
                 return await self.get_response(scope, receive, send)
