@@ -1,63 +1,3 @@
-/*import React, { createContext, useContext, useEffect, useState } from 'react';
-import ReconnectingWebSocket from 'reconnecting-websocket';
-import { useUser } from './UserContext.js';
-
-const WebSocketContext = createContext(null);
-
-export const useWebSocket = () => useContext(WebSocketContext);
-
-export const WebSocketProvider = ({ children }) => {
-  const [authSocket, setAuthSocket] = useState(null);
-  const { isAuthenticated, checkAuth } = useUser();
-
-  const createSocket = useCallback((url) => {
-    const socket = new ReconnectingWebSocket(url, [], {
-      connectionTimeout: 10000,
-    });
-
-    socket.onopen = () => console.log(`WebSocket Connected: ${url}`);
-    socket.onclose = () => console.log(`WebSocket Disconnected: ${url}`);
-
-    return socket;
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const authWs = createSocket(`ws://localhost:8080/ws/authentication/friend-requests/`);
-
-      setAuthSocket(authWs);
-
-      return () => {
-        authWs.close();
-      };
-    }
-  }, [isAuthenticated, createSocket]);
-
-  const sendMessage = useCallback((socket, message) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
-    } else {
-      console.error('WebSocket is not open. Unable to send message.');
-    }
-  }, []);
-
-  const sendAuthMessage = useCallback((message) => 
-    sendMessage(authSocket, message), [sendMessage, authSocket]);
-
-  return (
-    <WebSocketContext.Provider value={{ authSocket, gameSocket, sendAuthMessage }}>
-      {children}
-    </WebSocketContext.Provider>
-  );
-
-
-};*/
-
-
-
-
-
-
 import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
 import { useUser } from './UserContext.js';
 import { useNavigate } from 'react-router-dom';
@@ -76,10 +16,9 @@ const getWindowURLinfo = () => {
 
 export const WebSocketProvider = ({ children }) => {
   const [friends, setFriends] = useState([]);
-  const [onlineFriends, setOnlineFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { isAuthenticated, logout } = useUser();
+  const { user, isAuthenticated, logout, updateUser, checkFriends } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -94,7 +33,7 @@ export const WebSocketProvider = ({ children }) => {
       const wsToken = response.data.token;
       const { host, port, protocol } = getWindowURLinfo();
 
-      const newSocket = new WebSocket(`${protocol}://${host}:8080/ws/authentication/?token=${wsToken}/`);
+      const newSocket = new WebSocket(`${protocol}://${host}:${port}/ws/authentication/?token=${wsToken}/`);
       newSocket.onopen = () => {
         console.log('WebSocket connected');
         setSocket(newSocket);
@@ -106,9 +45,74 @@ export const WebSocketProvider = ({ children }) => {
         console.log('data: ', data);
 
         switch (data.type) {
-          case 'friend_list_update':
-            setFriends(data.friends);
+          case 'friend_list_user_update':
+            console.log('friend_list_user_update', data.user);
+            if (user && user.friends) {
+              const updatedFriends = user.friends.map(friend => 
+                friend.id === data.id ? {
+                  ...friend, username: data.username, status: data.status
+                } : friend
+              );
+
+              updateUser({ friends: updatedFriends });
+            }
+            checkFriends();
             break;
+
+          case 'friend_status':
+              console.log('Friend status update:', data); // Affiche l'ami et son statut
+      
+              if (user?.friends) {
+                // Met à jour le statut de l'ami en fonction de son username
+                const updatedFriends = user.friends.map((friend) =>
+                  friend.username === data.friend  // Compare en fonction du nom de l'ami
+                    ? { 
+                        ...friend, 
+                        status: data.status ? 'online' : 'offline',  // Met à jour le statut
+                        is_online: data.status  // Ajoute is_online pour faciliter la gestion de l'état
+                      }
+                    : friend
+                );
+      
+                console.log('Updated friends list:', updatedFriends);  // Vérifie la liste mise à jour
+                updateUser({ friends: updatedFriends });  // Met à jour l'état de l'utilisateur
+              }
+              checkFriends();  // Actualise la liste des amis
+              break;
+      
+            
+            
+
+            
+
+          case 'friend_deleted': // Nouveau cas pour les suppressions A AJOUTER EN BACK
+            if (!data.friend_id) {
+                console.error("Invalid friend ID received:", data.friend_id);
+                break;
+            }
+        
+            if (user?.friends) {
+                const updatedFriends = user.friends.filter(
+                    (friend) => friend.id !== data.friend_id
+                );
+        
+                if (updatedFriends.length === user.friends.length) {
+                    console.warn(`Friend with ID ${data.friend_id} not found in the list.`);
+                } else {
+                    console.log(`Friend with ID ${data.friend_id} successfully removed.`);
+                }
+        
+                updateUser({ friends: updatedFriends });
+            } else {
+                console.warn("User does not have a friends list or user object is null.");
+            }
+        
+            // Actualisation de la liste d'amis côté utilisateur
+            checkFriends();
+            break;
+
+
+
           case 'notification':
             console.log('notification_type = ', data.notification_type);
             //setNotifications(prev => [...prev, data.notification]);
@@ -120,10 +124,6 @@ export const WebSocketProvider = ({ children }) => {
               }
               return newNotifs;
             });
-            break;
-          case 'friend_status':
-            console.log('friend_status = ', data.status);
-            console.log('friend = ', data.friend);
             break;
           case 'disconnected_from_server':
             try {
