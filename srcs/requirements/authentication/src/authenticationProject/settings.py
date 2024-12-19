@@ -90,6 +90,32 @@ MIDDLEWARE = [
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
+
+
+# HTTPS
+
+# Ensure cookies are transmitted with HTTPS
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Inform the original request is with https even if request nginx -> django is http
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = [
+#    "https://localhost:8080",
+    "https://localhost:8443",
+    "https://localhost",
+    "https://api.intra.42.fr",
+]
+
+CORS_ALLOWED_ORIGINS = [
+#    "https://localhost:8080",
+    "https://localhost:8443",
+    "https://localhost",
+    "https://api.intra.42.fr",
+]
+
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'authenticationApp.auth_middleware.CustomJWTAuthentication',
@@ -114,15 +140,8 @@ TEMPLATES = [
     },
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8080",
-    "https://api.intra.42.fr",
-]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "https://api.intra.42.fr",
-]
+
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -217,7 +236,7 @@ class CsrfExemptMiddleware:
 
 LANGUAGE_CODE = 'en-us'
 
-SITE_URL = 'http://localhost:8080'
+SITE_URL = 'https://localhost:8443'
 
 TIME_ZONE = 'CET'
 

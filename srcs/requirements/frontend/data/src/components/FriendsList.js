@@ -6,7 +6,7 @@ import api from '../services/api.js';
 
 const FriendsList = () => {
 //  const { friends, socket } = useWebSocket();
-  const { user, friends, checkFriends } = useUser();
+  const { user, setUser, friends, checkFriends } = useUser();
 //  const [notifications, setNotifications] = useState([]);
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]); // État local pour les notifications
@@ -31,7 +31,6 @@ const FriendsList = () => {
         ...notif,
         notification_type: notif.notification_type || 'unknown'
       }));
-      //setNotifications(response.data.data);
       setNotifications(formattedNotifications);
     } catch (err) {
       console.error(err);
@@ -84,6 +83,18 @@ const FriendsList = () => {
           friendId: friendId,
         }
       });
+      if (response.status === 200) {
+        console.log('bonjour response status === 200');
+        setUser(prevUser => {
+          const updatedUser = { ...prevUser };
+
+          updatedUser.friends = Array.isArray(prevUser.friends) ?
+            prevUser.friends.filter(friend => friend.id !== friendId) : [];
+
+            return updatedUser;
+        });
+        checkFriends();
+      }
       console.log(response);
     } catch (err) {
       console.error(err);
@@ -177,15 +188,27 @@ const FriendsList = () => {
         <ul>
           {friends.map((friend) => (
             <li key={friend.id}>
-              {friend.username}
-              {friend.status === 'online' && <span> (Online)</span>}
-              <button onClick={() => handleDeleteFriend(friend.id)}>
+              <span>{friend.username}</span>
+              {friend.is_online ? (  // Utilisez is_online pour afficher le statut en ligne
+                <span style={{ color: 'green', marginLeft: '10px' }}> (Online)</span>
+              ) : (
+                <span style={{ color: 'gray', marginLeft: '10px' }}> (Offline)</span>
+              )}
+              <button
+                style={{ marginLeft: '15px' }}
+                onClick={() => handleDeleteFriend(friend.id)}
+              >
                 Remove friend
               </button>
             </li>
           ))}
         </ul>
       )}
+
+
+
+
+
       <h4>Notifications</h4>
       {!localNotifications || localNotifications.length === 0 ? (
         <p>No notifications yet</p>

@@ -22,8 +22,6 @@ def HttpResponseJD(message, status, additionnal_data=None):
         status=status,
         content_type='application/json'
     )
-    logger.debug(f"HttpResponseJD = {response}")
-    logger.debug(f"HttpResponseJD at {current_time} = {response}")
     return response
 
 

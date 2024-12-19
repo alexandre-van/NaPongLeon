@@ -376,8 +376,6 @@ async def PasswordResetView(request):
     if request.method != 'POST':
         return HttpResponseJD('Method not allowed', 405)
 
-    logger.debug('\nPasswordResetView\n')
-    logger.debug(f"Current directory: {os.getcwd()}")
     try:
         data = json.loads(request.body)
         email = data.get('email')
@@ -390,11 +388,6 @@ async def PasswordResetView(request):
         token = await database_sync_to_async(default_token_generator.make_token)(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-        '''
-        reset_url = request.build_absolute_uri(
-            reverse('password_reset_confirmation', kwargs={'uidb64': uid, 'token': token})
-        )
-        '''
         reset_url = f"{settings.SITE_URL}/reset-password/{uid}/{token}"
         logger.debug(f"reset_url={reset_url}")
         context = {
@@ -404,11 +397,6 @@ async def PasswordResetView(request):
 
 
         template_name = 'authenticationApp/password_reset_email.html'
-        
-        logger.debug(f"Template name: {template_name}")
-        logger.debug(f"Context: {context}")
-        logger.debug(f"Template directories: {settings.TEMPLATES[0]['DIRS']}")
-        logger.debug(f"\n\nEmail_host_password={settings.EMAIL_HOST_PASSWORD}")
         
         # Try to list template directory contents
         template_dir = '/app/authenticationApp/templates/authenticationApp'
@@ -425,14 +413,6 @@ async def PasswordResetView(request):
             raise
 
         email_subject = 'Reinitiatize your password'
-        '''
-        logger.debug(f'email_subject={email_subject}')
-
-        email_html = render_to_string('authenticationApp/password_reset_email.html', context)
-        '''
-
-        logger.debug(f'email_html={email_html}')
-        
 
         await database_sync_to_async(send_mail)(
             subject=email_subject,
@@ -450,6 +430,7 @@ async def PasswordResetView(request):
         logger.error(f"Template dirs: {settings.TEMPLATES[0]['DIRS']}")
         logger.error(f"App Dirs enabled: {settings.TEMPLATES[0]['APP_DIRS']}")
         return HttpResponseJDexception(e)
+
 
 
 async def PasswordResetConfirmationView(request, uidb64, token):
@@ -491,6 +472,8 @@ async def PasswordResetConfirmationView(request, uidb64, token):
     
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
         return HttpResponseJD('Could not reset password', 403)
+
+
 
 async def TokenRefreshView(request):
     if request.method != 'GET':
