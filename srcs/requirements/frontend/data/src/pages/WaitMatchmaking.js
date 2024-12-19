@@ -1,8 +1,10 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import api from "../services/api";
 
 export default function WaitMatchmaking() {
+  const location = useLocation();
+
   const handleCancelMatchmaking = async () => {
     try {
       const game_mode = ""; // Ajuste le mode de jeu si nécessaire
@@ -14,29 +16,31 @@ export default function WaitMatchmaking() {
   };
 
   useEffect(() => {
-    const handleRouteChange = () => {
-      handleCancelMatchmaking(); // Appelle l'annulation lors du changement de route
+    const handlePopState = () => {
+      if (location.pathname !== "/matchmaking") {
+        handleCancelMatchmaking();
+      }
     };
 
-    const handleBeforeUnload = (event) => {
-      handleCancelMatchmaking(); // Annule le matchmaking si l'utilisateur ferme/recharge la page
-    };
-
-    // Écoute les changements de navigation (back/forward) et les rechargements de la page
-    window.addEventListener("popstate", handleRouteChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    // Nettoyage des écouteurs
+    window.addEventListener("popstate", handlePopState);
     return () => {
-      window.removeEventListener("popstate", handleRouteChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
     };
-  }, []);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    return () => {
+      // Vérifie si la nouvelle destination n'est pas la page de matchmaking
+      if (location.pathname !== "/matchmaking") {
+        handleCancelMatchmaking();
+      }
+    };
+  }, [location]);
 
   return (
     <div>
       <div>
-        <p> MATCHMAKING... </p>
+        <p>MATCHMAKING...</p>
       </div>
       <div>
         <p>

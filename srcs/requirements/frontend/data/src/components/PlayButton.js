@@ -1,140 +1,206 @@
-import { useState, useEffect } from 'react';
-import api from '../services/api.js';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 
+const PlayButton = ({ gameMode, modifiers, number = '' }) => {
+    const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const navigate = useNavigate();
+    const wsRef = useRef(null);
 
-const PlayButton = ({ gameMode, modifiers, number='' }) => {
-	const [loading, setLoading] = useState(false);
-	const [errorMessage, setErrorMessage] = useState(null);
-	const navigate = useNavigate();
+    useEffect(() => {
+        // Nettoyage lors du démontage du composant
+        return () => {
+            if (wsRef.current) {
+                wsRef.current.close();
+            }
+            const existingIframe = document.querySelector('#gameFrame');
+            if (existingIframe) {
+                existingIframe.remove();
+            }
+        };
+    }, []);
 
-	const handlePlayButton = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null);
+    const connectWebSocket = () => {
+        const ws = new WebSocket(`ws://${window.location.host}/ws/matchmaking/`);
+        
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
 
-			let mods = modifiers.join(",");
-			const response = await api.get(`/game_manager/matchmaking/game_mode=${gameMode}?mods=${mods}&playernumber=${number}`, 3600000);
-			const gameId = response.data['data']['game_id'];
-			if (!gameId) return;
-			const gameServiceName = response.data['data']['service_name'];
-			if (!gameServiceName) throw new Error('Game service name is missing from the response.');
-			if (!window.gameInfo) {
-				window.gameInfo = {};
-			}
-			window.gameInfo.gameId = gameId;
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
 
-			const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
+            switch(data.status) {
+                case 'queued':
+                    console.log('En file d\'attente...');
+                    break;
+                case 'game_found':
+                    handleGameFound(data);
+                    break;
+                case 'error':
+                    setErrorMessage(data.message);
+                    setLoading(false);
+                    break;
+                default:
+                    console.log('Message non géré:', data);
+            }
+        };
 
-			navigate("/ingame");
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            setErrorMessage('Connection error');
+            setLoading(false);
+        };
 
-			console.log(gameUrl);
-			const iframe = document.createElement('iframe');
-			iframe.src = gameUrl;
-			iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
-			iframe.style.top = "75px";                 // Aligner en haut de la page
-			iframe.style.left = "0";                // Aligner à gauche de la page
-			iframe.style.width = "100vw";           // Largeur : 100% de la fenêtre
-			iframe.style.height = "93vh"; // Hauteur : 100% de la fenêtre moins la hauteur de la barre
-			iframe.style.border = "none";           // Supprimer les bordures
-			iframe.style.zIndex = "9999";           // Mettre l'iframe au premier plan
-			iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+            setLoading(false);
+        };
 
-			iframe.scrolling = "no";
+        return ws;
+    };
 
+    const handleGameFound = (data) => {
+        const { game_id, service_name } = data;
+        if (!game_id || !service_name) {
+            setErrorMessage('Invalid game data received');
+            setLoading(false);
+            return;
+        }
 
-			// Supprimer l'ancienne iframe s'il en existe une
-			const existingIframe = document.querySelector('#gameFrame');
-			if (existingIframe) {
-				existingIframe.remove();
-			}
-			iframe.id = "gameFrame";
-			document.body.appendChild(iframe);
-		} catch (error) {
-			console.error(error.message);
-			setErrorMessage(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
+        // Sauvegarder l'ID de la partie
+        if (!window.gameInfo) {
+            window.gameInfo = {};
+        }
+        window.gameInfo.gameId = game_id;
 
-	const handleCancelMatchmaking = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null);
-			const game_mode = "";
-			await api.get(`/game_manager/matchmaking/game_mode=${game_mode}`);
-			const iframe = document.querySelector('#gameFrame');
-			if (iframe) {
-				iframe.remove();
-			}
-		} catch (error) {
-			console.error("Failed to cancel matchmaking:", error.message);
-			setErrorMessage(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
+        // Créer et ajouter l'iframe
+        navigate("/ingame");
+        const gameUrl = `${location.origin}/api/${service_name}/?gameId=${game_id}`;
+        console.log(gameUrl);
 
-	useEffect(() => {
-		const handleGameFinished = (event) => {
-			if (event.data === 'game_end') {
-				// Supprimer l'iframe lorsque le jeu est terminé
-				const iframe = document.querySelector('#gameFrame');
-				if (iframe) {
-					iframe.remove();
-				}
-			}
-		};
+        const iframe = document.createElement('iframe');
+        iframe.src = gameUrl;
+        iframe.style.position = "fixed";
+        iframe.style.top = "75px";
+        iframe.style.left = "0";
+        iframe.style.width = "100vw";
+        iframe.style.height = "93vh";
+        iframe.style.border = "none";
+        iframe.style.zIndex = "9999";
+        iframe.sandbox = "allow-scripts allow-same-origin";
+        iframe.scrolling = "no";
+        iframe.id = "gameFrame";
 
-		// Ajouter l'écouteur d'événements
-		window.addEventListener('message', handleGameFinished);
+        const existingIframe = document.querySelector('#gameFrame');
+        if (existingIframe) {
+            existingIframe.remove();
+        }
 
-		// Nettoyer l'écouteur d'événements lorsqu'on quitte le composant
-		return () => {
-			window.removeEventListener('message', handleGameFinished);
-			const existingIframe = document.querySelector('#gameFrame');
-			if (existingIframe) {
-			  existingIframe.remove();
-			}
-		};
-	}, []);
+        document.body.appendChild(iframe);
+        setLoading(false);
+    };
 
-	return (
-		<>
-			{/* Bouton "Play" visible uniquement quand pas en chargement */}
-			{!loading && (
-				<button className="play-button-mode btn btn-outline-warning" onClick={handlePlayButton} style={{ marginTop: "10px" }}>
-					Play {gameMode}
-				</button>
-			)}
+    const handlePlayButton = () => {
+        try {
+            setLoading(true);
+            setErrorMessage(null);
 
-			{/* Bouton en croix visible uniquement pendant le chargement */}
-			{loading && (
-				<>
-					<p>Waiting...
-					<button 
-						onClick={handleCancelMatchmaking}
-						style={{
-							marginLeft: "10px",
-							background: "red",
-							color: "white",
-							border: "none",
-							borderRadius: "50%",
-							width: "30px",
-							height: "30px",
-							cursor: "pointer",
-						}}
-					>
-						X
-					</button></p>
-				</>
-			)}
+            if (wsRef.current) {
+                wsRef.current.close();
+            }
 
-			{/* Message d'erreur */}
-			{errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
-		</>
-	);
+            wsRef.current = connectWebSocket();
+            wsRef.current.onopen = () => {
+                wsRef.current.send(JSON.stringify({
+                    action: 'join_matchmaking',
+                    game_mode: gameMode,
+                    modifiers: modifiers.join(','),
+                    number_of_players: number
+                }));
+            };
+        } catch (error) {
+            console.error(error.message);
+            setErrorMessage(error.message);
+            setLoading(false);
+        }
+    };
+
+    const handleCancelMatchmaking = () => {
+        if (wsRef.current) {
+            wsRef.current.send(JSON.stringify({
+                action: 'leave_matchmaking'
+            }));
+            wsRef.current.close();
+            wsRef.current = null;
+        }
+        setLoading(false);
+
+        const iframe = document.querySelector('#gameFrame');
+        if (iframe) {
+            iframe.remove();
+        }
+    };
+
+    useEffect(() => {
+        const handleGameFinished = (event) => {
+            if (event.data === 'game_end') {
+                const iframe = document.querySelector('#gameFrame');
+                if (iframe) {
+                    iframe.remove();
+                }
+                if (wsRef.current) {
+                    wsRef.current.close();
+                    wsRef.current = null;
+                }
+            }
+        };
+
+        window.addEventListener('message', handleGameFinished);
+        return () => {
+            window.removeEventListener('message', handleGameFinished);
+        };
+    }, []);
+
+    return (
+        <>
+            {!loading && (
+                <button 
+                    className="play-button-mode btn btn-outline-warning" 
+                    onClick={handlePlayButton} 
+                    style={{ marginTop: "10px" }}
+                >
+                    Play {gameMode}
+                </button>
+            )}
+
+            {loading && (
+                <>
+                    <p>
+                        Waiting...
+                        <button 
+                            onClick={handleCancelMatchmaking}
+                            style={{
+                                marginLeft: "10px",
+                                background: "red",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "30px",
+                                height: "30px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            X
+                        </button>
+                    </p>
+                </>
+            )}
+
+            {errorMessage && <p style={{ color: 'red' }}>Error: {errorMessage}</p>}
+        </>
+    );
 };
 
 export default PlayButton;

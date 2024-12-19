@@ -4,37 +4,35 @@ from game_manager.game_manager import Game_manager
 from game_manager.utils.logger import logger
 from game_manager.utils.timer import Timer
 import uuid
-import asyncio
+import json
 import threading
 import copy
+import asyncio
 
+# matchmaking.py
 class Matchmaking:
 	matchmaking_instance = None
 	
 	def __init__(self):
 		logger.debug("Matchmaking init...")
-		self._is_running = False
-		self._task = None
-		self._is_running_mutex = threading.Lock()
 		self._queue = {}
 		self._queue_mutex = threading.Lock()
 		self.GAME_MODES = copy.deepcopy(settings.GAME_MODES)
 
 	async def remove_player_request(self, username):
+		await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 		with self._queue_mutex:
-			await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 			await self._remove_player_request_in_queue(username)
 
-	async def add_player_request(self, username, game_mode, modifiers, number_of_players, consumer):
+	async def add_player_to_queue(self, username, game_mode, modifiers, number_of_players, websocket):
 		status = await Game_manager.game_manager_instance.get_player_status(username)
 		if status == 'in_queue':
 			await self.remove_player_request(username)
 		elif status != 'inactive':
 			logger.debug(f"Player {username} cannot join queue, status is '{status}'")
-			await consumer.send_json({
-				'status': 'error',
-				'message': f"Cannot join queue with status '{status}'"
-			})
+			await websocket.send(json.dumps({
+				'error': f"Cannot join queue with status '{status}'"
+			}))
 			return
 
 		await Game_manager.game_manager_instance.update_player_status(username, 'in_queue')
@@ -48,100 +46,85 @@ class Matchmaking:
 				'game_mode': game_mode,
 				'modifiers': modifiers,
 				'number_of_players': number_of_players,
-				'consumer': consumer,
+				'websocket': websocket,
 				'time': Timer(),
 			})
 		
-		await consumer.send_json({
+		# Notifier le joueur qu'il est en file d'attente
+		await websocket.send(json.dumps({
 			'status': 'queued',
 			'message': 'Joined matchmaking queue'
-		})
-
-	def generate_queue_name(self, game_mode, modifiers_list, number_of_players):
-		queue_name = ""
-		queue_name += number_of_players
-		for i, gm in enumerate(self.GAME_MODES):
-			if gm == game_mode:
-				queue_name = chr(i + ord('0'))
-				if self.GAME_MODES[game_mode]['modifier_list']:
-					valid_modifiers = self.GAME_MODES[game_mode]['modifier_list']
-					for y, m in enumerate(valid_modifiers):
-						if m in modifiers_list:
-							queue_name += chr(y + ord('0'))
-					break
-		return queue_name
-
+		}))
 
 	async def matchmaking_logic(self):
 		with self._queue_mutex:
 			for queue in list(self._queue.keys()):
 				if queue not in self._queue:
 					continue
-				await self.remove_disconnected_client(self._queue[queue], False)
+				
 				queue_selected = []
 				for player_request in self._queue[queue][:]:
 					queue_selected.append(player_request)
 					game_mode = player_request.get('game_mode')
-					modifiers = player_request.get('modifiers')
-					number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
-					if not number_of_players:
-						number_of_players = player_request.get('number_of_players')
+					number_of_players = (self.GAME_MODES.get(game_mode, {})
+									   .get('number_of_players') or 
+									   player_request.get('number_of_players'))
+					
 					if len(queue_selected) == number_of_players:
-						await self.notify(game_mode, modifiers, queue_selected)
+						await self.create_game(game_mode, 
+											 player_request.get('modifiers'), 
+											 queue_selected)
 						if not self._queue[queue]:
 							del self._queue[queue]
 						break
 
-	async def notify(self, game_mode, modifiers, queue_selected):
-		logger.debug(f'New group for game_mode {game_mode}!')
+	async def create_game(self, game_mode, modifiers, queue_selected):
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		players = [p['username'] for p in queue_selected]
-		game = None
-		game_connected = False
-		players_connected = False
-
+		
 		try:
+			# Créer la partie
 			game_connected = await Game_manager.game_manager_instance.connect_to_game(
 				game_id, admin_id, game_mode, modifiers, players)
-			if game_connected:
-				game = await Game_manager.game_manager_instance.create_new_game_instance(
-					game_id, game_mode, modifiers, players)
-				if game:
-					for player_request in queue_selected:
-						try:
-							await player_request['consumer'].send_json({
-								'status': 'game_found',
-								'game_id': game_id,
-								'service_name': self.GAME_MODES[game_mode]['service_name']
-							})
-							players_connected = True
-						except Exception as e:
-							logger.error(f"Error notifying player {player_request['username']}: {str(e)}")
-							players_connected = False
-							break
-		except Exception as e:
-			logger.error(f"Error in notify: {str(e)}")
-			players_connected = False
-		await self.remove_disconnected_client(queue_selected, players_connected)
-		if not players_connected:
-			if game_connected:
-				await Game_manager.game_manager_instance.disconnect_to_game(game_id, game_mode)
-				logger.debug(f'Game service {game_id} aborted')
-			if game:
-				await Game_manager.game_manager_instance.abord_game_instance(game)
-				logger.debug(f'Game {game_id} aborted')
+			
+			if not game_connected:
+				raise Exception("Failed to connect to game")
+				
+			game = await Game_manager.game_manager_instance.create_new_game_instance(
+				game_id, game_mode, modifiers, players)
+				
+			if not game:
+				raise Exception("Failed to create game instance")
 
-	async def remove_disconnected_client(self, queue, players_connected):
-		for player_request in queue:
-			username = player_request['username']
-			if not players_connected:
-				consumer = player_request['consumer']
-				if not consumer.closed:
-					continue
-				await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
-			await self._remove_player_request_in_queue(username)
-			logger.debug(f"{username} is removed")
+			# Notifier tous les joueurs
+			for player in queue_selected:
+				websocket = player['websocket']
+				await websocket.send(json.dumps({
+					'status': 'game_found',
+					'game_id': game_id,
+					'service_name': self.GAME_MODES[game_mode]['service_name']
+				}))
+				
+			# Retirer les joueurs de la file
+			for player in queue_selected:
+				await self.remove_player_request(player['username'])
+				
+		except Exception as e:
+			logger.error(f"Error creating game: {str(e)}")
+			# Nettoyer en cas d'erreur
+			if 'game_connected' in locals():
+				await Game_manager.game_manager_instance.disconnect_to_game(
+					game_id, game_mode)
+			if 'game' in locals():
+				await Game_manager.game_manager_instance.abord_game_instance(game)
+			
+			# Notifier les joueurs de l'échec
+			for player in queue_selected:
+				websocket = player['websocket']
+				await websocket.send(json.dumps({
+					'error': 'Failed to create game'
+				}))
 
 	# LOOP
 
