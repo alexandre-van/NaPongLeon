@@ -188,15 +188,27 @@ const FriendsList = () => {
         <ul>
           {friends.map((friend) => (
             <li key={friend.id}>
-              {friend.username}
-              {friend.status === 'online' && <span> (Online)</span>}
-              <button onClick={() => handleDeleteFriend(friend.id)}>
+              <span>{friend.username}</span>
+              {friend.is_online ? (  // Utilisez is_online pour afficher le statut en ligne
+                <span style={{ color: 'green', marginLeft: '10px' }}> (Online)</span>
+              ) : (
+                <span style={{ color: 'gray', marginLeft: '10px' }}> (Offline)</span>
+              )}
+              <button
+                style={{ marginLeft: '15px' }}
+                onClick={() => handleDeleteFriend(friend.id)}
+              >
                 Remove friend
               </button>
             </li>
           ))}
         </ul>
       )}
+
+
+
+
+
       <h4>Notifications</h4>
       {!localNotifications || localNotifications.length === 0 ? (
         <p>No notifications yet</p>

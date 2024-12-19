@@ -2,30 +2,30 @@ import { useState, useEffect } from "react";
 import api from "../services/api.js";
 
 export default function GameHistory() {
-  const [history, setHistory] = useState([]); // Stocke l'historique des jeux
-  const [error, setError] = useState(null); // Stocke les erreurs éventuelles
+  const [history, setHistory] = useState([]); // Stores the game history
+  const [error, setError] = useState(null); // Stores potential errors
 
   useEffect(() => {
-    // Fonction pour récupérer les données depuis l'API
+    // Function to fetch data from the API
     const fetchHistory = async () => {
       try {
         const response = await api.get("/game_manager/get_history/");
         const gameHistory = response.data["game_history"];
 
         if (!gameHistory || Object.keys(gameHistory).length === 0) {
-          setHistory([]); // Aucun historique trouvé
+          setHistory([]); // No history found
         } else {
-          // Transformer l'objet en liste avec les informations importantes
+          // Transform the object into a list with the important information
           const formattedHistory = Object.entries(gameHistory).map(([date, data]) => ({
-            game_date: new Date(date).toLocaleString("fr-FR"), // Formate la date
+            game_date: new Date(date).toLocaleString("en-US"), // Formats the date
             game_mode: data.game_mode,
             status: data.status,
-            scores: data.scores || { left: 0, right: 0 }, // Valeurs par défaut si scores manquent
+            scores: data.scores || { left: 0, right: 0 }, // Default values if scores are missing
             teams: {
-              left: data.teams?.left || [], // Utilise un tableau vide si teams.left est undefined
-              right: data.teams?.right || [], // Utilise un tableau vide si teams.right est undefined
+              left: data.teams?.left || [], // Use an empty array if teams.left is undefined
+              right: data.teams?.right || [], // Use an empty array if teams.right is undefined
             },
-            winner: data.winner ? data.winner : "Aucun gagnant",
+            winner: data.winner ? data.winner : "No winner",
           }));
           setHistory(formattedHistory);
         }
@@ -35,12 +35,12 @@ export default function GameHistory() {
     };
 
     fetchHistory();
-  }, []); // [] signifie que cette fonction ne s'exécute qu'au montage du composant
+  }, []); // [] means this function runs only on component mount
 
   return (
     <div>
-      <h1>Historique des Parties</h1>
-      {error && <p style={{ color: "red" }}>Erreur: {error}</p>}
+      <h1>Game History</h1>
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
       {history.length > 0 ? (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {history.map((game, index) => (
@@ -54,37 +54,37 @@ export default function GameHistory() {
               }}
             >
               <p>
-                <strong>Date :</strong> {game.game_date}
+                <strong>Date:</strong> {game.game_date}
               </p>
               <p>
-                <strong>Mode de jeu :</strong> {game.game_mode}
+                <strong>Game Mode:</strong> {game.game_mode}
               </p>
               <p>
-                <strong>Statut :</strong>{" "}
-                {game.status === "aborted" ? "Annulé" : "Terminé"}
+                <strong>Status:</strong>{" "}
+                {game.status === "aborted" ? "Aborted" : "Completed"}
               </p>
               <p>
-                <strong>Équipes :</strong> Gauche (
+                <strong>Teams:</strong> Left (
                 {game.teams.left.length > 0
                   ? game.teams.left.join(", ")
-                  : "IA"}
-                ) vs Droite (
+                  : "AI"}
+                ) vs Right (
                 {game.teams.right.length > 0
                   ? game.teams.right.join(", ")
-                  : "IA"}
+                  : "AI"}
                 )
               </p>
               <p>
-                <strong>Score :</strong> {game.scores.left} - {game.scores.right}
+                <strong>Score:</strong> {game.scores.left} - {game.scores.right}
               </p>
               <p>
-                <strong>Gagnant :</strong> {game.winner}
+                <strong>Winner:</strong> {game.winner}
               </p>
             </li>
           ))}
         </ul>
       ) : (
-        <p>Aucun historique de jeu trouvé.</p>
+        <p>No game history found.</p>
       )}
     </div>
   );

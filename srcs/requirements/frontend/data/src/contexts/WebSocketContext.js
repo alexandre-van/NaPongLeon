@@ -58,6 +58,61 @@ export const WebSocketProvider = ({ children }) => {
             }
             checkFriends();
             break;
+
+          case 'friend_status':
+              console.log('Friend status update:', data); // Affiche l'ami et son statut
+      
+              if (user?.friends) {
+                // Met à jour le statut de l'ami en fonction de son username
+                const updatedFriends = user.friends.map((friend) =>
+                  friend.username === data.friend  // Compare en fonction du nom de l'ami
+                    ? { 
+                        ...friend, 
+                        status: data.status ? 'online' : 'offline',  // Met à jour le statut
+                        is_online: data.status  // Ajoute is_online pour faciliter la gestion de l'état
+                      }
+                    : friend
+                );
+      
+                console.log('Updated friends list:', updatedFriends);  // Vérifie la liste mise à jour
+                updateUser({ friends: updatedFriends });  // Met à jour l'état de l'utilisateur
+              }
+              checkFriends();  // Actualise la liste des amis
+              break;
+      
+            
+            
+
+            
+
+          case 'friend_deleted': // Nouveau cas pour les suppressions A AJOUTER EN BACK
+            if (!data.friend_id) {
+                console.error("Invalid friend ID received:", data.friend_id);
+                break;
+            }
+        
+            if (user?.friends) {
+                const updatedFriends = user.friends.filter(
+                    (friend) => friend.id !== data.friend_id
+                );
+        
+                if (updatedFriends.length === user.friends.length) {
+                    console.warn(`Friend with ID ${data.friend_id} not found in the list.`);
+                } else {
+                    console.log(`Friend with ID ${data.friend_id} successfully removed.`);
+                }
+        
+                updateUser({ friends: updatedFriends });
+            } else {
+                console.warn("User does not have a friends list or user object is null.");
+            }
+        
+            // Actualisation de la liste d'amis côté utilisateur
+            checkFriends();
+            break;
+
+
+
           case 'notification':
             console.log('notification_type = ', data.notification_type);
             //setNotifications(prev => [...prev, data.notification]);
@@ -69,10 +124,6 @@ export const WebSocketProvider = ({ children }) => {
               }
               return newNotifs;
             });
-            break;
-          case 'friend_status':
-            console.log('friend_status = ', data.status);
-            console.log('friend = ', data.friend);
             break;
           case 'disconnected_from_server':
             try {
