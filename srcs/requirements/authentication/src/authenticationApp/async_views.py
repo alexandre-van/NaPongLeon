@@ -1,6 +1,7 @@
 from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseJDexception
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from .services.FriendRequestService import FriendRequestService
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
@@ -221,8 +222,6 @@ async def FriendsRequestView(request):
             return HttpResponseBadRequestJD('Cannot be yourself')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.create_and_send_friend_request(user, receiver)
             if result:
                 return HttpResponseJD('Friend request sent', 201)
@@ -238,8 +237,6 @@ async def FriendsRequestView(request):
             return HttpResponseBadRequestJD('Notification id needed')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.accept_friend_request(user, notification_id)
             if result:
                 return HttpResponseJD('Friend request accepted', 200)
@@ -255,8 +252,6 @@ async def FriendsRequestView(request):
              return HttpResponseBadRequestJD('Notification id needed')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.reject_friend_request(user, notification_id)
             if result:
                 return HttpResponseJD('Friend request rejected', 200)
@@ -298,6 +293,7 @@ async def FriendsView(request):
 
             result = await user.remove_friend_from_list(friend)
             if result:
+                await FriendRequestService.delete_self_from_ex_friend_list(user, friend_id)
                 return HttpResponseJD('Removed friend successfully', 200)
             return HttpResponseJD('Friend to remove not found', 404)
 
