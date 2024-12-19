@@ -112,12 +112,7 @@ function connectWebSocket() {
 						updateHotbar(data.players[data.yourPlayerId].inventory, data.slot_index);
 					}
 					break;
-				case 'player_eat_other_player':
-					console.log('Player ate other player:', data);
-					updatePlayers(data.players, data.yourPlayerId);
-					removePlayer(data.player_eaten);
-					break;
-				case 'game_over':
+				case 'game_finish':
 					console.log('Game ending:', data);
 					showGameEndScreen(data);
 					updateGameInfo(data);

@@ -78,8 +78,7 @@ export function showGameEndScreen(data) {
     // 2. Déterminer le type d'écran à afficher
     const myId = getMyPlayerId();
     const isWinner = data.winner === myId;
-    const isForfeit = data.reason === 'forfeit';
-    
+
     // 3. Créer l'overlay approprié
     const overlay = document.createElement('div');
     overlay.className = isWinner ? 'game-win-overlay' : 'game-over-overlay';
@@ -90,22 +89,32 @@ export function showGameEndScreen(data) {
     
     const title = document.createElement('div');
     title.className = isWinner ? 'game-win-title' : 'game-over-title';
-    title.textContent = isWinner ? 'VICTORY!' : 'GAME OVER';
     
     const messageText = document.createElement('div');
     messageText.className = isWinner ? 'game-win-score' : 'game-over-score';
-    
-    // 4. Personnaliser le message selon le cas
-    if (isForfeit) {
+
+    // 4. Personnaliser le contenu selon le cas
+    if (data.reason === 'forfeit') {
         if (isWinner) {
-            messageText.textContent = `Victoire par forfait! Score: ${data.message}`;
+            title.textContent = 'VICTOIRE PAR FORFAIT!';
+            messageText.textContent = `Score final: ${data.winner_score}`;
         }
-    } else {
+    } else if (data.reason === 'victory') {
         if (isWinner) {
-            messageText.textContent = `Victoire! Score final: ${data.winner_score}`;
+            title.textContent = 'VICTOIRE!';
+            messageText.textContent = `Vous avez gagné avec un score de ${data.winner_score}!`;
         } else {
-            messageText.textContent = `Défaite! Votre score: ${data.loser_score}`;
+            title.textContent = 'DÉFAITE';
+            messageText.textContent = `Vous avez perdu avec un score de ${data.loser_score}`;
         }
+    }
+    
+    // 5. Ajouter des détails supplémentaires si disponibles
+    if (data.message) {
+        const additionalInfo = document.createElement('div');
+        additionalInfo.className = isWinner ? 'game-win-message' : 'game-over-message';
+        additionalInfo.textContent = data.message;
+        content.appendChild(additionalInfo);
     }
     
     content.appendChild(title);
@@ -113,7 +122,7 @@ export function showGameEndScreen(data) {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     
-    // 5. Retour à la waiting room après délai
+    // 6. Retour à la waiting room après délai
     setTimeout(() => {
         overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
         overlay.addEventListener('animationend', () => {
@@ -121,7 +130,7 @@ export function showGameEndScreen(data) {
                 overlay.remove();
                 const waitingRoom = document.getElementById('waitingRoom');
                 if (waitingRoom) {
-                    waitingRoom.style.display = 'flex';
+                    waitingRoom.style.display = 'block';
                 }
             }
         }, { once: true });

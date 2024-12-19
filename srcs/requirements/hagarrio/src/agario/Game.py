@@ -157,21 +157,23 @@ class Game:
 	def remove_player(self, player_id):
 		"""Retire un joueur de la partie"""
 		if player_id in self.players:
+			loser = self.players[player_id]
+			loser_score = self.players[player_id]['score']
 			del self.players[player_id]
 			if player_id in self.player_inputs:
 				del self.player_inputs[player_id]
 			if player_id in self.player_movements:
 				del self.player_movements[player_id]
-		if len(self.players) <= 1:
-			self.status = "finished"
-			remaining_player = list(self.players.values())[0]
-			return {
-				'type': 'game_over',
-				'winner': remaining_player['id'],
-				'loser': player_id,  # celui qui s'est déconnecté
-				'message': f"Victoire par forfait ! Score: {remaining_player['score']}",
-				'reason': 'forfeit'
-			}
+			if len(self.players) <= 1:
+				self.status = "finished"
+				winner = list(self.players.values())[0]
+				return {
+					'type': 'game_finish',
+					'loser': loser,
+					'winner': winner,
+					'message_winner': f"Score final : {winner['score']:.0f}",
+					'message_loser': f"Score final : {loser_score:.0f}",
+				}
 		return None
 
 	def get_food_state(self):
@@ -227,21 +229,16 @@ class Game:
 				positions_updated = self.update_positions(delta_time)
 				if positions_updated:
 					await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
-				player_ids = list(self.players.keys())     # Créer une copie des IDs des joueurs pour l'itération
-				players_eaten = []                        # Liste pour stocker les joueurs qui se font manger
-				# Vérifier les collisions entre les joueurs
-				for player_id in player_ids:
-					if player_id not in self.players:  # Le joueur a peut-être été mangé
-						continue
-					for other_player_id in player_ids:
-						if player_id != other_player_id and other_player_id in self.players:
-							if self.player_eat_other_player(player_id, other_player_id):
-								players_eaten.append((player_id, other_player_id))
-								break  # Sortir de la boucle interne car le joueur a été mangé
-
-				# Traiter les joueurs mangés après la boucle
-				for player_id, other_player_id in players_eaten:
-					await broadcast_callback(self.game_id, self.state_player_eat_other_player(player_id, other_player_id))
+				
+				# Vérifier les collisions entre les deux joueurs
+				if len(self.players) == 2:
+					player_ids = list(self.players.keys())
+					state_details = self.player_eat_other_player(player_ids[0], player_ids[1])
+					if state_details:
+						await broadcast_callback(self.game_id, state_details)
+					state_details = self.player_eat_other_player(player_ids[1], player_ids[0])
+					if state_details:
+						await broadcast_callback(self.game_id, state_details)
 
 				player_food_changes = self.check_all_food_collisions()
 				if player_food_changes:
@@ -392,15 +389,6 @@ class Game:
 			'power_up': power_up
 		}
 
-	def state_player_eat_other_player(self, player_id, other_player_id):
-		return {
-			'type': 'player_eat_other_player',
-			'game_id': self.game_id,
-			'players': self.players,
-			'player_id': player_id,
-			'other_player_id': other_player_id
-		}
-
 	def player_eat_other_player(self, player_id, other_player_id):
 		player = self.players.get(player_id)
 		other_player = self.players.get(other_player_id)
@@ -414,14 +402,9 @@ class Game:
 				player['score'] += other_player['score'] * 0.25
 				
 				# Supprimer le joueur mangé et retourner le résultat
-				return {
-					'type': 'game_over',
-					'winner': player_id,
-					'loser': other_player_id,
-					'winner_score': player['score'],
-					'loser_score': other_player['score'],
-					'reason': 'victory'
-				}
+				eaten = self.remove_player(other_player_id)
+				if eaten:
+					return eaten
 		return False
 
 	async def cleanup(self):
