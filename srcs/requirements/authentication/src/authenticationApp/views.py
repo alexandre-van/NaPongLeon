@@ -41,34 +41,7 @@ class UserView(APIView):
         return Response({
             "user": serializer.data
         }, status=status.HTTP_200_OK)
-
-
-
-''' TO REFACTORISER EN ASYNC POUR LE HEARTBEAT
-class TokenRefreshView(APIView):
-    def post(self, request):
-        refresh_token = request.COOKIES.get('refresh_token')
-        if refresh_token is None:
-            return Response({'error': 'Refresh token not found'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            refresh = RefreshToken(refresh_token)
-            access_token = str(refresh.access_token)
-            
-            response = Response({'message': 'Token refreshed successfully'})
-            response.set_cookie(
-                'access_token',
-                access_token,
-                httponly=True,
-                secure=False,
-                samesite='Strict',
-                max_age=2 * 60 * 60
-            )
-            return response
-        except TokenError:
-            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-'''
-
+    
 
 
 class VerifyTokenView(APIView):

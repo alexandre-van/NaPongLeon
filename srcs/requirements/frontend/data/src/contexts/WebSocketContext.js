@@ -33,7 +33,7 @@ export const WebSocketProvider = ({ children }) => {
       const wsToken = response.data.token;
       const { host, port, protocol } = getWindowURLinfo();
 
-      const newSocket = new WebSocket(`${protocol}://${host}:8080/ws/authentication/?token=${wsToken}/`);
+      const newSocket = new WebSocket(`${protocol}://${host}:${port}/ws/authentication/?token=${wsToken}/`);
       newSocket.onopen = () => {
         console.log('WebSocket connected');
         setSocket(newSocket);

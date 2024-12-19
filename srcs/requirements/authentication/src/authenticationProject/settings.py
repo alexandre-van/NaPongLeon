@@ -103,14 +103,14 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CSRF_TRUSTED_ORIGINS = [
 #    "https://localhost:8080",
-    "https://localhost:443",
+    "https://localhost:8443",
     "https://localhost",
     "https://api.intra.42.fr",
 ]
 
 CORS_ALLOWED_ORIGINS = [
 #    "https://localhost:8080",
-    "https://localhost:443",
+    "https://localhost:8443",
     "https://localhost",
     "https://api.intra.42.fr",
 ]

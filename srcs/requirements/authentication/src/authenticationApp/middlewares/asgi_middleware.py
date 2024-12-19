@@ -173,8 +173,6 @@ class CsrfAsgiMiddleware:
             'path': scope.get('path', '')
         })
 
-        is_secure = request.scheme == 'https' or normalized_headers.get('HTTP_X_FORWARDED_PROTO') == 'https'
-
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
@@ -197,16 +195,42 @@ class CsrfAsgiMiddleware:
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
             csrf_cookie = request.COOKIES.get('csrftoken')
             csrf_header = self.get_csrf_header(normalized_headers)
+
+            logger.debug(f"--------------------------- CSRF_cookie = {csrf_cookie}\n")
+            logger.debug(f"--------------------------- CSRF_header = {csrf_header}\n")
             if not csrf_cookie or not csrf_header:
                 return await self.send_error_response(send, 'CSRF token missing', 403)
 
             if csrf_cookie != csrf_header:
                 return await self.send_error_response(send, 'CRSF token invalid', 403)
 
-        async def server_send(response):
-            await send(response)
+        #async def server_send(response):
+        #    await send(response)
+
         
-        return await self.get_response(scope, receive, server_send)
+        
+        #return await self.get_response(scope, receive, server_send)
+        return await self.get_response(scope, receive, self.get_send_wrapper(send, request))
+    
+    def get_send_wrapper(self, send, request):
+        async def send_wrapper(message):
+            if message['type'] == 'http.response.start':
+                headers = list(message.get('headers', []))
+
+                if not request.COOKIES.get('csrftoken'):
+                    new_csrf_token = get_token(request)
+                    csrf_cookie = (
+                        f"csrftoken={new_csrf_token}; "
+                        f"Path=/; "
+                        f"SameSite=Strict; "
+                        f"Secure=true"
+                    ).encode()
+                    headers.append((b'set-cookie', csrf_cookie))
+                    headers.append((b'X-CSRFToken', new_csrf_token.encode()))
+                
+                message['headers'] = headers
+            await send(message)
+        return send_wrapper
 
     def get_csrf_header(self, headers):
         return (headers.get('HTTP_X_CSRFTOKEN') or 

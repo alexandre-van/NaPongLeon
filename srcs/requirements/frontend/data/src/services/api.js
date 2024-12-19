@@ -43,6 +43,7 @@ api.interceptors.request.use(function (config) {
 });
 
 // Response interceptor to handle CSRF token updates
+/*
 api.interceptors.response.use(function (response) {
   const newCsrfToken = response.headers['x-csrftoken'];
   if (newCsrfToken) {
@@ -52,6 +53,30 @@ api.interceptors.response.use(function (response) {
 }, function (error) {
   return Promise.reject(error);
 });
+*/
+
+
+api.interceptors.request.use(
+  (config) => {
+    const csrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+      
+    if (csrfToken) {
+      console.log('CSRF Token found:', csrfToken);
+      config.headers['X-CSRFToken'] = csrfToken;
+    } else {
+      console.log('No CSRF token found in cookies');
+    }
+    
+    console.log('Request headers:', config.headers);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const isLoginPage = () => window.location.pathname === '/login';
 
