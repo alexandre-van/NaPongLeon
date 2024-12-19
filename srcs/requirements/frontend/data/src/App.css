@@ -119,6 +119,7 @@ Form {
   margin-top: 100px;
   padding-left: 20px;
   padding-right: 20px;
+  margin-bottom: 50px;
   border-radius: 10px; /* Optionnel : rend les coins arrondis */
   font-weight: bold;
   margin-top: 200px;
