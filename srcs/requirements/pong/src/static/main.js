@@ -1,6 +1,7 @@
 import { init } from './srcs/init.js';
 import { startGame, updateGame, stopAnimation } from './srcs/animate.js';
 import { updateScore } from './srcs/object/score.js';
+import { printWinner } from './srcs/object/win.js';
 import {scene, cleanup} from './srcs/scene.js';
 import './srcs/object/camera.js';
 
@@ -54,7 +55,8 @@ socket.onmessage = function(event) {
 			updateScore(playerLscore, playerRscore);
 			break;
 		case "game_end":
-			//printWinner(data.winner);
+			printWinner(data.team);
+			console.log("FINITO : ", data);
 			console.log("Game ended. Reason:", data.reason);
 			if (socket.readyState === WebSocket.OPEN)
 				socket.close();

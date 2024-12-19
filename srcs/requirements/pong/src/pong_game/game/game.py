@@ -10,6 +10,12 @@ class Game:
 
 		sides = ['left', 'right']
 		logger.debug(f"TEAM LIST DANS LA CLASSE GAME: {teamlist}")
+		players_keys = list(players.keys())
+		logger.debug(f"players dans la classe Game: {players}")
+		logger.debug(f"teamlist dans la classe Game: {teamlist[0][0]} et players_keys: {players_keys[1]}")
+		if (teamlist[0][0] == players_keys[1]):
+			logger.debug("Inversion de l'ordre des clés de player_username")
+			players = {k: players[k] for k in reversed(players_keys)}
 		if teamlist is None:
 			random.shuffle(sides)
 		self.game_mode = game_mode
@@ -29,6 +35,7 @@ class Game:
 			self.players_in_side[side].append(self.players[username])
 			logger.debug(f"{username} is the {side} player !")
 		logger.debug(f"player_username: {self.players[username]}")
+		logger.debug(f"player_username: {self.players}")
 		#logger.debug(f"self.players_in_side: {self.players_in_side}")
 		self.ball = Ball(modifiers)
 		self.timer = Timer()
