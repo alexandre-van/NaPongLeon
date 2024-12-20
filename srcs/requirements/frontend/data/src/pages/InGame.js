@@ -14,7 +14,7 @@ export default function InGame() {
         try {
             if (!gameService || !gameId) {
                 console.error("Missing or invalid gameService or gameId");
-                navigate("/"); // Rediriger à l'accueil si les données sont manquantes ou invalides
+                navigate("/pong");
                 return;
             }
           
@@ -40,11 +40,10 @@ export default function InGame() {
 
         } catch (error) {
             console.error("Error during iframe setup:", error);
-            navigate("/"); // Rediriger à l'accueil en cas de problème
+            navigate("/pong");
         }
       
         return () => {
-            // Nettoyer l'iframe lors du démontage ou de la réinitialisation
             const iframe = document.querySelector('#gameFrame');
             if (iframe) {
                 iframe.remove();
@@ -56,11 +55,11 @@ export default function InGame() {
     const Cancel = async () => {
         const iframe = document.querySelector('#gameFrame');
         if (iframe) {
-            iframe.contentWindow.postMessage('stop_game', '*'); // Envoie un message pour arrêter le jeu
-            await new Promise(resolve => setTimeout(resolve, 100)); // Attendre un peu
-            iframe.remove(); // Supprime l'iframe
+            iframe.contentWindow.postMessage('stop_game', '*');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            iframe.remove();
         }
-        navigate("/"); // Retourner à la page d'accueil
+        navigate("/pong");
     };
 
     return (
@@ -77,7 +76,6 @@ export default function InGame() {
                 <h1 className="wait">Wait for the game to load</h1>
             </div>
             <div id="iframe-container" style={{ marginTop: '20px' }}>
-                {/* L'iframe sera insérée dynamiquement ici */}
             </div>
         </div>
     );

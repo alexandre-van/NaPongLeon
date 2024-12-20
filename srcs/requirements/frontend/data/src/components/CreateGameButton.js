@@ -24,45 +24,10 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
             };
 
             const response = await api.post('/game_manager/create_game/', gameParams);
-            const gameId = response.data.data.game_id;
-            if (!gameId) throw new Error('Game ID is missing from the response.');
-
-            const gameServiceName = response.data.data.service_name;
-            if (!gameServiceName) throw new Error('Game service name is missing from the response.');
-
-            if (!window.gameInfo) window.gameInfo = {};
-            window.gameInfo.gameId = gameId;
-
-            const gameUrl = `${location.origin}/api/${gameServiceName}/?gameId=${gameId}`;
-
-            // Remove existing iframe if any
-            const existingIframe = document.querySelector('#gameFrame');
-            if (existingIframe) existingIframe.remove();
-
-            // Create and configure the iframe
-            const iframe = document.createElement('iframe');
-            iframe.src = gameUrl;
-            iframe.id = "gameFrame";
-            iframe.style.position = "fixed";
-            iframe.style.top = "75px";
-            iframe.style.left = "0";
-            iframe.style.width = "100vw";
-            iframe.style.height = "calc(100vh - 75px)";
-            iframe.style.border = "none";
-            iframe.style.zIndex = "9999";
-            iframe.sandbox = "allow-scripts allow-same-origin";
-
-            // Disable scrolling inside the iframe
-            iframe.scrolling = "no";
-
-            // Prevent scrolling on the page
-            document.documentElement.style.overflow = "hidden";
-            document.body.style.overflow = "hidden";
-            document.body.style.margin = "0";
-            document.body.style.padding = "0";
-
-            // Add the iframe to the document
-            document.body.appendChild(iframe);
+            const data = response.data.data;
+            console.log("game_created:", data);
+            navigate("/pong/ingame", { state: { gameService: `${location.origin}/api/${data.service_name}`, gameId: data.game_id } });
+            
         } catch (error) {
             console.error(error.message);
             setErrorMessage(error.message);
