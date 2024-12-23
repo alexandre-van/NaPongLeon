@@ -3,11 +3,12 @@ import { useState } from 'react';
 import arrow from '../elements/arrow.png'
 import vid from '../elements/gif-solo.gif'
 import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 
 export default function DuoTournament() {
     const [modifiers, setModifiers] = useState([]);
-
+    const navigate = useNavigate();
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
 
     // Gérer la sélection des modificateurs
@@ -17,6 +18,10 @@ export default function DuoTournament() {
                 ? prevModifiers.filter((mod) => mod !== modifier)
                 : [...prevModifiers, modifier]
         );
+    };
+
+    const startMatchmaking = () => {
+        navigate("/matchmaking", { state: { gameMode: "DUO_TOURNAMENT", modifiers } });
     };
 
     return (
@@ -42,8 +47,9 @@ export default function DuoTournament() {
                 </ul>
             </div>
             <div>
-
-                <Link to="/matchmaking"><PlayButton gameMode="PONG_DUO_TOURNAMENT" modifiers={modifiers} /></Link>
+                <button className="play-button-mode btn btn-outline-warning" 
+                    style={{ marginTop: "10px" }}
+                    onClick={startMatchmaking}>Join DUO TOURNAMENT</button>
             </div>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>

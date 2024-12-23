@@ -24,8 +24,8 @@ class Game_manager:
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 3600,
-			'loading' : 3600,
+			'waiting': 15,
+			'loading' : 15,
 			'in_progress': 3600
 		}
 
@@ -87,24 +87,24 @@ class Game_manager:
 			or (ia_authorizes is False and len(players_list) < game_mode_data['number_of_players']):
 			return None
 		# pars teams_list
-		if not teams_list:
-			teams_list = []
-		if game_mode_data['team_names'] is None\
-			or len(teams_list) != len(game_mode_data['team_names']):
-			return None
-		number_of_players = 0
-		for i, team_name in enumerate(game_mode_data['team_names']):
-			if i >= len(teams_list):
-				teams_list.append([])
-		for team in teams_list:
-			team_size = len(team)
-			if team_size > game_mode_data['team_size']:
+		if teams_list:
+			if game_mode_data['team_names'] is None\
+				or len(teams_list) != len(game_mode_data['team_names']):
 				return None
-			number_of_players += team_size
-		if number_of_players != len(players_list):
-			return None
-		if all(any(player in team for team in teams_list) for player in players_list) is False:
-			return None
+			else:
+				for i, team_name in enumerate(game_mode_data['team_names']):
+					if  i >= len(teams_list):
+						teams_list.append([])
+			number_of_players = 0
+			for team in teams_list:
+				team_size = len(team)
+				if team_size > game_mode_data['team_size']:
+					return None
+				number_of_players += team_size
+			if number_of_players != len(players_list):
+				return None
+			if all(any(player in team for team in teams_list) for player in players_list) is False:
+				return None
 		# ai
 		all_ai = []
 		while ia_authorizes and len(players_list) < game_mode_data['number_of_players']:
@@ -116,10 +116,12 @@ class Game_manager:
 			all_ai.append(ai_id)
 			special_id.append(ai_id)
 			players_list.append(ai_id['public'])
-			for team in teams_list:
-				if len(team) < game_mode_data['team_size']:
-					team.append(ai_id['public'])
-					break
+			if teams_list:
+				for team in teams_list:
+					if len(team) < game_mode_data['team_size']:
+						team.append(ai_id['public'])
+						break
+		logger.debug(f"team_list = {teams_list}")
 		game_id = str(uuid.uuid4())
 		admin_id = str(uuid.uuid4())
 		game = None
@@ -152,12 +154,10 @@ class Game_manager:
 			'game_id': game_id,
 			'service_name': game_mode_data['service_name']
 		}
-
-	# game notify
-
+	
 	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
-		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
+		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players, 'teamsList': teams_list, 'special_id': special_id}
 		logger.debug(f"send to {game_service_url}: {send}")
 		try:
 			async with httpx.AsyncClient() as client:

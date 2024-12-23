@@ -1,16 +1,15 @@
-import PlayButton from '../components/PlayButton.js';
 import { useState } from 'react';
 import arrow from '../elements/arrow.png'
 import vid from '../elements/gif-solo.gif'
 import { Link } from 'react-router-dom';
-
+import { useNavigate } from "react-router-dom";
 
 export default function SoloMode() {
     const [modifiers, setModifiers] = useState([]);
+    const navigate = useNavigate();
 
     const availableModifiers = ["so_long", "small_arena", "border", "elusive", "perfection"];
 
-    // Gérer la sélection des modificateurs
     const handleModifierChange = (modifier) => {
         setModifiers((prevModifiers) =>
             prevModifiers.includes(modifier)
@@ -19,18 +18,23 @@ export default function SoloMode() {
         );
     };
 
+    const startMatchmaking = () => {
+        navigate("/matchmaking", { state: { gameMode: "PONG_CLASSIC", modifiers } });
+    };
+
     return (
         <div>
             <div className="box">
                 <h2 className="title-modes">1 VS 1</h2>
-                <img className="vid" src={vid}/>
+                <img className="vid" src={vid} />
                 <ul>
                     {availableModifiers.map((modifier) => (
                         <li key={modifier}>
-                            <div class="form-check form-switch">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">
+                            <div className="form-check form-switch">
+                                <label className="form-check-label" htmlFor={`switch-${modifier}`}>
                                     <input
-                                        class="form-check-input" id="flexSwitchCheckDefault"
+                                        className="form-check-input"
+                                        id={`switch-${modifier}`}
                                         type="checkbox"
                                         value={modifier}
                                         onChange={() => handleModifierChange(modifier)}
@@ -43,10 +47,11 @@ export default function SoloMode() {
                 </ul>
             </div>
             <div>
-
-                <Link to="/matchmaking"><PlayButton gameMode="PONG_CLASSIC" modifiers={modifiers} /></Link>
+                <button className="play-button-mode btn btn-outline-warning" 
+                    style={{ marginTop: "10px" }}
+                    onClick={startMatchmaking}>Play PONG CLASSIC</button>
             </div>
-            <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
+            <footer><Link to="/pong"><img className="arrow" src={arrow} /></Link></footer>
         </div>
     );
 }

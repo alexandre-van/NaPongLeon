@@ -19,14 +19,13 @@ services:
     volumes:
       - media_vol:/media
       - static_vol:/static_files
-#      - ./ssl:/etc/nginx/ssl:ro
+      - ./ssl:/etc/nginx/ssl:ro
     networks:
       - backend
       - frontend
     ports:
-      - "8080:8080"
-#      - "80:80"
-#      - "443:443"
+    #  - "8080:8080"
+      - "8443:443"
 
   frontend:
     build: ./requirements/frontend

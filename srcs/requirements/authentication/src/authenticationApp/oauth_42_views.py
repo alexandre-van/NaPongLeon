@@ -108,7 +108,7 @@ async def OAuth42CallbackView(request):
                 'csrftoken',
                 csrf_token,
                 httponly=False,
-                secure=False,  # True for production
+                secure=True,
                 samesite='Strict'
             )
             response['X-CSRFToken'] = csrf_token

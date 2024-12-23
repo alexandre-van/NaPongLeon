@@ -36,7 +36,7 @@ async def create_login_response(user, request):
         'csrftoken',
         csrf_token,
         httponly=False,
-        secure=False,  # True for production
+        secure=True,
         samesite='Strict'
     )
     response['X-CSRFToken'] = csrf_token
