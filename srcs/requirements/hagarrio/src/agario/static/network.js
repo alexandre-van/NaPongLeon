@@ -165,10 +165,8 @@ export async function startMatchmaking() {
 			return false;
 		}
 		const data = await response.json();
-		console.log(data);
 		const gameId = data.data.game_id;
 		if (!gameId) {
-			console.error('Game ID is missing from the response.');
 			return false;
 		}
 		socket.send(JSON.stringify({
@@ -190,11 +188,8 @@ export async function stopMatchmaking() {
 	try {
 		const response = await fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=`);
 		if (!response.ok) {
-			console.error('Network response was not ok');
 			return false; // Retourne false si la réponse réseau est invalide
 		}
-		const data = await response.json();
-		console.log(data);
 		return true; // Retourne true si tout s'est bien passé
 	} catch (error) {
 		console.error('An error occurred:', error);

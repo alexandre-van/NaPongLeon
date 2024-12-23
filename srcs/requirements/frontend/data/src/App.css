@@ -93,6 +93,7 @@ Form {
   letter-spacing: 1px;
   font-size: 70px;
   font-weight: bold;
+  
 }
 
 .exit-button {
@@ -119,6 +120,7 @@ Form {
   margin-top: 100px;
   padding-left: 20px;
   padding-right: 20px;
+  margin-bottom: 50px;
   border-radius: 10px; /* Optionnel : rend les coins arrondis */
   font-weight: bold;
   margin-top: 200px;
@@ -173,4 +175,18 @@ li{
   letter-spacing: 1px;
   font-size: 70px;
   font-weight: bold;
+}
+
+.options{
+  margin-top: 10px;
+}
+
+@layer demo {
+  .highlighted-text-shadow {
+    text-shadow:
+      /* regular text-shadow */
+      0 .15ch 15px var(--shadow),
+      /* text-shadow highlight */
+      0 -2px 0 var(--highlight);
+  }
 }

@@ -11,37 +11,46 @@ import { createHotbar } from './hotbar.js';
 let scene, camera, renderer;
 export let mapHeight, mapWidth, max_food;
 
-document.addEventListener('DOMContentLoaded', () => {
-	const joinBtn = document.getElementById('joinMatchmakingBtn');
-	const leaveBtn = document.getElementById('leaveMatchmakingBtn');
+document.addEventListener('DOMContentLoaded', async () => {
+    const joinBtn = document.getElementById('joinMatchmakingBtn');
+    const leaveBtn = document.getElementById('leaveMatchmakingBtn');
 
-	initNetwork()
+    initNetwork(); // Suppose que initNetwork est aussi async
 
-	let isInMatchmaking = false;
+    let isInMatchmaking = false;
 
-	function updateButtons() {
-		if (isInMatchmaking) {
-			joinBtn.style.display = 'none';
-			leaveBtn.style.display = 'block';
-		} else {
-			joinBtn.style.display = 'block';
-			leaveBtn.style.display = 'none';
-		}
-	}
-	joinBtn.addEventListener('click', () => {
+    function updateButtons() {
+        if (isInMatchmaking) {
+            joinBtn.style.display = 'none';
+            leaveBtn.style.display = 'block';
+        } else {
+            joinBtn.style.display = 'block';
+            leaveBtn.style.display = 'none';
+        }
+    }
+
+    joinBtn.addEventListener('click', async () => {
 		isInMatchmaking = true;
-		if (startMatchmaking())
+		updateButtons();
+		const success = await startMatchmaking();
+        if (success) {
+			return;
+        } else {
+            isInMatchmaking = false;
 			updateButtons();
-		console.log('Joining matchmaking...');
-	});
-	leaveBtn.addEventListener('click', () => {
-		isInMatchmaking = false;
-		if (stopMatchmaking())
-			updateButtons();
-		console.log('Leaving matchmaking...');
-	});
-	updateButtons();
+        }
+	})
+    leaveBtn.addEventListener('click', async () => {
+		const success = await stopMatchmaking();
+        if (success) {
+			isInMatchmaking = false;
+            updateButtons();
+        }
+    });
+
+    updateButtons();
 });
+
 
 
 export function startGameLoop(initialGameState) {

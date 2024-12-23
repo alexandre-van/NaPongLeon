@@ -68,15 +68,16 @@ const LoginForm = ({ onLogin }) => {
               required
             />
           </Form.Group>
-          <Link to='/forgot-password'>Forgot Password ?</Link>
 
-          <Button variant="primary" type="submit">LOG IN</Button> {/* Utilisation du bouton de React-Bootstrap */}
+          <Button className="options" variant="primary" type="submit">LOG IN</Button> {/* Utilisation du bouton de React-Bootstrap */}
           
           {/* Autre bouton pour "Log In with 42", variant "secondary" pour l'option secondaire */}
-          <Button variant="secondary" onClick={login42} className="mt-2">LOG IN WITH 42</Button>
+          <Button className="options" variant="secondary" onClick={login42}>LOG IN WITH 42</Button>
 
           <div className="mt-3">
             <Link to="/register">Don't have an account? Register</Link>
+            <br/>
+            <Link to='/forgot-password'>Forgot Password ?</Link>
           </div>
         </Form>
       </div>
