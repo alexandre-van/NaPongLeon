@@ -234,3 +234,9 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             'type': 'friend_list_user_update',
             'user': event['user'],
         }))
+
+    async def friend_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'friend_deleted',
+            'friend_id': event['friend_id'],
+        }))

@@ -29,6 +29,17 @@ async def send_user_info(receiver_id, user_info):
         }
     )
 
+async def send_deleted_friend_from_list(user, friend_id):
+    channel_layer = get_channel_layer()
+    logger.debug(f"Send Deleted friend from list to group user_{friend_id}:\n\n\n\n\n")
+    await channel_layer.group_send(
+        f"user_{friend_id}",
+        {
+            'type': "friend_deleted",
+            'friend_id': user.id
+        }
+    )
+
 @database_sync_to_async
 def get_notification_and_sender(notification_id):
     notification = Notification.objects.filter(id=notification_id).select_related('sender').first()
@@ -67,3 +78,7 @@ class FriendRequestService:
             if notification:
                 return True
         return False
+
+    @staticmethod
+    async def delete_self_from_ex_friend_list(user, friend_id):
+        await send_deleted_friend_from_list(user, friend_id)

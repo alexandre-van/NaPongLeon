@@ -5,9 +5,7 @@ import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const FriendsList = () => {
-//  const { friends, socket } = useWebSocket();
-  const { user, setUser, friends, checkFriends } = useUser();
-//  const [notifications, setNotifications] = useState([]);
+  const { user, setUser, friends, setFriends, checkFriends } = useUser();
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]); // État local pour les notifications
 
@@ -85,15 +83,15 @@ const FriendsList = () => {
       });
       if (response.status === 200) {
         console.log('bonjour response status === 200');
-        setUser(prevUser => {
-          const updatedUser = { ...prevUser };
+        const updatedFriends = [...user.friends].filter(
+          friend => friend.id !== friendId
+        );
 
-          updatedUser.friends = Array.isArray(prevUser.friends) ?
-            prevUser.friends.filter(friend => friend.id !== friendId) : [];
-
-            return updatedUser;
-        });
-        checkFriends();
+        setFriends(updatedFriends);
+        updateUser(prevUser => ({
+          ...prevUser,
+          friends: updatedFriends
+        }));
       }
       console.log(response);
     } catch (err) {

@@ -91,19 +91,22 @@ export function UserProvider({ children }) {
 		let heartbeatInterval;
 	
 		if (isAuthenticated) {
-		  // Lancer le heartbeat toutes les 3 minutes
 		  heartbeatInterval = setInterval(async () => {
 			await refreshAccessToken();
-		  }, 60 * 1000); // 3 minutes en millisecondes
+		  }, 60 * 1000); // 1 minute
 		}
 	
-		// Cleanup lors du démontage ou de la déconnexion
+		// Cleanup
 		return () => {
 		  if (heartbeatInterval) {
 			clearInterval(heartbeatInterval);
 		  }
 		};
 	}, [isAuthenticated, refreshAccessToken]);
+
+	useEffect(() => {
+		console.log('Friends list updated:', friends);
+	}, [friends]);
 
 	// Update user's Friends
 	const checkFriends = useCallback(async () => {
@@ -161,6 +164,7 @@ export function UserProvider({ children }) {
     setUser,
     isAuthenticated,
     friends,
+	setFriends,
     checkFriends,
     loading,
     error,
