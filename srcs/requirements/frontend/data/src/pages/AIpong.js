@@ -44,7 +44,7 @@ export default function AIpong() {
             </div>
             <div>
 
-                <Link to="/ingame"><CreateGameButton gameMode="PONG_CLASSIC" modifiers={modifiers} /></Link>
+                <Link to="/pong/ingame"><CreateGameButton gameMode="PONG_CLASSIC" modifiers={modifiers} /></Link>
             </div>
             <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
         </div>

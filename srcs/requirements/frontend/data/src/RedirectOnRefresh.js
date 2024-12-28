@@ -16,7 +16,7 @@ const RedirectOnRefresh = () => {
     const handleRedirect = () => {
       const lastPath = sessionStorage.getItem('lastPath');
 
-      const gamePaths = ['/solo-mode', '/duo-mode', '/matchmaking', '/ingame', '/ai-pong', '/classic-tournament', '/duo-tournament'];
+      const gamePaths = ['/pong/matchmaking', '/pong/ingame'];
       if (gamePaths.some(path => lastPath?.startsWith(path))) {
         navigate('/pong');
         sessionStorage.clear();
