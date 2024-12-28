@@ -25,12 +25,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../src/App.css'
 import Profile from './pages/Profile.js'
 
-import SoloMode from './pages/SoloMode.js';
 import ProtectedRoute from './components/ProtectedRoute.js';
 import WaitMatchmaking from './pages/WaitMatchmaking.js';
-import DuoMode from './pages/DuoMode.js';
-import ClassicTournament from './pages/ClassicTournament.js';
-import DuoTournament from './pages/DuoTournament.js';
+import GameModeSelector from './pages/GameModePage.js';
 import CreateGameButton from './components/CreateGameButton.js';
 import AIpong from './pages/AIpong.js';
 import InGame from './pages/InGame.js';
@@ -71,18 +68,15 @@ function AppContent() {
         </Route>
 
         <Route>
-          <Route path="solo-mode" element={<SoloMode />}/>
-          <Route path="duo-mode" element={<DuoMode />}/>
-          <Route path="classic-tournament" element={<ClassicTournament />}/>
-          <Route path="duo-tournament" element={<DuoTournament />}/>
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />}/>
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
-          <Route path="matchmaking" element={<WaitMatchmaking />} />
-          <Route path="ai-pong" element={<AIpong />} />
-          <Route path="ingame" element={<InGame />} />
+          <Route path="pong/matchmaking" element={<WaitMatchmaking />} />
+          <Route path="pong/ai-pong" element={<AIpong />} />
+          <Route path="pong/ingame" element={<InGame />} />
+          <Route path="pong/game-mode" element={<GameModeSelector />} />
 
         </Route>
       </Routes>
