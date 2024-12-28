@@ -21,7 +21,7 @@ async def get_history(request, username=None):
 	try :
 		await game_manager_instance.create_new_player_instance(username)
 		game_history = await game_manager_instance.get_game_history(username)
-		return JsonResponse({'status': 'success', 'game_history': game_history}, status=status.HTTP_200_OK)
+		return JsonResponse({'status': 'success', 'game_history': game_history, 'username': username}, status=status.HTTP_200_OK)
 	except Exception as e:
 		logger.error(f"Error in get_game_history for user {username}: {str(e)}")
 		return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

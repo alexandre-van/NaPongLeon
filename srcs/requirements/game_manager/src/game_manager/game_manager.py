@@ -364,6 +364,8 @@ class Game_manager:
 			for player_entry in game_players:
 				if player_entry.team_name not in teams_distribution:
 					teams_distribution[player_entry.team_name] = []
+				username = player_entry.player.username
+				nickname = player_entry.player.nickname
 				teams_distribution[player_entry.team_name].append(player_entry.player.username)
 			game_scores = GameScore.objects.filter(game=game_instance)
 			teams_scores = {score.team_name: score.score for score in game_scores}
