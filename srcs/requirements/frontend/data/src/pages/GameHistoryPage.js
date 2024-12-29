@@ -9,10 +9,10 @@ const styles = {
   th: {
     textAlign: "center",
     padding: "10px",
-    borderBottom: "1px solid #ddd",
+    borderBottom: "2px solid #ddd",
     backgroundColor: "#f2f2f2",
     fontWeight: "bold",
-    color: "black", // Titres en noir
+    color: "black",
   },
   td: {
     padding: "10px",
@@ -25,31 +25,29 @@ const styles = {
     borderBottom: "1px solid #ddd",
     textAlign: "center",
     verticalAlign: "middle",
-    width: "80px", // Reduced width for date
+    width: "80px",
   },
   hourCell: {
     padding: "10px",
     borderBottom: "1px solid #ddd",
     textAlign: "center",
     verticalAlign: "middle",
-    width: "80px", // Reduced width for hour
+    width: "80px",
   },
   statusCell: (status) => ({
     padding: "10px",
     borderBottom: "1px solid #ddd",
     textAlign: "center",
     verticalAlign: "middle",
-    backgroundColor:
-      status === "finished"
-        ? "green"
-        : status === "aborted"
-        ? "red"
-        : status === "in_progress"
-        ? "blue"
-        : status === "loading" || status === "waiting"
-        ? "yellow"
-        : "transparent",
-    color: "white", // Text color to contrast the background
+    color: status === "finished"
+      ? "#4CAF50"  // vert
+      : status === "aborted"
+      ? "#f44336"  // rouge
+      : status === "in_progress"
+      ? "#2196F3"  // bleu
+      : status === "loading" || status === "waiting"
+      ? "#FFC107"  // jaune
+      : "#ffffff",  // blanc par défaut
   }),
   gameModeCell: (gameModeColor) => ({
     padding: "10px",
@@ -58,23 +56,31 @@ const styles = {
     verticalAlign: "middle",
     backgroundColor: gameModeColor,
   }),
-  row: (isExpanded) => ({
-    cursor: "pointer",
-    backgroundColor: isExpanded ? "white" : "transparent",
-    color: isExpanded ? "black" : "inherit",
-    border: isExpanded ? "1px solid #ccc" : "none",
-    boxShadow: isExpanded ? "0px 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-    transition: "background-color 0.3s ease, box-shadow 0.3s ease",
-  }),
-  expandedCell: {
+  resultCell: (result) => ({
     padding: "10px",
     borderBottom: "1px solid #ddd",
-    backgroundColor: "#f9f9f9",
-    border: "1px solid #ddd",
-    borderRadius: "5px",
-    color: "#333",
-    fontSize: "14px",
-  },
+    textAlign: "center",
+    verticalAlign: "middle",
+    color: result === "WIN"
+      ? "#4CAF50"  // vert
+      : result === "LOSE"
+      ? "#f44336"  // rouge
+      : result === "Equality"
+      ? "#2196F3"  // bleu
+      : "#ffffff",  // blanc pour "No result"
+  }),
+  row: (isExpanded) => ({
+    cursor: "pointer",
+    backgroundColor: "transparent",
+    transition: "background-color 0.3s ease",
+  }),
+  teamName: (color) => ({
+    padding: "4px 8px",
+    borderRadius: "4px",
+    backgroundColor: color,
+    color: "black",
+    fontWeight: "bold",
+  }),
   filterDropdown: {
     margin: "10px auto",
     padding: "8px 15px",
@@ -90,8 +96,9 @@ const styles = {
   },
 };
 
-const containerStyle = {
-  marginBottom: "30px",
+const getRandomPastelColor = () => {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 90%)`;  // Soft pastel colors
 };
 
 export default function GameHistory() {
@@ -100,6 +107,7 @@ export default function GameHistory() {
   const [filterMode, setFilterMode] = useState("all");
   const [expandedGame, setExpandedGame] = useState(null);
   const [gameModeColors, setGameModeColors] = useState({});
+  const [teamColors, setTeamColors] = useState({});
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -109,33 +117,29 @@ export default function GameHistory() {
         if (!gameHistory || Object.keys(gameHistory).length === 0) {
           setHistory([]);
         } else {
-          const formattedHistory = Object.entries(gameHistory).map(
-            ([date, data]) => ({
-              game_date: new Date(data.game_date).toLocaleDateString("fr-FR"),
+          const formattedHistory = Object.entries(gameHistory)
+            .map(([date, data]) => ({
+              game_date: new Date(data.game_date),
               game_time: new Date(data.game_date).toLocaleTimeString("fr-FR", {
                 hour: "2-digit",
                 minute: "2-digit",
               }),
               game_mode: data.game_mode,
               status: data.status,
-              scores: data.scores || { left: 0, right: 0 },
-              teams: {
-                left: data.teams?.left || [],
-                right: data.teams?.right || [],
-              },
-              winner:
-                data.winner && data.teams?.[data.winner]
-                  ? data.teams[data.winner].join(", ")
-                  : "No winner",
-              result:
-                data.winner === "left"
-                  ? "WIN"
-                  : data.winner === "right"
-                  ? "LOOSE"
-                  : "No result",
+              scores: data.scores || {},
+              teams: data.teams || {},
+              winner: data.winner && data.teams?.[data.winner]
+                ? data.teams[data.winner].join(", ")
+                : "No winner",
+              result: data.self_team === data.winner
+                ? "WIN"
+                : data.winner && data.self_team !== data.winner
+                ? "LOSE"
+                : "No result",
+              self_team: data.self_team,
               game_id: data.game_id,
-            })
-          );
+            }))
+            .sort((a, b) => b.game_date - a.game_date); // Sort by date, most recent first
           setHistory(formattedHistory);
         }
       } catch (err) {
@@ -149,10 +153,19 @@ export default function GameHistory() {
   useEffect(() => {
     const modes = Array.from(new Set(history.map((game) => game.game_mode)));
     const colors = {};
-    modes.forEach(
-      (mode) => (colors[mode] = `#${Math.floor(Math.random() * 16777215).toString(16)}`)
-    );
+    modes.forEach((mode) => (colors[mode] = `#${Math.floor(Math.random() * 16777215).toString(16)}`));
     setGameModeColors(colors);
+
+    // Dynamically generate colors for teams
+    const teamColorsMap = {};
+    history.forEach((game) => {
+      Object.keys(game.teams).forEach((team) => {
+        if (!teamColorsMap[team]) {
+          teamColorsMap[team] = getRandomPastelColor();
+        }
+      });
+    });
+    setTeamColors(teamColorsMap);
   }, [history]);
 
   const filteredHistory = history.filter((game) => {
@@ -164,8 +177,46 @@ export default function GameHistory() {
     setExpandedGame((prev) => (prev === gameId ? null : gameId));
   };
 
-  const getScoreColor = (team) => (team === "left" ? "green" : "red");
-  const getResultColor = (result) => (result === "WIN" ? "green" : "red");
+  const renderTeams = (game) => {
+    // Get the team names dynamically
+    const teams = Object.keys(game.teams).sort(
+      (a, b) => game.scores[b] - game.scores[a]
+    );
+
+    return (
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ ...styles.th, backgroundColor: "black", width: "11%" }}></th>
+            <th style={{ ...styles.th, width: "32%" }}>TEAM NAME</th>
+            <th style={{ ...styles.th, width: "33%" }}>PLAYERS</th>
+            <th style={{ ...styles.th, width: "24%" }}>SCORE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {teams.map((team) => (
+            <tr key={team}>
+              <td style={{ ...styles.td, backgroundColor: "black", width: "80px" }}></td>
+              <td style={{
+                ...styles.td,
+                backgroundColor: teamColors[team] || getRandomPastelColor(),
+                color: "black",
+                fontWeight: "bold",
+              }}>
+                {team.toUpperCase()}
+              </td>
+              <td style={{ ...styles.td, width: "35%", backgroundColor: "grey" }}>
+                {game.teams[team].join(", ") || "AI"}
+              </td>
+              <td style={{ ...styles.td, width: "20%", backgroundColor: "grey" }}>
+                {game.scores[team]}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
 
   return (
     <div>
@@ -191,7 +242,7 @@ export default function GameHistory() {
       </div>
 
       {filteredHistory.length > 0 ? (
-        <div style={containerStyle}>
+        <div>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -210,54 +261,21 @@ export default function GameHistory() {
                     onClick={() => handleExpand(game.game_id)}
                     style={styles.row(expandedGame === game.game_id)}
                   >
-                    <td style={styles.dateCell}>{game.game_date}</td>
+                    <td style={styles.dateCell}>
+                      {game.game_date.toLocaleDateString("fr-FR")}
+                    </td>
                     <td style={styles.hourCell}>{game.game_time}</td>
-                    <td
-                      style={styles.gameModeCell(gameModeColors[game.game_mode])}
-                    >
+                    <td style={styles.gameModeCell(gameModeColors[game.game_mode])}>
                       {game.game_mode}
                     </td>
-                    <td
-                      style={{
-                        ...styles.td,
-                        color: game.status === "finished"
-                          ? "green"
-                          : game.status === "aborted"
-                          ? "red"
-                          : game.status === "in_progress"
-                          ? "blue"
-                          : game.status === "loading" || game.status === "waiting"
-                          ? "yellow"
-                          : "black", // couleur par défaut
-                      }}
-                    >
-                      {game.status}
-                    </td>
-                    <td
-                      style={{
-                        ...styles.td,
-                        color: getScoreColor(game.winner),
-                      }}
-                    >
-                      {game.scores.left} - {game.scores.right}
-                    </td>
-                    <td
-                      style={{
-                        ...styles.td,
-                        color: getResultColor(game.result),
-                      }}
-                    >
-                      {game.result}
-                    </td>
+                    <td style={styles.statusCell(game.status)}>{game.status}</td>
+                    <td style={styles.td}>{game.scores.left} - {game.scores.right}</td>
+                    <td style={styles.resultCell(game.result)}>{game.result}</td>
                   </tr>
                   {expandedGame === game.game_id && (
                     <tr>
-                      <td colSpan="6" style={styles.expandedCell}>
-                        <strong>Team Left:</strong> {game.teams.left.join(", ") || "AI"}{" "}
-                        (Score: {game.scores.left})
-                        <br />
-                        <strong>Team Right:</strong> {game.teams.right.join(", ") || "AI"}{" "}
-                        (Score: {game.scores.right})
+                      <td colSpan="6" style={{ padding: "0" }}>
+                        {renderTeams(game)}
                       </td>
                     </tr>
                   )}
@@ -272,3 +290,4 @@ export default function GameHistory() {
     </div>
   );
 }
+  

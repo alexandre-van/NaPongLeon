@@ -25,8 +25,8 @@ export default function WaitMatchmaking() {
             console.log(data);
             if (data.status === "game_found") {
                 game_found = true
-                console.log("game_found:", data);
-                navigate("/pong/ingame", { state: { gameService: `${location.origin}/api/${data.service_name}`, gameId: data.game_id } });
+                console.log("game_found:", data, window.location.protocol);
+                navigate("/pong/ingame", { state: { gameService: `${window.location.protocol}/api/${data.service_name}`, gameId: data.game_id } });
             }
         };
 

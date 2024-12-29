@@ -64,11 +64,18 @@ class Game_manager:
 		if not history:
 			return {}
 		game_entries = await self.extract_game_ids(history)
-		logger.debug(f"Extracted game entries: {game_entries}")
 		history_dict = {}
 		for game_date, game_id in game_entries:
 			game_data = await self.get_game_data(game_id)
 			if game_data:
+				game_data['self_team'] = ''
+				teams = game_data.get('teams')
+				if teams:
+					for team_name in teams:
+						for playername in teams[team_name]:
+							logger.debug(f"{playername} == {username}")
+							if playername == username:
+								game_data['self_team'] = team_name
 				date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
 				history_dict[date_key] = game_data
 		return history_dict
@@ -365,7 +372,7 @@ class Game_manager:
 				if player_entry.team_name not in teams_distribution:
 					teams_distribution[player_entry.team_name] = []
 				username = player_entry.player.username
-				nickname = player_entry.player.nickname
+				#nickname = player_entry.player.nickname
 				teams_distribution[player_entry.team_name].append(player_entry.player.username)
 			game_scores = GameScore.objects.filter(game=game_instance)
 			teams_scores = {score.team_name: score.score for score in game_scores}
