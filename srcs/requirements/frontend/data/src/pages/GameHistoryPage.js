@@ -106,6 +106,7 @@ export default function GameHistory() {
   const [error, setError] = useState(null);
   const [filterMode, setFilterMode] = useState("all");
   const [expandedGame, setExpandedGame] = useState(null);
+  const [hoveredGameId, setHoveredGameId] = useState(null); // Suivi de l'élément survolé
   const [gameModeColors, setGameModeColors] = useState({});
   const [teamColors, setTeamColors] = useState({});
 
@@ -177,8 +178,15 @@ export default function GameHistory() {
     setExpandedGame((prev) => (prev === gameId ? null : gameId));
   };
 
+  const handleMouseEnter = (gameId) => {
+    setHoveredGameId(gameId); // Lorsque la souris entre dans une ligne, on set l'ID du jeu
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredGameId(null); // Lorsque la souris quitte la ligne, on réinitialise l'ID
+  };
+
   const renderTeams = (game) => {
-    // Get the team names dynamically
     const teams = Object.keys(game.teams).sort(
       (a, b) => game.scores[b] - game.scores[a]
     );
@@ -259,7 +267,12 @@ export default function GameHistory() {
                 <React.Fragment key={game.game_id}>
                   <tr
                     onClick={() => handleExpand(game.game_id)}
-                    style={styles.row(expandedGame === game.game_id)}
+                    onMouseEnter={() => handleMouseEnter(game.game_id)}  // Ajouter un effet lorsque la souris entre
+                    onMouseLeave={handleMouseLeave}  // Ajouter un effet lorsque la souris quitte
+                    style={{
+                      ...styles.row(expandedGame === game.game_id),
+                      backgroundColor: hoveredGameId === game.game_id ? "#f0f0f0" : "transparent", // Changer la couleur de fond survolée
+                    }}
                   >
                     <td style={styles.dateCell}>
                       {game.game_date.toLocaleDateString("fr-FR")}
@@ -290,4 +303,3 @@ export default function GameHistory() {
     </div>
   );
 }
-  
