@@ -41,9 +41,9 @@ socket.onmessage = function(event) {
 			console.log("Tournament started!");
 			break;
 		case "tournament_end":
-			//socket.close();
-			console.log("Tournament ended. Reason:", data.reason);
-			stopTournament();
+			console.log("Tournament ended.", data.reason);
+			updateTournament(data, nickname, data.game_private_id);
+			//stopTournament();
 			break;
 		default:
 			console.log("Unknown message type:", data.type);

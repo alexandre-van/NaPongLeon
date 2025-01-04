@@ -18,12 +18,13 @@ class Tournament:
 		self.teams = self.init_teams()
 		self.tree = Tree(self.teams)
 		self.tree.init_matchs(game_mode, self.game_modifiers)
-		#self.matchs = self.tree.get_all_()
 
 	#tournament update
 
 	async def update(self):
 		await self.tree.update()
+		if self.tree.root.bench:
+			return self.tournament_end()
 		return {
 			'type': 'tournament_update',
 			'tree': self.tree.export(),
@@ -39,6 +40,26 @@ class Tournament:
 			'tree': self.tree.export(),
 			'teams': list(team.export() for team in self.teams)
 		}
+	
+	def export_teams(self):
+		teams_data = {}
+		for team in self.teams:
+			players_list = []
+			for player in team.players:
+				players_list.append(player.username)
+			teams_data[team.name] = players_list
+		return teams_data
+	
+	
+	def tournament_end(self):
+		return {
+			'type': 'tournament_end',
+			'tree': self.tree.export(),
+			'teams': list(team.export() for team in self.teams),
+			'team': self.tree.root.bench.export(),
+			'score': 0
+		}
+
 
 	# init
 

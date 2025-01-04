@@ -23,7 +23,7 @@ class Game:
 		}
 		for i, (username, player_consumer) in enumerate(players.items()):
 			side = sides[i % len(sides)]
-			self.players[username] = Player(player_consumer, side, game_mode, modifiers)
+			self.players[username] = Player(username, player_consumer, side, game_mode, modifiers)
 			self.players_in_side[side].append(self.players[username])
 			logger.debug(f"{username} is the {side} player !")
 		self.ball = Ball(modifiers)
@@ -120,7 +120,7 @@ class Game:
 	def scored(self, scoring_side):
 		self.ball.reset_position()
 		self.score[scoring_side] += 1
-		if self.score[scoring_side] >= 5:
+		if self.score[scoring_side] >= 1:
 			return {
 				'type': 'game_end',
 				'reason': 'The ' + str(scoring_side) + ' side wins !',

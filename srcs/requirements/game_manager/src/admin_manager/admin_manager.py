@@ -75,7 +75,7 @@ class AdminManager:
 		type = message.get("type")
 		if type == "export_status":
 			status = message.get("status")
-			if status == "finished":
+			if status == "finished" or status == "aborted":
 				win_team = message.get("team")
 				score = message.get("score")
 				self.set_winner(game_id, win_team, score)

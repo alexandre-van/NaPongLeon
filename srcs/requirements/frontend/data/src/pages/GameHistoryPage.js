@@ -115,6 +115,7 @@ export default function GameHistory() {
       try {
         const response = await api.get("/game_manager/get_history/");
         const gameHistory = response.data["game_history"];
+        console.log(response.data["game_history"])
         if (!gameHistory || Object.keys(gameHistory).length === 0) {
           setHistory([]);
         } else {
