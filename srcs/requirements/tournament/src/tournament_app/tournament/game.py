@@ -81,7 +81,7 @@ class Game:
 		# Convertir les noms d'utilisateur en IDs publics pour les équipes
 		teams_with_public_ids = self._convert_to_public_ids(teams_list)
 		special_id = self._create_special_id_list()
-
+		logger.debug(f"team ask : {teams_list}")
 		try:
 			async with httpx.AsyncClient() as client:
 				response = await client.post(game_manager_service_url, json={
@@ -115,10 +115,8 @@ class Game:
 				response = await client.get(game_manager_service_url)
 			if response and response.status_code == 200:
 				game_data = response.json().get('game_data')
+
 				if game_data:
-					# Reconversion des IDs publics en noms d'utilisateur
-					teams_with_public_ids = game_data.get('teamsList', [])
-					game_data['teamsList'] = self._convert_to_usernames(teams_with_public_ids)
 					return game_data
 			else:
 				logger.debug(f'Error api request game_manager, response: {response}')

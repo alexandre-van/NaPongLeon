@@ -121,7 +121,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			await self.tournament_end()
 			return
 		else:
-			if self.username in self.room['spectator']:
+			if self.username in self.room['players']:
+				await self.send_user_disconnection()
+			elif self.username in self.room['spectator']:
 				await self.send_user_disconnection()
 				tournament_manager.remove_user(self.username, self.tournament_id)
 
