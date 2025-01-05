@@ -131,7 +131,7 @@ class Game:
 	def scored(self, scoring_side):
 		self.ball.reset_position()
 		self.score[scoring_side] += 1
-		if self.score[scoring_side] >= 1:
+		if self.score[scoring_side] >= 3:
 			return {
 				'type': 'game_end',
 				'reason': 'The ' + str(scoring_side) + ' side wins !',

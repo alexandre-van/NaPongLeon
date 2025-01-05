@@ -181,6 +181,18 @@ li{
   margin-top: 10px;
 }
 
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.alert {
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+
 @layer demo {
   .highlighted-text-shadow {
     text-shadow:
