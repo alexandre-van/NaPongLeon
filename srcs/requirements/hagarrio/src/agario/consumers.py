@@ -259,6 +259,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# Log de création de la partie
 		logger.info(f"New game created with ID: {game_id}")
 		return game_id
+	
+	@classmethod
+	def abortgame(cls, game_id):
+		if game_id in cls.active_games:
+			game = cls.active_games.get(game_id)
+			if game:
+				game.cleanup()
+			del cls.active_games[game_id]
 
 	async def notify_admin_player_connection(self, game_id, username, connection_type='player'):
 		game = GameConsumer.active_games.get(game_id)
