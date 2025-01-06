@@ -293,7 +293,29 @@ class Game_manager:
 			if self._task:
 				self._task.cancel()
 
+	async def get_user_status(self, username):
+		status = await self.get_player_status(username)
+		if status:
+			ret = {'status': status}
+			if status in ['pending', 'waiting', 'loading', 'in_game']:
+				player_history = await self.fetch_history(await self.fetch_player(username))
+				game_id = await self.get_last_game_id(player_history)
+				if game_id:
+					game_data = await self.get_game_data(game_id)
+					ret['game_mode'] = game_data['game_mode']
+			return ret
+		else:
+			return None
+	
+
 	# db
+
+	@sync_to_async
+	def get_last_game_id(self, player_history):
+		if player_history:
+			latest_game = player_history[-1]
+			return latest_game.game.game_id
+		return None
 
 	async def create_new_game_instance(self, game_id, game_mode, modifiers, players):
 		game = await self.create_game_instance(game_id, game_mode, modifiers, players)
@@ -306,6 +328,10 @@ class Game_manager:
 		
 	async def create_new_player_instance(self, username):
 		await self.create_player_instance(username)
+
+	@sync_to_async
+	def get_game_instance(self, game_id):
+		return GameInstance.get_game(game_id)
 
 	@sync_to_async
 	def create_game_instance(self, game_id, game_mode, modifiers, players):

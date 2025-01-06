@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../contexts/WebSocketContext.js';
 import AddFriendButton from './AddFriendButton.js';
 import { useUser } from '../contexts/UserContext.js';
@@ -11,6 +11,7 @@ const FriendsList = () => {
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
+  const [friendStatuses, setFriendStatuses] = useState({});
 
   useEffect(() => {
     if (Array.isArray(notifications)) {
@@ -22,10 +23,74 @@ const FriendsList = () => {
     checkFriends();
   }, [checkFriends]);
 
+  // Requête pour récupérer le statut des amis en ligne
+  const fetchFriendStatuses = async () => {
+    const onlineFriends = friends.filter(friend => friend.is_online);
+    const statuses = {};
+    for (const friend of onlineFriends) {
+      try {
+        const { data } = await api.get(`/game_manager/get_status/username=${friend.username}`);
+        statuses[friend.id] = data.data; // Inclut le statut et le mode de jeu
+      } catch (err) {
+        console.error(`Error fetching status for ${friend.username}:`, err);
+      }
+    }
+    setFriendStatuses(statuses);
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchFriendStatuses();
+    }, 10000);
+  
+    return () => clearInterval(intervalId);
+  }, [friends]);
+  
+  
+  useEffect(() => {
+    fetchFriendStatuses();
+  }, [friends]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+        case "inactive":
+            return "green";
+        case "pending":
+            return "orange";
+        case "in_queue":
+        case "in_game":
+            return "blue";
+        case "waiting":
+        case "loading_game":
+            return "yellow";
+        default:
+            return "black";
+    }
+  };
+
+  const getStatusTxt = (status) => {
+    switch (status) {
+        case "inactive":
+            return "Online";
+        case "pending":
+            return "Expected in game";
+        case "in_queue":
+            return "In queue";
+        case "in_game":
+            return "In game";
+        case "waiting":
+            return "Waiting";
+        case "loading_game":
+            return "In game";
+        default:
+            return "";
+    }
+  };
+
+
   const handleNavigateToFriendGameHistory = async (username) => {
-    const state = { username };
-    navigate("/gamehistory", { state });
-  }
+    navigate("/gamehistory", { state: { username } });
+  };
 
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
@@ -40,7 +105,7 @@ const FriendsList = () => {
   const handleRejectFriendRequest = async (notificationId) => {
     try {
       await api.delete('/authentication/friends/requests/', {
-        data: { id: notificationId }
+        data: { id: notificationId },
       });
       setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
     } catch (err) {
@@ -51,7 +116,7 @@ const FriendsList = () => {
   const handleDeleteFriend = async (friendId) => {
     try {
       const response = await api.delete('/authentication/friends/', {
-        data: { friendId }
+        data: { friendId },
       });
       if (response.status === 200) {
         setFriends(prev => prev.filter(friend => friend.id !== friendId));
@@ -65,7 +130,7 @@ const FriendsList = () => {
   const handleDeleteNotification = async (notificationId) => {
     try {
       await api.delete('/authentication/notifications/', {
-        data: { id: notificationId }
+        data: { id: notificationId },
       });
       setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
     } catch (err) {
@@ -74,14 +139,7 @@ const FriendsList = () => {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      gap: "20px",
-      padding: "20px",
-      maxWidth: "1200px",
-      margin: "0 auto"
-    }}>
+    <div style={{ display: "flex", justifyContent: "center", gap: "20px", padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Liste des amis */}
       {!selectedFriend ? (
         <div style={{ flex: 1, maxWidth: "500px" }}>
@@ -93,18 +151,16 @@ const FriendsList = () => {
             borderRadius: "8px",
             padding: "10px",
           }}>
-            {/* Bouton Add Friend intégré comme premier élément */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "10px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginBottom: "10px",
-                backgroundColor: "#f8f8f8",
-                transition: "background-color 0.3s",
-              }}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "10px",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginBottom: "10px",
+              backgroundColor: "#f8f8f8",
+              transition: "background-color 0.3s",
+            }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f8f8f8"}
             >
@@ -124,7 +180,6 @@ const FriendsList = () => {
               <AddFriendButton />
             </div>
 
-            {/* Liste des amis */}
             {friends.length === 0 ? (
               <p style={{ textAlign: "center" }}>No friends yet.</p>
             ) : (
@@ -156,11 +211,11 @@ const FriendsList = () => {
                       }}
                     />
                     <span style={{ flexGrow: 1 }}>{friend.username}</span>
-                    <span style={{ 
-                      color: friend.is_online ? "green" : "gray",
-                      marginLeft: "10px" 
+                    <span style={{
+                      color: friend.is_online ? getStatusColor(friendStatuses[friend.id]?.status) || "green" : "gray",
+                      marginLeft: "10px"
                     }}>
-                      {friend.is_online ? "Online" : "Offline"}
+                      {friend.is_online ? (getStatusTxt(friendStatuses[friend.id]?.status) || "Online") : "Offline"}
                     </span>
                   </li>
                 ))}
@@ -170,42 +225,39 @@ const FriendsList = () => {
         </div>
       ) : (
         <div style={{ flex: 1, maxWidth: "40%", overflow: "hidden" }}>
-  <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Friend Menu</h3>
-  <div
-    style={{
-      border: "1px solid #ddd",
-      borderRadius: "8px",
-      padding: "20px",
-      textAlign: "center", // Centre tout à l'intérieur
-    }}
-  >
-    <img
-      src={
-        selectedFriend.avatar
-          ? `media/${selectedFriend.avatar}`
-          : "static_files/images/default_avatar.png"
-      }
-      alt={`${selectedFriend.username}'s avatar`}
-      style={{
-        width: "100px",
-        height: "100px",
-        borderRadius: "50%",
-        marginBottom: "15px", // Espacement avant le nom
-      }}
-    />
-    <div style={{ marginBottom: "10px" }}></div>
-    <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px" }}>
-      {selectedFriend.username}
-    </h1>
-    <div style={{ marginBottom: "10px" }}></div>
-    <span
-      style={{
-        color: selectedFriend.is_online ? "green" : "gray",
-        fontSize: "24px"
-      }}
-    >
-      {selectedFriend.is_online ? "Online" : "Offline"}
-    </span>
+          <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Friend Menu</h3>
+          <div style={{
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            padding: "20px",
+            textAlign: "center",
+          }}>
+            <img
+              src={selectedFriend.avatar ? `media/${selectedFriend.avatar}` : "static_files/images/default_avatar.png"}
+              alt={`${selectedFriend.username}'s avatar`}
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                marginBottom: "15px",
+              }}
+            />
+            <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px" }}>
+              {selectedFriend.username}
+            </h1>
+            <span
+              style={{
+                color: selectedFriend.is_online 
+                  ? getStatusColor(friendStatuses[selectedFriend.id]?.status) || "green"
+                  : "gray",
+                fontSize: "24px",
+              }}
+            >
+            {selectedFriend.is_online
+              ? `${getStatusTxt(friendStatuses[selectedFriend.id]?.status) || "Online"}${friendStatuses[selectedFriend.id]?.game_mode ? ` - ${friendStatuses[selectedFriend.id]?.game_mode}` : ""}`
+              : "Offline"}
+            
+            </span>
     
     {/* Espacement entre le statut et les boutons */}
     <div style={{ marginBottom: "30px" }}></div>

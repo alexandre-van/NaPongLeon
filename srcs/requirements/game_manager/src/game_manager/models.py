@@ -17,7 +17,6 @@ class Player(models.Model):
 	]
 
 	username = models.CharField(max_length=100, unique=True)
-	#nickname = models.CharField(max_length=100, unique=True)
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='inactive')
 
 	def __str__(self):
