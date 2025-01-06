@@ -399,10 +399,15 @@ class Game_manager:
 
 	def parse_modifier(self, modifiers, game_mode):
 		modifiers_list = modifiers.split(",") if modifiers else []
+		modifiers_list = self.check_modifier(modifiers_list, game_mode)
+		return modifiers_list
+
+	def check_modifier(self, modifiers_list, game_mode):
 		valid_modifiers = settings.GAME_MODES.get(game_mode).get("modifier_list")
-		if not all(mod in valid_modifiers for mod in modifiers_list):
-			return None
-		modifiers_list.sort()
+		if modifiers_list:
+			if not all(mod in valid_modifiers for mod in modifiers_list):
+				return None
+			modifiers_list.sort()
 		return modifiers_list
 
 def create_game_manager_instance():

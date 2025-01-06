@@ -25,7 +25,8 @@ def auth_required(view_func):
 
 			if response and response.status_code == 200:
 				username = response.json().get('user')
-				kwargs['username'] = username
+				if not kwargs.get('username'):
+					kwargs['username'] = username
 				return await view_func(request, *args, **kwargs)
 			else:
 				return JsonResponse({"error": "Invalid token"}, status=401)

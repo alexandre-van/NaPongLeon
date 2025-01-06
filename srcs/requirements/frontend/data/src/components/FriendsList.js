@@ -1,56 +1,37 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useWebSocket } from '../contexts/WebSocketContext.js';
 import AddFriendButton from './AddFriendButton.js';
 import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const FriendsList = () => {
-  const { user, setUser, friends, setFriends, checkFriends } = useUser();
+  const navigate = useNavigate();
+  const { user, friends, setFriends, checkFriends } = useUser();
   const { notifications, setNotifications } = useWebSocket();
-  const [localNotifications, setLocalNotifications] = useState([]); // État local pour les notifications
+  const [localNotifications, setLocalNotifications] = useState([]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
-  // Synchroniser l'état local avec les notifications du contexte
   useEffect(() => {
     if (Array.isArray(notifications)) {
       setLocalNotifications(notifications);
     }
   }, [notifications]);
-  
+
   useEffect(() => {
-    checkFriends()
+    checkFriends();
   }, [checkFriends]);
 
-  const loadExistingNotifications = useCallback(async () => {
-    try {
-      console.log('loadExistingNotifications');
-      const response = await api.get('/authentication/notifications/');
-      console.log(response);
-      const formattedNotifications = response.data.data.map(notif => ({
-        ...notif,
-        notification_type: notif.notification_type || 'unknown'
-      }));
-      setNotifications(formattedNotifications);
-    } catch (err) {
-      console.error(err);
-    }
-  }, [setNotifications]);
-
-  useEffect(() => {
-    loadExistingNotifications();
-  }, [loadExistingNotifications]);
+  const handleNavigateToFriendGameHistory = async (username) => {
+    const state = { username };
+    navigate("/gamehistory", { state });
+  }
 
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
-      console.log('handleAcceptFriendRequest');
-      const data = {
-        notificationId: notificationId,
-      };
-      const response = await api.patch('/authentication/friends/requests/', data);
-      setNotifications(prev => 
-        prev.filter(notif => notif.id !== notificationId)
-      );
+      await api.patch('/authentication/friends/requests/', { notificationId });
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
       checkFriends();
-      console.log(response);
     } catch (err) {
       console.error(err);
     }
@@ -58,16 +39,10 @@ const FriendsList = () => {
 
   const handleRejectFriendRequest = async (notificationId) => {
     try {
-      console.log('handleRejectFriendRequest');
-      const response = await api.delete('/authentication/friends/requests/', {
-        data: {
-          id: notificationId,
-        }
+      await api.delete('/authentication/friends/requests/', {
+        data: { id: notificationId }
       });
-      setNotifications(prev => 
-        prev.filter(notif => notif.id !== notificationId)
-      );
-      console.log(response);
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
     } catch (err) {
       console.error(err);
     }
@@ -75,25 +50,13 @@ const FriendsList = () => {
 
   const handleDeleteFriend = async (friendId) => {
     try {
-      console.log('handleDeleteFriend');
       const response = await api.delete('/authentication/friends/', {
-        data: {
-          friendId: friendId,
-        }
+        data: { friendId }
       });
       if (response.status === 200) {
-        console.log('bonjour response status === 200');
-        const updatedFriends = [...user.friends].filter(
-          friend => friend.id !== friendId
-        );
-
-        setFriends(updatedFriends);
-        updateUser(prevUser => ({
-          ...prevUser,
-          friends: updatedFriends
-        }));
+        setFriends(prev => prev.filter(friend => friend.id !== friendId));
+        setSelectedFriend(null);
       }
-      console.log(response);
     } catch (err) {
       console.error(err);
     }
@@ -101,146 +64,281 @@ const FriendsList = () => {
 
   const handleDeleteNotification = async (notificationId) => {
     try {
-      console.log('handleDeleteNotification');
-      const response = await api.delete('/authentication/notifications/', {
-        data: {
-          id: notificationId,
-        }
+      await api.delete('/authentication/notifications/', {
+        data: { id: notificationId }
       });
-      setNotifications(prev => 
-        prev.filter(notif => notif.id !== notificationId)
-      );
-      console.log(response);
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
     } catch (err) {
       console.error(err);
     }
   };
 
-  /*
-
-
-
-
-  useEffect(() => {
-    if (socket) {
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log(`data :\ndata.type = ${data.type}`);
-        switch (data.type) {
-          case 'notification':
-            console.log(`New notification: ${data.content}`);
-            console.log(`notification_type: ${data.notification_type}`)
-
-            setNotifications(prev => [...prev, data]);
-            break;
-          case 'error':
-            console.error(data.message);
-            break;
-          default:Friend request from user ID: avan￼Accept￼Reject
-            console.log(data.message);
-            break;
-        }
-        console.log(`notifications.length = ${notifications.length}`);
-      };
-    }
-  }, [socket]);
-
-  const handleMessage = useCallback((event) => {
-    const data = JSON.parse(event.data);
-    console.log(`data :\ndata.type = ${data.type}`);
-    switch (data.type) {
-      case 'notification':
-        console.log(`New notification: ${data.content}`);
-        console.log(`notification_type: ${data.notification_type}`)
-        setNotifications(prev => [...prev, data]);
-        break;
-      case 'error':
-        console.error(data.message);
-        break;
-      default:
-        console.log(data.message);
-        break;
-    }
-    console.log(`notifications.length = ${notifications.length}`);
-
-    Friend request from user ID: avan￼Accept￼Reject
-  });
-
-  useEffect(() => {
-    if (socket) {
-      socket.addEventListener('message', handleMessage);
-      return (
-        socket.removeEventListener('message', handleMessage)
-      );
-    }
-  }, [socket, handleMessage]);
-  */
-
   return (
-    <div>
-      <h3>Friends list</h3>
-      <AddFriendButton />
-      {friends.length === 0 ? (
-        <p>No friends yet.</p>
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      gap: "20px",
+      padding: "20px",
+      maxWidth: "1200px",
+      margin: "0 auto"
+    }}>
+      {/* Liste des amis */}
+      {!selectedFriend ? (
+        <div style={{ flex: 1, maxWidth: "500px" }}>
+          <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Friends List</h3>
+          <div style={{
+            maxHeight: "600px",
+            overflowY: "auto",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            padding: "10px",
+          }}>
+            {/* Bouton Add Friend intégré comme premier élément */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "10px",
+                borderRadius: "5px",
+                cursor: "pointer",
+                marginBottom: "10px",
+                backgroundColor: "#f8f8f8",
+                transition: "background-color 0.3s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f8f8f8"}
+            >
+              <div style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                marginRight: "10px",
+                backgroundColor: "#e0e0e0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "24px"
+              }}>
+                +
+              </div>
+              <AddFriendButton />
+            </div>
+
+            {/* Liste des amis */}
+            {friends.length === 0 ? (
+              <p style={{ textAlign: "center" }}>No friends yet.</p>
+            ) : (
+              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                {friends.map((friend) => (
+                  <li
+                    key={friend.id}
+                    onClick={() => setSelectedFriend(friend)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "10px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      transition: "background-color 0.3s",
+                      marginBottom: "5px",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                  >
+                    <img
+                      src={friend.avatar ? `media/${friend.avatar}` : "static_files/images/default_avatar.png"}
+                      alt={`${friend.username}'s avatar`}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        marginRight: "10px",
+                      }}
+                    />
+                    <span style={{ flexGrow: 1 }}>{friend.username}</span>
+                    <span style={{ 
+                      color: friend.is_online ? "green" : "gray",
+                      marginLeft: "10px" 
+                    }}>
+                      {friend.is_online ? "Online" : "Offline"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       ) : (
-        <ul>
-          {friends.map((friend) => (
-            <li key={friend.id}>
-              <span>{friend.username}</span>
-              {friend.is_online ? (  // Utilisez is_online pour afficher le statut en ligne
-                <span style={{ color: 'green', marginLeft: '10px' }}> (Online)</span>
-              ) : (
-                <span style={{ color: 'gray', marginLeft: '10px' }}> (Offline)</span>
-              )}
-              <button
-                style={{ marginLeft: '15px' }}
-                onClick={() => handleDeleteFriend(friend.id)}
-              >
-                Remove friend
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div style={{ flex: 1, maxWidth: "40%", overflow: "hidden" }}>
+  <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Friend Menu</h3>
+  <div
+    style={{
+      border: "1px solid #ddd",
+      borderRadius: "8px",
+      padding: "20px",
+      textAlign: "center", // Centre tout à l'intérieur
+    }}
+  >
+    <img
+      src={
+        selectedFriend.avatar
+          ? `media/${selectedFriend.avatar}`
+          : "static_files/images/default_avatar.png"
+      }
+      alt={`${selectedFriend.username}'s avatar`}
+      style={{
+        width: "100px",
+        height: "100px",
+        borderRadius: "50%",
+        marginBottom: "15px", // Espacement avant le nom
+      }}
+    />
+    <div style={{ marginBottom: "10px" }}></div>
+    <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px" }}>
+      {selectedFriend.username}
+    </h1>
+    <div style={{ marginBottom: "10px" }}></div>
+    <span
+      style={{
+        color: selectedFriend.is_online ? "green" : "gray",
+        fontSize: "24px"
+      }}
+    >
+      {selectedFriend.is_online ? "Online" : "Offline"}
+    </span>
+    
+    {/* Espacement entre le statut et les boutons */}
+    <div style={{ marginBottom: "30px" }}></div>
+
+    {selectedFriend.status === "in_game" && (
+      <button
+        onClick={() => {
+          /* Logique de spectate */
+        }}
+        style={{
+          display: "block",
+          margin: "10px auto", // Centrer horizontalement
+          backgroundColor: "#4CAF50",
+          color: "white",
+          border: "none",
+          padding: "10px 20px",
+          borderRadius: "10px",
+          cursor: "pointer",
+        }}
+      >
+        Spectate
+      </button>
+    )}
+    
+    <button
+      onClick={() => {
+        handleNavigateToFriendGameHistory(selectedFriend.username)
+      }}
+      style={{
+        display: "block",
+        margin: "10px auto", // Centrer horizontalement
+        backgroundColor: "#008CBA",
+        color: "white",
+        border: "none",
+        padding: "10px 20px",
+        borderRadius: "10px",
+        cursor: "pointer",
+      }}
+    >
+      Game History
+    </button>
+    
+    <button
+      onClick={() => handleDeleteFriend(selectedFriend.id)}
+      style={{
+        display: "block",
+        margin: "10px auto", // Centrer horizontalement
+        backgroundColor: "red",
+        color: "white",
+        border: "none",
+        padding: "10px 20px",
+        borderRadius: "10px",
+        cursor: "pointer",
+      }}
+    >
+      Remove Friend
+    </button>
+
+    <button
+      onClick={() => setSelectedFriend(null)}
+      style={{
+        display: "block",
+        margin: "10px auto", // Centrer horizontalement
+        backgroundColor: "#f1f1f1",
+        color: "#333",
+        border: "none",
+        padding: "10px 20px",
+        borderRadius: "10px",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      Return
+    </button>
+  </div>
+</div>
+
+      
       )}
+      {/* Notifications */}
+      <div style={{ flex: 1, maxWidth: "40%", overflow: "hidden" }}>
+      <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Notifications</h3>
+        <div style={{
+          maxHeight: "400px",
+          overflowY: "auto",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "10px",
+        }}>
+          {!localNotifications || localNotifications.length === 0 ? (
+            <p>No notifications yet.</p>
+          ) : (
+            <ul>
+              {localNotifications.map((notification) => {
+                if (!notification) return null;
 
-
-
-
-
-      <h4>Notifications</h4>
-      {!localNotifications || localNotifications.length === 0 ? (
-        <p>No notifications yet</p>
-      ) : (
-        <ul>
-          {localNotifications.map((notification) => {
-            if (!notification) return null;
-
-            return (
-            <li key={notification.id}>
-              {notification.notification_type === 'friend_request' && (
-                <>
-                  Friend request from user ID: {notification.sender__username}
-                  <button onClick={() => handleAcceptFriendRequest(notification.id)}>
-                    Accept
-                  </button>
-                  <button onClick={() => handleRejectFriendRequest(notification.id)}>
-                    Reject
-                  </button>
-                </>
+                return (
+                  <li key={notification.id} style={{ marginBottom: "10px" }}>
+                    {notification.notification_type === "friend_request" && (
+                      <>
+                        Friend request from {notification.sender__username}
+                        <button
+                          onClick={() => handleAcceptFriendRequest(notification.id)}
+                          style={{ marginLeft: "10px" }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectFriendRequest(notification.id)}
+                          style={{ marginLeft: "10px" }}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {notification.notification_type === "friend_request_accepted" && (
+                      <>
+                        {notification.sender__username} has accepted your friend request
+                        <button
+                          onClick={() => handleDeleteNotification(notification.id)}
+                          style={{ marginLeft: "10px" }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </li>
+                )}
               )}
-              {notification.notification_type === 'friend_request_accepted' && (
-                <>
-                  {notification.sender__username} has accepted your friend request
-                  <button onClick={() => handleDeleteNotification(notification.id)}>
-                    Delete notification
-                  </button>
-                </>
-              )}
-            </li>
-            );
-          })}
-        </ul>
-      )}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

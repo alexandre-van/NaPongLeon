@@ -57,7 +57,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
 			})
 			return
 			
-		modifier_list = Game_manager.game_manager_instance.parse_modifier(modifiers, game_mode)
+		modifier_list = Game_manager.game_manager_instance.check_modifier(modifiers, game_mode)
 		if modifier_list is None:
 			await self.send_json({
 				'status': 'error',

@@ -4,39 +4,48 @@ from ..utils.logger import logger
 from .getdata import get_data
 
 class Game:
-	def __init__(self, players, game_mode, modifiers, teamlist): # add teams list
+	def __init__(self, players, game_mode, modifiers, teamlist=None):  # add teams list
 		from .timer import Timer
 		import random
-
+	
 		sides = ['left', 'right']
 		logger.debug(f"TEAM LIST DANS LA CLASSE GAME: {teamlist}")
 		players_keys = list(players.keys())
 		logger.debug(f"players dans la classe Game: {players}")
-		#logger.debug(f"teamlist dans la classe Game: {teamlist[0][0]} et players_keys: {players_keys[1]}")
-		if teamlist is None or len(teamlist) == 0:
-			random.shuffle(sides)
-		elif (teamlist[0][0] == players_keys[1]):
-			logger.debug("Inversion de l'ordre des clés de player_username")
-			players = {k: players[k] for k in reversed(players_keys)}
+	
+		# Initialisation des attributs
 		self.game_mode = game_mode
 		self.modifiers = modifiers
 		self.players = {}
 		self.players_in_side = {
 			'left': [],
-			'right': []	
+			'right': []
 		}
 		self.score = {
 			'left': 0,
-			'right': 0	
+			'right': 0
 		}
-		for i, (username, player_consumer) in enumerate(players.items()):
-			side = sides[i % len(sides)]
-			self.players[username] = Player(username, player_consumer, side, game_mode, modifiers)
-			self.players_in_side[side].append(self.players[username])
-			logger.debug(f"{username} is the {side} player !")
-		logger.debug(f"player_username: {self.players[username]}")
-		logger.debug(f"player_username: {self.players}")
-		#logger.debug(f"self.players_in_side: {self.players_in_side}")
+	
+		# Gestion de la répartition des joueurs
+		if teamlist is not None and len(teamlist) == 2:
+			# Attribution des joueurs selon teamlist
+			for side, team in zip(sides, teamlist):
+				for username in team:
+					if username in players:  # Vérifie que le joueur existe dans `players`
+						player_consumer = players[username]
+						self.players[username] = Player(username, player_consumer, side, game_mode, modifiers)
+						self.players_in_side[side].append(self.players[username])
+						logger.debug(f"{username} ajouté à l'équipe {side} !")
+		else:
+			# Attribution aléatoire si teamlist est vide ou invalide
+			random.shuffle(sides)
+			for i, (username, player_consumer) in enumerate(players.items()):
+				side = sides[i % len(sides)]
+				self.players[username] = Player(username, player_consumer, side, game_mode, modifiers)
+				self.players_in_side[side].append(self.players[username])
+				logger.debug(f"{username} est assigné à l'équipe {side} de façon aléatoire !")
+	
+		# Initialisation des autres éléments du jeu
 		self.ball = Ball(modifiers)
 		self.timer = Timer()
 		self.timer.settup(None)
@@ -44,7 +53,10 @@ class Game:
 		maps = ['mountain', 'island']
 		random.shuffle(maps)
 		self.map = maps[0]
-
+	
+		logger.debug(f"Configuration finale des équipes : {self.players_in_side}")
+	
+	
 	def input_players(self, username, input):
 		self.players[username].move_padel(input)
 

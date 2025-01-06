@@ -13,7 +13,7 @@ ball_data = {
 }
 
 padel_data = {
-	'spd': 1.75,
+	'spd': 1.5,
 	'pos': {
 		'x': 1,
 		'y': 1,

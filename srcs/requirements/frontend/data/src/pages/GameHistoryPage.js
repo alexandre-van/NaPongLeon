@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../services/api.js";
 
 const styles = {
@@ -106,16 +107,20 @@ export default function GameHistory() {
   const [error, setError] = useState(null);
   const [filterMode, setFilterMode] = useState("all");
   const [expandedGame, setExpandedGame] = useState(null);
-  const [hoveredGameId, setHoveredGameId] = useState(null); // Suivi de l'élément survolé
+  const [hoveredGameId, setHoveredGameId] = useState(null);
   const [gameModeColors, setGameModeColors] = useState({});
   const [teamColors, setTeamColors] = useState({});
+  const location = useLocation();
+
+  // Récupérer le username du state ou des paramètres d'URL
+  const username = location.state?.username || ""; // Par défaut, pas de username
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await api.get("/game_manager/get_history/");
+        const endpoint = `/game_manager/get_history/username=${username}`
+        const response = await api.get(endpoint);
         const gameHistory = response.data["game_history"];
-        console.log(response.data["game_history"])
         if (!gameHistory || Object.keys(gameHistory).length === 0) {
           setHistory([]);
         } else {
@@ -141,7 +146,7 @@ export default function GameHistory() {
               self_team: data.self_team,
               game_id: data.game_id,
             }))
-            .sort((a, b) => b.game_date - a.game_date); // Sort by date, most recent first
+            .sort((a, b) => b.game_date - a.game_date);
           setHistory(formattedHistory);
         }
       } catch (err) {
@@ -150,7 +155,7 @@ export default function GameHistory() {
     };
 
     fetchHistory();
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     const modes = Array.from(new Set(history.map((game) => game.game_mode)));
@@ -158,7 +163,6 @@ export default function GameHistory() {
     modes.forEach((mode) => (colors[mode] = `#${Math.floor(Math.random() * 16777215).toString(16)}`));
     setGameModeColors(colors);
 
-    // Dynamically generate colors for teams
     const teamColorsMap = {};
     history.forEach((game) => {
       Object.keys(game.teams).forEach((team) => {
@@ -180,11 +184,11 @@ export default function GameHistory() {
   };
 
   const handleMouseEnter = (gameId) => {
-    setHoveredGameId(gameId); // Lorsque la souris entre dans une ligne, on set l'ID du jeu
+    setHoveredGameId(gameId);
   };
 
   const handleMouseLeave = () => {
-    setHoveredGameId(null); // Lorsque la souris quitte la ligne, on réinitialise l'ID
+    setHoveredGameId(null);
   };
 
   const renderTeams = (game) => {
@@ -229,7 +233,9 @@ export default function GameHistory() {
 
   return (
     <div>
-      <h1>Game History</h1>
+      <h1>
+        {username ? `${username}'s Game History` : "Game History"}
+      </h1>
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
       <div style={{ marginBottom: "20px" }}>
@@ -268,11 +274,11 @@ export default function GameHistory() {
                 <React.Fragment key={game.game_id}>
                   <tr
                     onClick={() => handleExpand(game.game_id)}
-                    onMouseEnter={() => handleMouseEnter(game.game_id)}  // Ajouter un effet lorsque la souris entre
-                    onMouseLeave={handleMouseLeave}  // Ajouter un effet lorsque la souris quitte
+                    onMouseEnter={() => handleMouseEnter(game.game_id)}
+                    onMouseLeave={handleMouseLeave}
                     style={{
                       ...styles.row(expandedGame === game.game_id),
-                      backgroundColor: hoveredGameId === game.game_id ? "#f0f0f0" : "transparent", // Changer la couleur de fond survolée
+                      backgroundColor: hoveredGameId === game.game_id ? "#f0f0f0" : "transparent",
                     }}
                   >
                     <td style={styles.dateCell}>
