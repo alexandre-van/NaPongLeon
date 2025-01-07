@@ -28,7 +28,8 @@ import Profile from './pages/Profile.js'
 import ProtectedRoute from './components/ProtectedRoute.js';
 import WaitMatchmaking from './pages/WaitMatchmaking.js';
 import GameModeSelector from './pages/GameModePage.js';
-import CreateGameButton from './components/CreateGameButton.js';
+import FriendsButton from './components/FriendsButton.js';
+import NotifButton from './components/NotifButton.js';
 import AIpong from './pages/AIpong.js';
 import InGame from './pages/InGame.js';
 //import './assets/App.css';
@@ -90,6 +91,8 @@ function App() {
         <WebSocketProvider>
           <RedirectOnRefresh />
           <AppContent />
+          <FriendsButton />
+          <NotifButton />
         </WebSocketProvider>
       </UserProvider>
     </Router>

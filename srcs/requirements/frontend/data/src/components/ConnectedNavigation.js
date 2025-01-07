@@ -28,13 +28,18 @@ export default function ConnectedNavigation() {
   return (
     <div>
       <div className="topnav">
-        <Link className="active" to="/"><img className="logo" src={logo}/></Link>
+        <Link className="active" to="/"><img className="logo" src={logo} alt="Logo" /></Link>
         <Link to="/pong">Pong</Link>
         <Link to="/hagarrio">Hagarrio</Link>
         <Link to="/gamehistory">Game History</Link>
         <Link onClick={handleLogout}>Logout</Link>
         <div className="right-profile">
-          <Link className="avatarprofile" to="/profile"><Avatar user={{ ...user, avatar_url: getAvatarUrl() }} /></Link>
+          <Link className="avatarprofile" to="/profile">
+            <div className="user-info">
+              <span className="username">{user?.username}</span>
+              <Avatar user={{ ...user, avatar_url: getAvatarUrl() }} />
+            </div>
+          </Link>
         </div>
       </div>
     </div>
