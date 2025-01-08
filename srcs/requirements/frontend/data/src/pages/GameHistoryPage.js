@@ -233,6 +233,7 @@ export default function GameHistory() {
 
   return (
     <div>
+      <div className="profile" style={{ paddingTop: '50px' }}></div>
       <h1>
         {username ? `${username}'s Game History` : "Game History"}
       </h1>

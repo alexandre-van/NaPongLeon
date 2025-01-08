@@ -82,7 +82,7 @@ const NotifButton = () => {
           width: '400px',
           maxHeight: '80vh',
           overflowY: 'auto',
-          zIndex: 999,
+          zIndex: 1000,
           boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
         }}>
           <h3 style={{ color: 'white', textAlign: "center", marginBottom: "15px" }}>Notifications</h3>

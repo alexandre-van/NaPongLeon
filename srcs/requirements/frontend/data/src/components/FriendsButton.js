@@ -121,7 +121,7 @@ const FriendsButton = () => {
           width: '400px',
           maxHeight: '80vh',
           overflowY: 'auto',
-          zIndex: 999
+          zIndex: 1000
         }}>
           {!selectedFriend ? (
             <div>
@@ -181,7 +181,7 @@ const FriendsButton = () => {
                         }}
                       >
                         <img
-                          src={friend.avatar ? `media/${friend.avatar}` : "static_files/images/default_avatar.png"}
+                          src={friend.avatar ? `media/${friend.avatar}` : "/static_files/images/default_avatar.png"}
                           alt={`${friend.username}'s avatar`}
                           style={{
                             width: "40px",
@@ -213,7 +213,7 @@ const FriendsButton = () => {
                 borderRadius: '8px'
               }}>
                 <img
-                  src={selectedFriend.avatar ? `media/${selectedFriend.avatar}` : "static_files/images/default_avatar.png"}
+                  src={selectedFriend.avatar ? `media/${selectedFriend.avatar}` : "/static_files/images/default_avatar.png"}
                   alt={`${selectedFriend.username}'s avatar`}
                   style={{
                     width: "100px",

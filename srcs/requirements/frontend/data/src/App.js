@@ -32,6 +32,7 @@ import FriendsButton from './components/FriendsButton.js';
 import NotifButton from './components/NotifButton.js';
 import AIpong from './pages/AIpong.js';
 import InGame from './pages/InGame.js';
+import SocialPage from './pages/SocialPage.js';
 //import './assets/App.css';
 
 function AppContent() {
@@ -53,11 +54,16 @@ function AppContent() {
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
           <Route path="pong" element={<PongPage />} />
+          <Route path="pong/matchmaking" element={<WaitMatchmaking />} />
+          <Route path="pong/ai-pong" element={<AIpong />} />
+          <Route path="pong/ingame" element={<InGame />} />
+          <Route path="pong/game-mode" element={<GameModeSelector />} />
           <Route path="hagarrio" element={<HagarrioPage />} />
           <Route path="gamehistory" element={<GameHistory />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
+          <Route path="social-network" element={<SocialPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
 
@@ -74,10 +80,6 @@ function AppContent() {
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
-          <Route path="pong/matchmaking" element={<WaitMatchmaking />} />
-          <Route path="pong/ai-pong" element={<AIpong />} />
-          <Route path="pong/ingame" element={<InGame />} />
-          <Route path="pong/game-mode" element={<GameModeSelector />} />
 
         </Route>
       </Routes>
@@ -91,6 +93,7 @@ function App() {
         <WebSocketProvider>
           <RedirectOnRefresh />
           <AppContent />
+          <div className="background"></div>
           <FriendsButton />
           <NotifButton />
         </WebSocketProvider>
