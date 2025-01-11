@@ -89,24 +89,7 @@ class GameConsumer(AsyncWebsocketConsumer):
   
 
 		# Remplacement des IDs par les nicknames
-		special_ids = self.room.get('special_id', [])
-		if special_ids:
-			id_to_nickname = {id_map['public']: id_map['nickname'] for id_map in special_ids if 'public' in id_map and 'nickname' in id_map}
-		
-			logger.debug(f"ID TO NICKNAME : {id_to_nickname}")
-			logger.debug(f"GAME DATA : {game_data}")
-	
-			def replace_ids_with_nicknames(data):
-				if isinstance(data, dict):
-					# Parcourt récursivement les dictionnaires
-					return {k: replace_ids_with_nicknames(v) for k, v in data.items()}
-				elif isinstance(data, list):
-					# Parcourt récursivement les listes et remplace les IDs
-					return [id_to_nickname.get(item, item) for item in data]
-				return data
-
-			# Application à `game_data`
-			game_data['teams'] = {k: replace_ids_with_nicknames(v) for k, v in game_data['teams'].items()}
+		self.remplacenickname(game_data)
 	
 		#game_data = replace_ids_with_nicknames(game_data)
 		logger.debug(f"GAME DATA : {game_data}")
@@ -117,11 +100,32 @@ class GameConsumer(AsyncWebsocketConsumer):
 		await self.send_export_data(self.game_id, game_data)
 		logger.debug(f'Export data')
 
+	def remplacenickname(self, game_data):
+		special_ids = self.room.get('special_id', [])
+		if special_ids:
+			id_to_nickname = {id_map['public']: id_map['nickname'] for id_map in special_ids if 'public' in id_map and 'nickname' in id_map}
+
+			logger.debug(f"ID TO NICKNAME : {id_to_nickname}")
+			logger.debug(f"GAME DATA : {game_data}")
+
+			def replace_ids_with_nicknames(data):
+				if isinstance(data, dict):
+						# Parcourt récursivement les dictionnaires
+					return {k: replace_ids_with_nicknames(v) for k, v in data.items()}
+				elif isinstance(data, list):
+						# Parcourt récursivement les listes et remplace les IDs
+					return [id_to_nickname.get(item, item) for item in data]
+				return data
+
+			game_data['teams'] = {k: replace_ids_with_nicknames(v) for k, v in game_data['teams'].items()}
+
 	async def add_spectator(self):
 		logger.debug(f"{self.username} is here")
+		game_data = self.room['game_instance'].export_data()
+		self.remplacenickname(game_data)
 		await self.send_message({
 			'type': "export_data",
-			'data': self.room['game_instance'].export_data()
+			'data': game_data
 		})
 
 	async def send_user_connection(self):
