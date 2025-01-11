@@ -1,18 +1,27 @@
-// NotifButton.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext.js';
+import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const NotifButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null); // Ref pour le conteneur du menu
+  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
 
   useEffect(() => {
-    if (Array.isArray(notifications)) {
+    if (!isAuthenticated) {
+      if (localNotifications.length > 0 || notifications.length > 0) {
+        setLocalNotifications([]);
+        setNotifications([]);
+      }
+    } else if (Array.isArray(notifications) && notifications !== localNotifications) {
       setLocalNotifications(notifications);
     }
-  }, [notifications]);
+  }, [isAuthenticated, notifications]);
+
+  const unreadNotificationsCount = localNotifications.filter(notification => !notification.is_read).length;
 
   const handleAcceptFriendRequest = async (notificationId) => {
     try {
@@ -45,10 +54,34 @@ const NotifButton = () => {
     }
   };
 
+  // Fermer le menu si on clique en dehors
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('click', handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isOpen]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation(); // Empêche la propagation de l'événement
+          setIsOpen(!isOpen);
+        }}
         style={{
           position: 'fixed',
           bottom: '20px',
@@ -65,34 +98,60 @@ const NotifButton = () => {
           justifyContent: 'center',
           fontSize: '24px',
           zIndex: 1000,
-          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
         }}
       >
         🔔
+        {unreadNotificationsCount > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+              backgroundColor: '#f44336',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              borderRadius: '50%',
+              width: '20px',
+              height: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {unreadNotificationsCount}
+          </div>
+        )}
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: '20px',
-          backgroundColor: '#333',
-          borderRadius: '8px',
-          padding: '20px',
-          width: '400px',
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          zIndex: 999,
-          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-        }}>
+        <div
+          ref={menuRef} // Ref pour le conteneur
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            right: '20px',
+            backgroundColor: '#333',
+            borderRadius: '8px',
+            padding: '20px',
+            width: '400px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            zIndex: 1000,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          }}
+        >
           <h3 style={{ color: 'white', textAlign: "center", marginBottom: "15px" }}>Notifications</h3>
-          <div style={{
-            maxHeight: "400px",
-            overflowY: "auto",
-            borderRadius: "8px",
-            padding: "10px",
-            backgroundColor: '#444'
-          }}>
+          <div
+            style={{
+              maxHeight: "400px",
+              overflowY: "auto",
+              borderRadius: "8px",
+              padding: "10px",
+              backgroundColor: '#444',
+            }}
+          >
             {!localNotifications || localNotifications.length === 0 ? (
               <p style={{ color: 'white', textAlign: 'center' }}>No notifications yet.</p>
             ) : (
@@ -101,15 +160,20 @@ const NotifButton = () => {
                   if (!notification) return null;
 
                   return (
-                    <li key={notification.id} style={{ 
-                      marginBottom: "10px",
-                      backgroundColor: '#555',
-                      padding: '10px',
-                      borderRadius: '5px',
-                      color: 'white'
-                    }}>
+                    <li
+                      key={notification.id}
+                      style={{
+                        marginBottom: "10px",
+                        backgroundColor: '#555',
+                        padding: '10px',
+                        borderRadius: '5px',
+                        color: 'white',
+                      }}
+                    >
                       {notification.notification_type === "friend_request" && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                        >
                           <span>Friend request from {notification.sender__username}</span>
                           <div>
                             <button
@@ -121,7 +185,7 @@ const NotifButton = () => {
                                 padding: "5px 10px",
                                 borderRadius: "5px",
                                 cursor: "pointer",
-                                marginRight: "5px"
+                                marginRight: "5px",
                               }}
                             >
                               Accept
@@ -134,7 +198,7 @@ const NotifButton = () => {
                                 border: "none",
                                 padding: "5px 10px",
                                 borderRadius: "5px",
-                                cursor: "pointer"
+                                cursor: "pointer",
                               }}
                             >
                               Reject
@@ -143,7 +207,9 @@ const NotifButton = () => {
                         </div>
                       )}
                       {notification.notification_type === "friend_request_accepted" && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                        >
                           <span>{notification.sender__username} has accepted your friend request</span>
                           <button
                             onClick={() => handleDeleteNotification(notification.id)}
@@ -153,10 +219,10 @@ const NotifButton = () => {
                               border: "none",
                               padding: "5px 10px",
                               borderRadius: "5px",
-                              cursor: "pointer"
+                              cursor: "pointer",
                             }}
                           >
-                            Dismiss
+                            Delete
                           </button>
                         </div>
                       )}

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.user = self.scope["user"]
+        self.user = self.scope.get("user", None)
         if not self.user:
             await self.close()
         else:
@@ -27,6 +27,12 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             await self.user.update_user_status(True)
             await self.send_status_friends(True)
             logger.debug('Connection accepted')
+            # Récupérer toutes les notifications et les envoyer
+            notifications = await Notification.get_all_notifications(self.user)
+            for notification in notifications:
+                logger.debug(f"notification: {notification}")
+                await self.send(text_data=json.dumps(notification.to_dict()))
+
 
 
 
@@ -35,17 +41,21 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         from django_otp.plugins.otp_totp.models import TOTPDevice
         from asgiref.sync import sync_to_async
 
-        await self.user.update_user_status(False)
-        await self.send_status_friends(False)
+        try:
+            if self.user and self.user.is_authenticated:
+                await self.user.update_user_status(False)
+                await self.send_status_friends(False)
 
-        @sync_to_async
-        def delete_unconfirmed_2fa_auth(user):
-            for device in devices_for_user(user, confirmed=False):
-                device.delete()
-                return True
-            return False
-        
-        result = await delete_unconfirmed_2fa_auth(self.user)
+            @sync_to_async
+            def delete_unconfirmed_2fa_auth(user):
+                for device in devices_for_user(user, confirmed=False):
+                    device.delete()
+                    return True
+                return False
+
+            result = await delete_unconfirmed_2fa_auth(self.user)
+        except Exception as e:
+            logger.error(f"Error during disconnect: {str(e)}")
 
 
 

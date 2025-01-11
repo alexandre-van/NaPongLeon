@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import logo from '../elements/logo.png';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -27,12 +25,12 @@ export default function InGame() {
             iframe.id = "gameFrame";
             iframe.src = `${gameService}/?gameId=${gameId}`;
             iframe.style.position = "fixed";
-            iframe.style.top = "75px";
-            iframe.style.left = "0";
-            iframe.style.width = "100vw";
-            iframe.style.height = "93vh";
+            iframe.style.top = "56px";
+            iframe.style.left = "-2.5%";
+            iframe.style.width = "105%";
+            iframe.style.height = "100%";
             iframe.style.border = "none";
-            iframe.style.zIndex = "9999";
+            iframe.style.zIndex = "999";
             iframe.scrolling = "no";
             iframe.sandbox = "allow-scripts allow-same-origin";
             // Ajouter l'iframe au DOM
@@ -64,19 +62,7 @@ export default function InGame() {
 
     return (
         <div>
-            <div className="topnav">
-                <Link className="active"><img className="logo" src={logo} alt="Logo" /></Link>
-                <button 
-                    className="exit-button btn btn-outline-warning" 
-                    type="button" 
-                    onClick={Cancel}
-                >
-                    EXIT
-                </button>
-                <h1 className="wait">Wait for the game to load</h1>
-            </div>
-            <div id="iframe-container" style={{ marginTop: '20px' }}>
-            </div>
+            <h1 className="wait">Wait for the game to load</h1>
         </div>
     );
 }

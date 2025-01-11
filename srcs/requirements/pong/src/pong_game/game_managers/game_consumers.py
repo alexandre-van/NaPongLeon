@@ -230,8 +230,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def receive(self, text_data):
 		if not self.room:
 			return
-		if self.username not in self.room['players']:
-			return
 		try:
 			data = json.loads(text_data)
 			data_type = data['type']

@@ -107,7 +107,7 @@ class CustomUser(AbstractUser):
         if (to_user != self):
             try:
                 friendship, created = await Friendship.aget_or_create_friendship(self, to_user)
-
+                logger.debug(f"frienship : {friendship}, created: {created}")
                 if created:
                     notification = await Notification.objects.acreate(
                         sender=self,
@@ -233,8 +233,10 @@ class Friendship(models.Model):
                 Q(from_user=from_user, to_user=to_user) |
                 Q(from_user=to_user, to_user=from_user)
             )
+            logger.debug("Request already existring")
             return friendship, False
         except cls.DoesNotExist:
+            logger.debug("Creatign request tentative...")
             friendship = await cls.objects.acreate(
                 from_user=from_user,
                 to_user=to_user,
@@ -296,17 +298,12 @@ class Notification(models.Model):
     async def get_all_notifications(cls, user):
         @sync_to_async
         def get_notifications():
-            return list(cls.objects.filter(Q(recipient=user) | Q(sender=user)).select_related(
-                    'recipient', 'sender'
-                ).order_by('-created_at').values(
-                    'id',
-                    'recipient__username',
-                    'sender__username',
-                    'notification_type',
-                    'created_at',
-                ))
+            return list(cls.objects.filter(
+                Q(recipient=user)
+            ).select_related('recipient', 'sender').order_by('-created_at'))
 
         return await get_notifications()
+
 
     @classmethod
     async def get_all_received_notifications(cls, user):

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import FriendsList from '../components/FriendsList.js';
 
 export default function Formations() {
-    const { user } = useUser();
+    const { user, logout } = useUser();
     const [playerStatus, setPlayerStatus] = useState('Loading...'); // État pour le statut du joueur
     const [gameMode, setGameMode] = useState(null); // État pour le mode de jeu
     const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ export default function Formations() {
     const getStatusColor = (status) => {
         switch (status) {
             case "inactive":
-                return "gray";
+                return "green";
             case "pending":
                 return "orange";
             case "in_queue":
@@ -56,62 +56,114 @@ export default function Formations() {
     };
 
     const getStatusTxt = (status) => {
-      switch (status) {
-          case "inactive":
-              return "Inactive";
-          case "pending":
-              return "Expected in game";
-          case "in_queue":
-              return "In queue";
-          case "in_game":
-              return "In game";
-          case "waiting":
-              return "Waiting";
-          case "loading_game":
-              return "In game";
-          default:
-              return "with";
-      }
-  };
+        switch (status) {
+            case "inactive":
+                return "Online";
+            case "pending":
+                return "Expected in game";
+            case "in_queue":
+                return "In queue";
+            case "in_game":
+                return "In game";
+            case "waiting":
+                return "Waiting";
+            case "loading_game":
+                return "In game";
+            default:
+                return "with";
+        }
+    };
+
+    const handleLogout = (e) => {
+        e.preventDefault();
+        try {
+          logout();
+          navigate('/logout-success');
+        } catch (error) {
+          console.error("Logout failed", error);
+        }
+      };
 
     return (
-        <div className="profile">
-            <div className="profile-header" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {/* Avatar avec styles en ligne */}
-                <div style={{ marginRight: '20px', marginLeft: '-100px' }}>
-                    <img
-                        src={user.avatar_url} // Utilisation de l'URL de l'avatar
-                        alt={user.username}
-                        style={{
-                            width: '150px',   // Taille agrandie de l'avatar
-                            height: '150px',
-                            borderRadius: '50%' // Avatar circulaire
-                        }}
-                        onError={(e) => {
-                            console.error('Error loading image:', e);
-                        }}
-                    />
-                </div>
-                <div>
-                    <h2>{user.username}</h2>
-                    <h3>
-                    {error ? (
-                        <p style={{ color: 'red' }}>{error}</p>
-                    ) : (
-                        <p style={{ color: getStatusColor(playerStatus), margin: 0 }}>
-                            {playerStatus !== "inactive" && gameMode 
-                                ? `${getStatusTxt(playerStatus)} - ${gameMode}` 
-                                : getStatusTxt(playerStatus)}
-                        </p>
-                    )}
-                    </h3>
-                </div>
-            </div>
-            <Link to="/user-personalization">Personalize Profile</Link>
+        <div className="profile" style={{ paddingTop: '50px' }}> {/* Ajout d'une marge en haut */}
+    {/* Titre Profile à l'extérieur */}
+    <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Profile</h1>
 
-            {user.nickname ? <h3>My nickname: {user.nickname}</h3> : <p>No nickname yet</p>}
-
-            <FriendsList />
+    <div style={{
+        border: '2px solid #fff',  // Bordure blanche
+        padding: '20px',
+        borderRadius: '10px',
+        backgroundColor: 'transparent',  // Fond transparent
+        maxWidth: '600px',  // Largeur maximale pour que le cadre ne soit pas trop large
+        margin: '0 auto',  // Centrage horizontal
+        display: 'flex',  // Disposition en flex pour diviser en 2 parties égales
+    }}>
+        {/* Partie gauche pour l'image */}
+        <div style={{
+            flex: 1, // La partie gauche prend 1/2 de l'espace
+            display: 'flex',
+            justifyContent: 'center',  // Centrage horizontal de l'image
+            alignItems: 'center',  // Centrage vertical de l'image
+        }}>
+            <img
+                src={user.avatar_url} // Utilisation de l'URL de l'avatar
+                alt={user.username}
+                style={{
+                    width: '200px',   // Taille agrandie de l'avatar
+                    height: '200px',
+                    borderRadius: '50%' // Avatar circulaire
+                }}
+                onError={(e) => {
+                    console.error('Error loading image:', e);
+                }}
+            />
         </div>
+
+        {/* Partie droite pour les informations */}
+        <div style={{
+            flex: 1, // La partie droite prend 1/2 de l'espace
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center', // Centrage vertical des informations
+            alignItems: 'center', // Alignement à gauche
+            paddingLeft: '20px',  // Espacement entre l'image et les informations
+        }}>
+            <h1>{user.username}</h1>
+            <h2>{user.nickname && (
+                <p style={{ fontSize: '24px', marginTop: '6px' }}>
+                    {user.nickname}
+                </p>
+            )}
+            </h2>
+            <h3>
+                {error ? (
+                    <p style={{ color: 'red' }}>{error}</p>
+                ) : (
+                    <p style={{ color: getStatusColor(playerStatus), margin: 0 }}>
+                        {playerStatus !== "inactive" && gameMode 
+                            ? `${getStatusTxt(playerStatus)} - ${gameMode}` 
+                            : getStatusTxt(playerStatus)}
+                    </p>
+                )}
+            </h3>
+        </div>
+    </div>
+
+    {/* Titre Personalize Profile à l'extérieur */}
+    <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button className="Profilebutton personalize" onClick={() => window.location.href = '/user-personalization'}>
+            Personalize Profile
+        </button>
+    </div>
+
+    {/* Bouton Logout avec classe CSS */}
+    <div style={{ textAlign: 'center' }}>
+        <button className="Profilebutton logout" onClick={handleLogout}>
+            Logout
+        </button>
+    </div>
+</div>
+
+
     );
 }
