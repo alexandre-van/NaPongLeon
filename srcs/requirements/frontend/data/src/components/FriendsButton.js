@@ -1,21 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '../contexts/UserContext.js';
-import { useWebSocket } from '../contexts/WebSocketContext.js';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import AddFriendButton from './AddFriendButton.js';
 import api from '../services/api.js';
 
 const FriendsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, friends, setFriends, checkFriends } = useUser();
+  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [friendStatuses, setFriendStatuses] = useState({});
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // Référence pour le bouton et le menu
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    checkFriends();
-  }, [checkFriends]);
+    if (isAuthenticated) {
+      checkFriends();
+    }
+  }, [isAuthenticated, checkFriends]);
 
   const fetchFriendStatuses = async () => {
     const onlineFriends = friends.filter(friend => friend.is_online);
@@ -32,38 +35,69 @@ const FriendsButton = () => {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchFriendStatuses();
-    }, 10000);
-  
-    return () => clearInterval(intervalId);
-  }, [friends]);
-  
+    if (isAuthenticated && friends.length > 0) {
+      const intervalId = setInterval(() => {
+        fetchFriendStatuses();
+      }, 3000);
+      return () => clearInterval(intervalId);
+    }
+  }, [isAuthenticated, friends]);
+
   useEffect(() => {
     fetchFriendStatuses();
-  }, [friends]);
+  }, [isAuthenticated, friends]);
+
+  useEffect(() => {
+    // Gestionnaire pour fermer le menu si clic à l'extérieur
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const onlineFriendsCount = friends.filter(friend => friend.is_online).length;
 
   const getStatusColor = (status) => {
     switch (status) {
       case "inactive": return "green";
       case "pending": return "orange";
+      case "spectate": return "yellow";
       case "in_queue":
+      case "loading_game":
       case "in_game": return "blue";
       case "waiting":
-      case "loading_game": return "yellow";
       default: return "black";
     }
   };
 
   const getStatusTxt = (status) => {
     switch (status) {
-      case "inactive": return "Online";
-      case "pending": return "Expected in game";
-      case "in_queue": return "In queue";
-      case "in_game": return "In game";
-      case "waiting": return "Waiting";
-      case "loading_game": return "In game";
-      default: return "";
+        case "inactive":
+            return "Online";
+        case "spectate":
+            return "Spectate a game";
+        case "pending":
+            return "Expected in game";
+        case "in_queue":
+            return "In queue";
+        case "in_game":
+            return "In game";
+        case "waiting":
+            return "Waiting";
+        case "loading_game":
+            return "In game";
+        default:
+            return "";
     }
   };
 
@@ -85,8 +119,29 @@ const FriendsButton = () => {
     }
   };
 
+  function handleSpectateButton(friendStatuses, selectedFriend, navigate) {
+    const friendStatus = friendStatuses[selectedFriend.id];
+  
+    if (
+      friendStatus?.status === "in_game" &&
+      friendStatus?.game_id &&
+      (friendStatus?.game_service === "pong" || friendStatus?.game_service === "tournament")
+    ) {
+      // Récupérer les informations nécessaires
+      const gameServiceUrl = `${window.location.protocol}/api/${friendStatus.game_service}`;
+      const gameId = friendStatus.game_id;
+  
+      // Naviguer vers la page de spectateur
+      navigate("/pong/ingame", { state: { gameService: gameServiceUrl, gameId: gameId } });
+    } else {
+      console.error("Impossible de spectate : aucune partie valide trouvée.");
+    }
+  }
+
+  const sortedFriends = friends.sort((a, b) => b.is_online - a.is_online);
+
   return (
-    <>
+    <div ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -108,6 +163,28 @@ const FriendsButton = () => {
         }}
       >
         👥
+        {onlineFriendsCount > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              borderRadius: '50%',
+              width: '20px',
+              height: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: 0.75,
+            }}
+          >
+            {onlineFriendsCount}
+          </div>
+        )}
       </button>
 
       {isOpen && (
@@ -127,7 +204,7 @@ const FriendsButton = () => {
             <div>
               <h3 style={{ color: 'white', textAlign: "center", marginBottom: "15px" }}>Friends List</h3>
               <div style={{
-                maxHeight: "600px",
+                maxHeight: "450px",
                 overflowY: "auto",
                 borderRadius: "8px",
                 padding: "10px",
@@ -164,7 +241,7 @@ const FriendsButton = () => {
                   <p style={{ textAlign: "center", color: 'white' }}>No friends yet.</p>
                 ) : (
                   <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                    {friends.map((friend) => (
+                    {sortedFriends.map((friend) => (
                       <li
                         key={friend.id}
                         onClick={() => setSelectedFriend(friend)}
@@ -225,6 +302,12 @@ const FriendsButton = () => {
                 <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px", color: 'white' }}>
                   {selectedFriend.username}
                 </h1>
+                <h2>{selectedFriend.nickname && (
+                  <p style={{ fontSize: '24px', marginTop: '6px' }}>
+                      {selectedFriend.nickname}
+                  </p>
+                )}
+                </h2>
                 <span style={{
                   color: selectedFriend.is_online 
                     ? getStatusColor(friendStatuses[selectedFriend.id]?.status) || "green"
@@ -238,9 +321,10 @@ const FriendsButton = () => {
 
                 <div style={{ marginBottom: "30px" }}></div>
 
-                {selectedFriend.status === "in_game" && (
+                {friendStatuses[selectedFriend.id]?.status === "in_game" && friendStatuses[selectedFriend.id]?.game_id && (friendStatuses[selectedFriend.id]?.game_service === "pong" || friendStatuses[selectedFriend.id]?.game_service === "tournament") &&
+                (
                   <button
-                    onClick={() => {/* Logique de spectate */}}
+                    onClick={() => handleSpectateButton(friendStatuses, selectedFriend, navigate)}
                     style={{
                       display: "block",
                       margin: "10px auto",
@@ -308,7 +392,7 @@ const FriendsButton = () => {
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };
 

@@ -1,33 +1,31 @@
-import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
 
-const NicknameForm = ({ onUpload, onError }) => {
-  const [nicknameForm, setNicknameForm] = useState(null);
-  const { user } = useUser();
+const NicknameForm = ({ onSubmit, onError }) => {
+  const [nickname, setNickname] = useState('');
 
-  const handleNicknameChange = (e) => {
-    setNicknameForm(e.target.value);
-  };
+  const handleNicknameChange = (e) => setNickname(e.target.value);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!nicknameForm) {
-      onUpload({ nickname: null, error: "Please submit a nickname"});
-      return;
+    if (!nickname) {
+      onSubmit({ value: null, error: 'Please submit a nickname' });
+    } else {
+      onSubmit({ value: nickname, error: null });
     }
-    onUpload({ nickname: nicknameForm, error: null });
   };
 
   return (
-    <div>
+    <div className="nickname-form">
       <form onSubmit={handleSubmit}>
-        <label htmlFor="current nickname">Current nickname: {user.nickname ? user.nickname : 'No nickname yet'}</label>
-        <label htmlFor="update nickname">Update Nickname</label>
+        <label htmlFor="current-nickname">Current nickname:</label>
+        <p>{nickname || 'No nickname yet'}</p>
+
+        <label htmlFor="nickname">New Nickname</label>
         <input
           type="text"
           id="nickname"
           name="nickname"
-          value={nicknameForm}
+          value={nickname}
           onChange={handleNicknameChange}
           placeholder="Enter your new nickname"
         />

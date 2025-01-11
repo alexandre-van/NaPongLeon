@@ -7,7 +7,7 @@ import api from '../services/api.js';
 
 const FriendsList = () => {
   const navigate = useNavigate();
-  const { user, friends, setFriends, checkFriends } = useUser();
+  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser();
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -20,8 +20,10 @@ const FriendsList = () => {
   }, [notifications]);
 
   useEffect(() => {
-    checkFriends();
-  }, [checkFriends]);
+    if (isAuthenticated) {
+      checkFriends();
+    }
+  }, [isAuthenticated, checkFriends]);
 
   // Requête pour récupérer le statut des amis en ligne
   const fetchFriendStatuses = async () => {
@@ -39,17 +41,21 @@ const FriendsList = () => {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchFriendStatuses();
-    }, 10000);
-  
-    return () => clearInterval(intervalId);
-  }, [friends]);
-  
+    if (isAuthenticated && friends.length > 0) {
+      const intervalId = setInterval(() => {
+        fetchFriendStatuses();
+      }, 3000);
+      return () => clearInterval(intervalId);
+    }
+  }, [isAuthenticated, friends]);
   
   useEffect(() => {
     fetchFriendStatuses();
-  }, [friends]);
+  }, [isAuthenticated, friends]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -138,6 +144,25 @@ const FriendsList = () => {
     }
   };
 
+  function handleSpectateButton(friendStatuses, selectedFriend, navigate) {
+    const friendStatus = friendStatuses[selectedFriend.id];
+  
+    if (
+      friendStatus?.status === "in_game" &&
+      friendStatus?.game_id &&
+      (friendStatus?.game_service === "pong" || friendStatus?.game_service === "tournament")
+    ) {
+      // Récupérer les informations nécessaires
+      const gameServiceUrl = `${window.location.protocol}/api/${friendStatus.game_service}`;
+      const gameId = friendStatus.game_id;
+  
+      // Naviguer vers la page de spectateur
+      navigate("/pong/ingame", { state: { gameService: gameServiceUrl, gameId: gameId } });
+    } else {
+      console.error("Impossible de spectate : aucune partie valide trouvée.");
+    }
+  }
+
   return (
     <div style={{ display: "flex", justifyContent: "center", gap: "20px", padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Liste des amis */}
@@ -201,7 +226,7 @@ const FriendsList = () => {
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                   >
                     <img
-                      src={friend.avatar ? `media/${friend.avatar}` : "/static_files/images/default_avatar.png"}
+                      src={friend.avatar ? `media/${friend.avatar}` : "static_files/images/default_avatar.png"}
                       alt={`${friend.username}'s avatar`}
                       style={{
                         width: "40px",
@@ -245,6 +270,12 @@ const FriendsList = () => {
             <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px" }}>
               {selectedFriend.username}
             </h1>
+            <h2>{selectedFriend.nickname && (
+                <p style={{ fontSize: '24px', marginTop: '6px' }}>
+                    {selectedFriend.nickname}
+                </p>
+            )}
+            </h2>
             <span
               style={{
                 color: selectedFriend.is_online 
@@ -262,11 +293,10 @@ const FriendsList = () => {
     {/* Espacement entre le statut et les boutons */}
     <div style={{ marginBottom: "30px" }}></div>
 
-    {selectedFriend.status === "in_game" && (
-      <button
-        onClick={() => {
-          /* Logique de spectate */
-        }}
+    {friendStatuses[selectedFriend.id]?.status === "in_game" && friendStatuses[selectedFriend.id]?.game_id && (friendStatuses[selectedFriend.id]?.game_service === "pong" || friendStatuses[selectedFriend.id]?.game_service === "tournament") &&
+                (
+                  <button
+                    onClick={() => handleSpectateButton(friendStatuses, selectedFriend, navigate)}
         style={{
           display: "block",
           margin: "10px auto", // Centrer horizontalement

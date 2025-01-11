@@ -303,6 +303,9 @@ class Game_manager:
 				if game_id:
 					game_data = await self.get_game_data(game_id)
 					ret['game_mode'] = game_data['game_mode']
+					ret['game_id'] = game_data['game_id']
+					game_mode_data = settings.GAME_MODES.get(ret['game_mode'])
+					ret['game_service'] = game_mode_data['service_name']
 			return ret
 		else:
 			return None

@@ -1,57 +1,198 @@
-import AvatarUpload from '../components/AvatarUpload.js';
-import NicknameForm from '../components/NicknameForm.js';
-import Setup2FA from '../components/Setup2FA.js';
-import useAvatarUpload from '../hooks/useAvatarUpload.js';
-import useNicknameUpdate from '../hooks/useNicknameUpdate.js';
-
-import { Link } from 'react-router-dom';
-//import { useUser } from '../contexts/UserContext.js';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import AvatarUpload from '../components/AvatarUpload';
+import NicknameForm from '../components/NicknameForm';
+import Setup2FA from '../components/Setup2FA';
+import useAvatarUpload from '../hooks/useAvatarUpload';
+import useNicknameUpdate from '../hooks/useNicknameUpdate';
+import { useUser } from '../contexts/UserContext';
 
 function UserPersonalizationPage() {
   const [error, setError] = useState(null);
+  const [activeSection, setActiveSection] = useState(null);
   const { updateAvatar } = useAvatarUpload();
   const { updateNickname } = useNicknameUpdate();
-//  const { user } = useUser();
+  const { user } = useUser();
 
-  const handleNicknameSubmit = async ({ nickname, error }) => {
+  const handleSubmit = async (type, data) => {
+    const { error, value } = data;
     if (error) {
       setError(error);
       return;
     }
 
     try {
-      await updateNickname(nickname);
-      console.log('Nickname uploaded successfully');
+      if (type === 'nickname') await updateNickname(value);
+      if (type === 'avatar') await updateAvatar(value);
       setError(null);
-    } catch (updateNicknameError) {
-      setError(updateNicknameError.response.data.nickname[0]);
+    } catch (updateError) {
+      setError(updateError.message || 'An error occurred');
     }
   };
 
-  const handleAvatarUpload = async ({ file, error }) => {
-    if (error) {
-      setError(error);
-      return;
+  const getTitle = () => {
+    switch (activeSection) {
+      case 'nickname':
+        return 'Update Nickname';
+      case 'avatar':
+        return 'Change Avatar';
+      case '2fa':
+        return '2FA Settings';
+      default:
+        return 'Personalize Profile';
+    }
+  };
+
+  const renderContent = () => {
+    if (!activeSection) {
+      return (
+        <>
+          <div style={{
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            padding: "20px",
+            textAlign: "center",
+          }}>
+            <img
+              src={user.avatar_url}
+              alt={user.username}
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                marginBottom: "15px",
+              }}
+            />
+            <h1 style={{ fontSize: "36px", fontWeight: "bold", marginBottom: "5px" }}>
+              {user.username}
+            </h1>
+            {user.nickname && (
+              <p style={{ fontSize: "24px", marginTop: "6px" }}>
+                {user.nickname}
+              </p>
+            )}
+          </div>
+
+          {/* Buttons section */}
+          <div style={{ marginTop: "30px", textAlign: "center" }}>
+            <button
+              onClick={() => setActiveSection('nickname')}
+              style={{
+                display: "block",
+                margin: "10px auto",
+                backgroundColor: "#4CAF50",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                cursor: "pointer",
+              }}
+            >
+              Update Nickname
+            </button>
+            <button
+              onClick={() => setActiveSection('avatar')}
+              style={{
+                display: "block",
+                margin: "10px auto",
+                backgroundColor: "#008CBA",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                cursor: "pointer",
+              }}
+            >
+              Change Avatar
+            </button>
+            <button
+              onClick={() => setActiveSection('2fa')}
+              style={{
+                display: "block",
+                margin: "10px auto",
+                backgroundColor: "#FFA500",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                cursor: "pointer",
+              }}
+            >
+              2FA Settings
+            </button>
+            <Link
+              to="/profile"
+              style={{
+                display: "block",
+                margin: "10px auto",
+                backgroundColor: "#f1f1f1",
+                color: "#333",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Return
+            </Link>
+          </div>
+        </>
+      );
     }
 
-    try {
-      await updateAvatar(file);
-      console.log('Avatar uploaded successfully');
-      setError(null);
-    } catch (updateAvatarError) {
-      setError(updateAvatarError.message);
-    }
+    return (
+      <div className="space-y-4">
+        {activeSection === 'nickname' && (
+          <NicknameForm onSubmit={(data) => handleSubmit('nickname', data)} onError={setError} />
+        )}
+        {activeSection === 'avatar' && (
+          <AvatarUpload onSubmit={(data) => handleSubmit('avatar', data)} onError={setError} />
+        )}
+        {activeSection === '2fa' && (
+          <Setup2FA onError={setError} />
+        )}
+
+        <button
+          onClick={() => setActiveSection(null)}
+          style={{
+            display: "block",
+            margin: "10px auto",
+            backgroundColor: "#f1f1f1",
+            color: "#333",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "10px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Return
+        </button>
+      </div>
+    );
   };
 
   return (
-    <div>
-      <Link to="/profile">Back to Profile</Link>
-      <NicknameForm onUpload={handleNicknameSubmit} onError={setError} />
-      <AvatarUpload onUpload={handleAvatarUpload} onError={setError} />
-      <h2>Security Settings (2FA)</h2>
-      <Setup2FA onError={setError} />
-      {error && <p>{error}</p>}
+    <div className="profile" style={{ paddingTop: '50px' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>{getTitle()}</h1>
+      
+      <div style={{
+        border: '2px solid #fff',
+        padding: '20px',
+        borderRadius: '10px',
+        backgroundColor: 'transparent',
+        maxWidth: '600px',
+        margin: '0 auto',
+      }}>
+        {renderContent()}
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

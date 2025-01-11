@@ -1,6 +1,6 @@
 
 key_data = {
-    'up': 'w',
+    'up': 'z',
     'down': 's' 
 }
 

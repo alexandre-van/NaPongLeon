@@ -128,13 +128,13 @@ export default function Formations() {
             alignItems: 'center', // Alignement à gauche
             paddingLeft: '20px',  // Espacement entre l'image et les informations
         }}>
-            <h2>{user.username}</h2>
-            <h3>{user.nickname && (
-                <p style={{ fontSize: '20px', marginTop: '5px' }}>
+            <h1>{user.username}</h1>
+            <h2>{user.nickname && (
+                <p style={{ fontSize: '24px', marginTop: '6px' }}>
                     {user.nickname}
                 </p>
             )}
-            </h3>
+            </h2>
             <h3>
                 {error ? (
                     <p style={{ color: 'red' }}>{error}</p>
