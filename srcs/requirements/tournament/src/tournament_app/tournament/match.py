@@ -43,12 +43,15 @@ class Match:
 			if game_data:
 				self.set_status(game_data['status'])
 				score = game_data['scores']
+				teamsIngame = game_data['teams']
 				i = 0
 				teams = [self.team1, self.team2]
-				for teamname in score:
+				logger.debug(f"teams {teams}, score : {score}")
+				for teamname in teamsIngame:
 					self.score[teams[i].name] = score[teamname]
 					self.team_in_game[teams[i].name] = teamname
 					winner = game_data['winner']
+					logger.debug(f"team check = {teamname} / win team : {winner}")
 					if teamname == winner:
 						self.set_winner(teams[i], teams[(i + 1) % 2])
 					i += 1
@@ -56,6 +59,7 @@ class Match:
 			self.game = None
 
 	def set_winner(self, win_team, lose_team):
+		logger.debug(f"win team: {win_team.name}, lose team: {lose_team.name}")
 		self.winner = win_team
 		lose_team.set_status("defeated")
 

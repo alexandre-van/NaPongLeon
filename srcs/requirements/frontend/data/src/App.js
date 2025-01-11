@@ -7,6 +7,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext.js';
 import ConnectedLayout from './layouts/ConnectedLayout.js';
 import DefaultLayout from './layouts/DefaultLayout.js';
 import SpecialLayout from './layouts/SpecialLayout.js';
+import RedirectOnRefresh from './RedirectOnRefresh';
 
 import HomePage from './pages/HomePage.js';
 import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
@@ -24,15 +25,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../src/App.css'
 import Profile from './pages/Profile.js'
 
-import SoloMode from './pages/SoloMode.js';
 import ProtectedRoute from './components/ProtectedRoute.js';
 import WaitMatchmaking from './pages/WaitMatchmaking.js';
-import DuoMode from './pages/DuoMode.js';
-import ClassicTournament from './pages/ClassicTournament.js';
-import DuoTournament from './pages/DuoTournament.js';
-import CreateGameButton from './components/CreateGameButton.js';
+import GameModeSelector from './pages/GameModePage.js';
+import FriendsButton from './components/FriendsButton.js';
+import NotifButton from './components/NotifButton.js';
 import AIpong from './pages/AIpong.js';
 import InGame from './pages/InGame.js';
+import SocialPage from './pages/SocialPage.js';
 //import './assets/App.css';
 
 function AppContent() {
@@ -54,11 +54,16 @@ function AppContent() {
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
           <Route path="pong" element={<PongPage />} />
+          <Route path="pong/matchmaking" element={<WaitMatchmaking />} />
+          <Route path="pong/ai-pong" element={<AIpong />} />
+          <Route path="pong/ingame" element={<InGame />} />
+          <Route path="pong/game-mode" element={<GameModeSelector />} />
           <Route path="hagarrio" element={<HagarrioPage />} />
           <Route path="gamehistory" element={<GameHistory />} />
           <Route path="logout" element={<Navigate to="/logout-success" replace />} />
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
+          <Route path="social-network" element={<SocialPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
 
@@ -70,18 +75,11 @@ function AppContent() {
         </Route>
 
         <Route>
-          <Route path="solo-mode" element={<SoloMode />}/>
-          <Route path="duo-mode" element={<DuoMode />}/>
-          <Route path="classic-tournament" element={<ClassicTournament />}/>
-          <Route path="duo-tournament" element={<DuoTournament />}/>
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />}/>
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
-          <Route path="matchmaking" element={<WaitMatchmaking />} />
-          <Route path="ai-pong" element={<AIpong />} />
-          <Route path="ingame" element={<InGame />} />
 
         </Route>
       </Routes>
@@ -93,7 +91,11 @@ function App() {
     <Router>
       <UserProvider>
         <WebSocketProvider>
+          <RedirectOnRefresh />
           <AppContent />
+          <div className="background"></div>
+          <FriendsButton />
+          <NotifButton />
         </WebSocketProvider>
       </UserProvider>
     </Router>

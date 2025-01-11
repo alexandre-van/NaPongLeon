@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const RegisterForm = ({ onRegister }) => {
+const RegisterForm = ({ onRegister, errors }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -10,9 +10,9 @@ const RegisterForm = ({ onRegister }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -36,6 +36,7 @@ const RegisterForm = ({ onRegister }) => {
               onChange={handleChange}
               required
             />
+            {errors.username && <p className="error-message">{errors.username[0]}</p>}
           </div>
           <div>
             <label htmlFor="email">Email</label>
@@ -47,6 +48,7 @@ const RegisterForm = ({ onRegister }) => {
               onChange={handleChange}
               required
             />
+            {errors.email && <p className="error-message">{errors.email[0]}</p>}
           </div>
           <div>
             <label htmlFor="password">Password</label>
@@ -58,13 +60,14 @@ const RegisterForm = ({ onRegister }) => {
               onChange={handleChange}
               required
             />
+            {errors.password && <p className="error-message">{errors.password[0]}</p>}
           </div>
           <button type="submit">SIGN UP</button>
         </form>
-        <Link to="/login">Return to loginpage</Link>
+        <Link to="/login">Return to login page</Link>
       </div>
     </div>
   );
-}
+};
 
 export default RegisterForm;

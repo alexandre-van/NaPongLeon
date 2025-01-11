@@ -85,7 +85,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			await self.channel_layer.group_add(self.tournament_id, spectatorConsumer.channel_name)
 		await self.send_tournament_status(admin['id'], self.tournament_id, 'loading')
 		tournament_data = self.room['tournament_instance'].export_data()
-		#await self.send_export_teams(admin['id'], tournament_data['teams'])
+		teams = self.room['tournament_instance'].export_teams()
+		await self.send_export_teams(admin['id'], teams)
 		await self.send_export_data(self.tournament_id, tournament_data)
 
 	async def add_spectator(self):
@@ -119,12 +120,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		if self.admin_id == self.room['admin']['id']:
 			await self.tournament_end()
 			return
-		if self.username in self.room['players']:
-			admin = self.room['admin']
-			await self.send_tournament_status(admin['id'], self.tournament_id, 'aborted')
-			await self.tournament_end()
 		else:
-			if self.username in self.room['spectator']:
+			if self.username in self.room['players']:
+				await self.send_user_disconnection()
+			elif self.username in self.room['spectator']:
 				await self.send_user_disconnection()
 				tournament_manager.remove_user(self.username, self.tournament_id)
 
@@ -254,12 +253,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 						'state': tournament_state
 					}
 				)
-				if tournament_state['type'] == 'scored':
-					await self.send_update_score(tournament_state['team'], tournament_state['score'])
-				elif tournament_state['type'] == 'tournament_end':
+				for team in tournament_state['teams']:
+					await self.send_update_score(team['name'], team['level'])
+				if tournament_state['type'] == 'tournament_end':
 					tournament_manager.update_status('finished', self.tournament_id)
-					await self.send_tournament_finished(tournament_state['team'], tournament_state['score'])
-					await self.tournament_end()
+					await self.send_tournament_finished(tournament_state['team']['name'], tournament_state['score'])
+					#await self.tournament_end()
 					return
 				await asyncio.sleep(3)
 			else:
@@ -279,6 +278,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	async def send_tournament_finished(self, team, score):
 		admin = self.room['admin']
 		admin['consumer'].can_be_disconnected = False
+		logger.debug(f"{team}: {score}")
 		await self.channel_layer.group_send(admin['id'], {
 				'type': "send_state",
 				'state': {

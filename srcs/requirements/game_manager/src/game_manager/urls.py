@@ -5,7 +5,8 @@ urlpatterns = [
 	#matchmaking
 	re_path(r'^matchmaking/game_mode=(?P<game_mode>.*)/$', get_in_matchmaking, name='matchmaking'),
     #game_manager
-    path('get_history/', get_history, name='get_history'),
+    re_path(r'^get_history/username=(?P<username>.*)/$', get_history, name='get_history'),
+    re_path(r'^get_status/username=(?P<username>.*)/$', get_status, name='get_status'),
     path('create_game/', create_game, name='create_game'),
     #game_manager_api
     path('create_game_api/', create_game_api, name='create_game_api'),

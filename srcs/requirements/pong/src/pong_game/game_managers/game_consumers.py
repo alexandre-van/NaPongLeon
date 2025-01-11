@@ -153,7 +153,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if self.username in self.room['players']:
 			admin = self.room['admin']
 			logger.debug(f"{self.username} as been disconnected")
-			await self.send_game_status(admin['id'], self.game_id, 'aborted')
+			teams = self.room['game_instance'].players_in_side
+			score = self.room['game_instance'].score
+			opponent_team = None
+			for teamname in teams:
+				logger.debug(f'team check : {self.username} is in {teamname}({teams[teamname]}) ?')
+				if self.username not in list(player.username for player in teams[teamname]):
+					opponent_team = teamname
+					logger.debug(f'opponant team : {self.username} in {teamname}.')
+			
+			logger.debug(f"{opponent_team}: {score[opponent_team]}")
+			if self.room['status'] != 'aborted':
+				game_manager.update_status('aborted', self.game_id)
+				await self.send_game_finished(opponent_team, score[opponent_team], 'aborted')
 			await self.game_end()
 		else:
 			if self.username in self.room['spectator']:
@@ -217,8 +229,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def receive(self, text_data):
 		if not self.room:
-			return
-		if self.username not in self.room['players']:
 			return
 		try:
 			data = json.loads(text_data)
@@ -289,7 +299,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 					await self.send_update_score(game_state['team'], game_state['score'])
 				elif game_state['type'] == 'game_end':
 					game_manager.update_status('finished', self.game_id)
-					await self.send_game_finished(game_state['team'], game_state['score'])
+					await self.send_game_finished(game_state['team'], game_state['score'], 'finished')
 					await self.game_end()
 					return
 				await asyncio.sleep(0.025)
@@ -307,14 +317,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 				}
 			})
 		
-	async def send_game_finished(self, team, score):
+	async def send_game_finished(self, team, score, status):
 		admin = self.room['admin']
 		admin['consumer'].can_be_disconnected = False
 		await self.channel_layer.group_send(admin['id'], {
 				'type': "send_state",
 				'state': {
 					'type': "export_status",
-					'status': 'finished',
+					'status': status,
 					'team': team,
 					'score': score
 				}
@@ -323,7 +333,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 	# STATUS_LOOP
 	async def status_loop(self):
 		while self.room['status'] != 'aborted':
-			#logger.debug("status_loop")
 			await asyncio.sleep(1)
 		await self.game_end()
 

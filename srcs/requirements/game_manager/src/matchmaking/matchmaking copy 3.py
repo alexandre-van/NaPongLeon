@@ -18,28 +18,30 @@ class Matchmaking:
 		self._is_running_mutex = threading.Lock()
 		self._queue = {}
 		self._queue_mutex = threading.Lock()
+		self._futures = {}
+		self._futures_mutex = threading.Lock()
 		self.GAME_MODES = copy.deepcopy(settings.GAME_MODES)
 
 	async def remove_player_request(self, username):
 		with self._queue_mutex:
 			await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
-			await self._remove_player_request_in_queue(username)
+			future = await self._remove_player_request_in_queue(username)
+			if future:
+				future.set_result({'game_id': None})
 
-	async def add_player_request(self, username, game_mode, modifiers, number_of_players, consumer):
+	async def add_player_request(self, username, game_mode, modifiers, number_of_players):
+		future = asyncio.Future()
 		status = await Game_manager.game_manager_instance.get_player_status(username)
-		if status == 'in_queue':
+		if (status == 'in_queue'):
 			await self.remove_player_request(username)
-		elif status != 'inactive':
-			logger.debug(f"Player {username} cannot join queue, status is '{status}'")
-			await consumer.send_json({
-				'status': 'error',
-				'message': f"Cannot join queue with status '{status}'"
-			})
-			return
-
+		elif (status != 'inactive'):
+			logger.debug(f"Player {username} cannot join the matchmaking queue because their current status is '{status}'. Status must be 'inactive' to join.")
+			future.set_result({'game_id': None})
+			return future
 		await Game_manager.game_manager_instance.update_player_status(username, 'in_queue')
+		with self._futures_mutex:
+				self._futures[username] = future
 		queue_name = self.generate_queue_name(game_mode, modifiers, number_of_players)
-		
 		with self._queue_mutex:
 			if queue_name not in self._queue:
 				self._queue[queue_name] = []
@@ -48,14 +50,9 @@ class Matchmaking:
 				'game_mode': game_mode,
 				'modifiers': modifiers,
 				'number_of_players': number_of_players,
-				'consumer': consumer,
 				'time': Timer(),
 			})
-		
-		await consumer.send_json({
-			'status': 'queued',
-			'message': 'Joined matchmaking queue'
-		})
+		return future
 
 	def generate_queue_name(self, game_mode, modifiers_list, number_of_players):
 		queue_name = ""
@@ -100,45 +97,60 @@ class Matchmaking:
 		game = None
 		game_connected = False
 		players_connected = False
-
-		try:
-			game_connected = await Game_manager.game_manager_instance.connect_to_game(
-				game_id, admin_id, game_mode, modifiers, players)
-			if game_connected:
-				game = await Game_manager.game_manager_instance.create_new_game_instance(
-					game_id, game_mode, modifiers, players)
-				if game:
-					for player_request in queue_selected:
-						try:
-							await player_request['consumer'].send_json({
-								'status': 'game_found',
-								'game_id': game_id,
-								'service_name': self.GAME_MODES[game_mode]['service_name']
-							})
-							players_connected = True
-						except Exception as e:
-							logger.error(f"Error notifying player {player_request['username']}: {str(e)}")
-							players_connected = False
-							break
-		except Exception as e:
-			logger.error(f"Error in notify: {str(e)}")
-			players_connected = False
+		# new game
+		if await self.check_futures(queue_selected):
+			game_connected = await Game_manager.game_manager_instance.connect_to_game(game_id, admin_id, game_mode, modifiers, players)
+		if game_connected and await self.check_futures(queue_selected):
+			game = await Game_manager.game_manager_instance.create_new_game_instance(game_id, game_mode, modifiers, players)
+		if game and await self.check_futures(queue_selected):
+			players_connected = await self.send_result(game_id, queue_selected, game_mode)
 		await self.remove_disconnected_client(queue_selected, players_connected)
-		if not players_connected:
-			if game_connected:
-				await Game_manager.game_manager_instance.disconnect_to_game(game_id, game_mode)
-				logger.debug(f'Game service {game_id} aborted')
-			if game:
-				await Game_manager.game_manager_instance.abord_game_instance(game)
-				logger.debug(f'Game {game_id} aborted')
+		if players_connected:
+			return
+		# aborting
+		if game_connected:
+			await Game_manager.game_manager_instance.disconnect_to_game(game_id, game_mode)
+			logger.debug(f'Game service {game_id} aborted')
+		if game:
+			await Game_manager.game_manager_instance.abord_game_instance(game)
+			logger.debug(f'Game {game_id} aborted')
+
+	async def check_futures(self, queue_selected):
+		for player_request in queue_selected:
+			username = player_request['username']
+			with self._futures_mutex:
+				if username in self._futures:
+					future = self._futures[username]
+					if not future.done() and not future.cancelled():
+						continue
+			return None
+		return True
+
+	async def send_result(self, result, queue_selected, game_mode):
+		for player_request in queue_selected:
+			username = player_request['username']
+			with self._futures_mutex:
+				if username in self._futures:
+					future = self._futures[username]
+					if not future.done() and not future.cancelled():
+						future.set_result({
+							'game_id': result,
+							'service_name': self.GAME_MODES[game_mode]['service_name']
+						})
+						continue
+			logger.debug(f"return none at {username}")
+			return None
+		return True
 
 	async def remove_disconnected_client(self, queue, players_connected):
 		for player_request in queue:
 			username = player_request['username']
 			if not players_connected:
-				consumer = player_request['consumer']
-				if not consumer.closed:
-					continue
+				with self._futures_mutex:
+					if username in self._futures:
+						future = self._futures[username]
+						if not future.done() and not future.cancelled():
+							continue
 				await Game_manager.game_manager_instance.update_player_status(username, 'inactive')
 			await self._remove_player_request_in_queue(username)
 			logger.debug(f"{username} is removed")
@@ -185,10 +197,16 @@ class Matchmaking:
 		player_request = await self._get_player_request(username)
 		if player_request is None:
 			return None
-		queuename = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'], player_request['number_of_players'])
-		queue = self._queue.get(queuename)
-		if queue:
-			queue.remove(player_request)
+		with self._futures_mutex:
+			queuename = self.generate_queue_name(player_request['game_mode'], player_request['modifiers'], player_request['number_of_players'])
+			queue = self._queue.get(queuename)
+			if queue:
+				queue.remove(player_request)
+			if self._futures[username]:
+				future = self._futures.get(username)
+				if future:
+					del self._futures[username]
+				return future
 
 # Initialisation singleton
 if Matchmaking.matchmaking_instance is None:

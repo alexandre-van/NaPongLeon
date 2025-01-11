@@ -57,6 +57,17 @@ class Player(models.Model):
 		else:
 			raise ValueError(f"Invalid status: {new_status}")
 	
+	def update_nickname(self, nickname):
+		try:
+			self.nickname = nickname
+			self.save()
+		except IntegrityError as e:
+			logger.error(f"Integrity error while update nickname of player '{self.username}': {e}")
+			return None
+		except DatabaseError as e:
+			logger.error(f"Database error while update nickname of player '{self.username}': {e}")
+			return None
+	
 	def add_game_to_history(self, game_id):
 		game = GameInstance.get_game(game_id)
 		if game:

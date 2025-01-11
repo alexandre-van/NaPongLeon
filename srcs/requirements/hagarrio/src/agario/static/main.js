@@ -35,17 +35,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 		updateButtons();
 		const success = await startMatchmaking();
         if (success) {
-			return;
+			console.log('Successfully entered matchmaking queue.');
         } else {
             isInMatchmaking = false;
 			updateButtons();
         }
-	})
+	});
+
     leaveBtn.addEventListener('click', async () => {
-		const success = await stopMatchmaking();
+		isInMatchmaking = false;
+		updateButtons();
+        const success = await stopMatchmaking();
         if (success) {
-			isInMatchmaking = false;
-            updateButtons();
+            console.log('Left the matchmaking queue and disconnected.');
+        } else {
+            console.log('Failed to leave the matchmaking queue.');
         }
     });
 

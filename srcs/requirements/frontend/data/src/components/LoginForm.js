@@ -3,23 +3,15 @@ import { Link } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap'; // Importation de React-Bootstrap
 import { useUser } from '../contexts/UserContext.js';
 
-const LoginForm = ({ onLogin }) => {
-  /*const [credentials, setCredentials] = useState({
-    username: '',
-    password: '',
-    totpToken: '',
-  });*/
+const LoginForm = ({ onLogin, error }) => { // Ajout de la prop `error`
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-  })
-  const [showModal, setShowModal] = useState(false);
-  const [step, setStep] = useState('credentials'); // 'credentials' or 'totp'
-  const { login42 } = useUser();
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -28,24 +20,14 @@ const LoginForm = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onLogin(formData);
-    /*try {
-      const has_2fa = onLogin(credentials);
-      if (has_2fa) {
-        setStep('totp');
-      } else {
-        console.log('Login successful');
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-    }*/
   };
 
   return (
     <div>
       <h1 className="title">LOGIN</h1>
       <div className="BorderBox">
-        <Form onSubmit={handleSubmit}> {/* Utilisation du composant Form de React-Bootstrap */}
-          <Form.Group controlId="formBasicUsername"> {/* Form.Group est utilisé pour un contrôle de champ */}
+        <Form onSubmit={handleSubmit}>
+          <Form.Group controlId="formBasicUsername">
             <Form.Label>Username</Form.Label>
             <Form.Control
               type="text"
@@ -69,20 +51,25 @@ const LoginForm = ({ onLogin }) => {
             />
           </Form.Group>
 
-          <Button className="options" variant="primary" type="submit">LOG IN</Button> {/* Utilisation du bouton de React-Bootstrap */}
-          
-          {/* Autre bouton pour "Log In with 42", variant "secondary" pour l'option secondaire */}
-          <Button className="options" variant="secondary" onClick={login42}>LOG IN WITH 42</Button>
+          {/* Affichage du message d'erreur en rouge sous le formulaire */}
+          {error && <p className="error-message">{error}</p>}
+
+          <Button className="options" variant="primary" type="submit">
+            LOG IN
+          </Button>
+          <Button className="options" variant="secondary" onClick={useUser().login42}>
+            LOG IN WITH 42
+          </Button>
 
           <div className="mt-3">
             <Link to="/register">Don't have an account? Register</Link>
-            <br/>
-            <Link to='/forgot-password'>Forgot Password ?</Link>
+            <br />
+            <Link to="/forgot-password">Forgot Password?</Link>
           </div>
         </Form>
       </div>
     </div>
   );
-}
+};
 
 export default LoginForm;

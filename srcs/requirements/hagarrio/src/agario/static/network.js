@@ -6,6 +6,7 @@ import { updatePowerUps, displayPowerUpCollected, createNewPowerUp, usePowerUp }
 import { updateHotbar } from './hotbar.js';
 
 let socket;
+let gameManagerSocket;
 
 document.addEventListener('keydown', (event) => {
 	const keyToSlot = {
@@ -147,49 +148,96 @@ export function sendPlayerMove(playerId, key, isKeyDown) {
 	}
 }
 
+// Fonction pour créer la connexion WebSocket
+function connectGameManagerSocket() {
+    return new Promise((resolve, reject) => {
+        const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname;
+        const port = window.location.port;
+        const wsUrl = `${wsProtocol}//${host}${port ? `:${port}` : ''}/ws/matchmaking/`;
+        console.log('Attempting Game Manager WebSocket connection to:', wsUrl);
+        
+        try {
+            gameManagerSocket = new WebSocket(wsUrl);
+            console.log('Game Manager WebSocket instance created');
 
-export async function startMatchmaking() {
-	if (!socket || socket.readyState !== WebSocket.OPEN) {
-		console.error('Socket not ready');
-		return false;
-	}
-	try {
-		const response = await fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=HAGARRIO`);
-		if (!response.ok) {
-			console.error('Network response was not ok');
-			return false;
-		}
-		const data = await response.json();
-		const gameId = data.data.game_id;
-		if (!gameId) {
-			return false;
-		}
-		socket.send(JSON.stringify({
-			type: 'start_game',
-			game_id: gameId
-		}));
-		return true;
-	} catch (error) {
-		console.error('An error occurred:', error);
-		return false;
-	}
+            gameManagerSocket.onopen = function() {
+                console.log('Game Manager WebSocket connection established successfully');
+                resolve(gameManagerSocket);  // La connexion est prête, on résout la promesse
+            };
+
+            gameManagerSocket.onerror = function(error) {
+                console.error('Game Manager WebSocket error:', error);
+                reject(error);  // Si erreur, on rejette la promesse
+            };
+
+            gameManagerSocket.onclose = function(event) {
+                console.log('Game Manager WebSocket connection closed:', event.code, event.reason);
+            };
+
+            gameManagerSocket.onmessage = handleMatchmakingMessages;
+
+        } catch (error) {
+            console.error('Error creating Game Manager WebSocket:', error);
+            reject(error);  // Si erreur dans la création du WebSocket, on rejette la promesse
+        }
+    });
 }
 
+// Fonction pour gérer les messages du matchmaking
+function handleMatchmakingMessages(e) {
+    const data = JSON.parse(e.data);
+    switch (data.status) {
+        case 'queued':
+            console.log('Matchmaking started:', data);
+            break;
+        case 'matchmaking_cancelled':
+            console.log('Matchmaking cancelled:', data);
+            break;
+        case 'game_found':
+            console.log('Game found:', data);
+            joinGame(data.game_id);
+            break;
+        default:
+            console.log('Unknown matchmaking message type:', data.status);
+    }
+}
+
+// Fonction pour rejoindre le matchmaking
+export async function startMatchmaking() {
+    try {
+        if (!gameManagerSocket || gameManagerSocket.readyState !== WebSocket.OPEN) {
+            // Si la connexion WebSocket n'est pas encore ouverte, on attend
+            await connectGameManagerSocket();
+        }
+
+        // Une fois la connexion établie, on envoie la requête
+        gameManagerSocket.send(JSON.stringify({
+            action: 'join_matchmaking',
+            game_mode: 'HAGARRIO'
+        }));
+
+        return true;
+    } catch (error) {
+        console.error('Error starting matchmaking:', error);
+        return false;
+    }
+}
+
+// Fonction pour arrêter le matchmaking
 export async function stopMatchmaking() {
-	if (!socket || socket.readyState !== WebSocket.OPEN) {
-		console.error('Socket not ready');
-		return false; // Retourne false si le socket n'est pas prêt
-	}
-	try {
-		const response = await fetch(`${location.origin}/api/game_manager/matchmaking/game_mode=`);
-		if (!response.ok) {
-			return false; // Retourne false si la réponse réseau est invalide
-		}
-		return true; // Retourne true si tout s'est bien passé
-	} catch (error) {
-		console.error('An error occurred:', error);
-		return false; // Retourne false en cas d'erreur
-	}
+    if (!gameManagerSocket || gameManagerSocket.readyState !== WebSocket.OPEN) {
+        console.error('Game Manager WebSocket not ready');
+        return false;
+    }
+    try {
+        // On ferme la connexion WebSocket sans envoyer de message pour annuler le matchmaking
+        gameManagerSocket.close();
+        return true;
+    } catch (error) {
+        console.error('Error while closing WebSocket connection:', error);
+        return false;
+    }
 }
 
 export function joinGame(gameId) {
@@ -199,8 +247,8 @@ export function joinGame(gameId) {
 	}
 	
 	socket.send(JSON.stringify({
-		type: 'join_game',
-		gameId: gameId
+		type: 'start_game',
+		game_id: gameId
 	}));
 }
 

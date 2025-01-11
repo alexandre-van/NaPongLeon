@@ -1,34 +1,35 @@
 import { useState } from 'react';
-import { Link , useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
 import { useUser } from '../contexts/UserContext.js';
 
 export function RegisterPage() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [errors, setErrors] = useState({});
   const { register } = useUser();
   const navigate = useNavigate();
 
-
   const handleRegister = async (userData) => {
     setLoading(true);
-    setError(false);
+    setErrors({});
     try {
       await register(userData);
       navigate('/login');
     } catch (error) {
-      setError(true);
-      console.log('Error during registering:', error.response);
+      if (error.response && error.response.data) {
+        setErrors(error.response.data); // Capture les erreurs spécifiques
+      } else {
+        console.log('Unexpected error:', error);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className='login-page'>
+    <div className="login-page">
       {loading && <p>Registering...</p>}
-      {error && <p>An user with this name already exists</p>}
-      <RegisterForm onRegister={handleRegister} />
+      <RegisterForm onRegister={handleRegister} errors={errors} />
     </div>
   );
 }
@@ -41,4 +42,3 @@ export function RegisterSuccessPage() {
     </div>
   );
 }
-

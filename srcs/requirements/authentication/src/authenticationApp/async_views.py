@@ -1,6 +1,7 @@
 from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseJDexception
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from .services.FriendRequestService import FriendRequestService
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
@@ -221,8 +222,6 @@ async def FriendsRequestView(request):
             return HttpResponseBadRequestJD('Cannot be yourself')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.create_and_send_friend_request(user, receiver)
             if result:
                 return HttpResponseJD('Friend request sent', 201)
@@ -238,8 +237,6 @@ async def FriendsRequestView(request):
             return HttpResponseBadRequestJD('Notification id needed')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.accept_friend_request(user, notification_id)
             if result:
                 return HttpResponseJD('Friend request accepted', 200)
@@ -255,8 +252,6 @@ async def FriendsRequestView(request):
              return HttpResponseBadRequestJD('Notification id needed')
 
         try:
-            from .services.FriendRequestService import FriendRequestService
-
             result = await FriendRequestService.reject_friend_request(user, notification_id)
             if result:
                 return HttpResponseJD('Friend request rejected', 200)
@@ -272,15 +267,12 @@ async def FriendsRequestView(request):
 
 async def FriendsView(request):
     user = await sync_to_async(lambda: request.user)()
-
+    if not user or not user.is_authenticated:
+        return HttpResponseJD('Authentication required', 401)
     if request.method == 'GET':
         # Get all friends
         friends = await user.aget_friends()
-
-        if friends:
-            return HttpResponseJD('Friends', 200, friends)
-        return HttpResponseJD('Friends not found', 404)
-
+        return HttpResponseJD('Friends', 200, friends)
     elif request.method == 'DELETE':
         # Delete a friend from the list
         from .models import CustomUser
@@ -298,6 +290,7 @@ async def FriendsView(request):
 
             result = await user.remove_friend_from_list(friend)
             if result:
+                await FriendRequestService.delete_self_from_ex_friend_list(user, friend_id)
                 return HttpResponseJD('Removed friend successfully', 200)
             return HttpResponseJD('Friend to remove not found', 404)
 

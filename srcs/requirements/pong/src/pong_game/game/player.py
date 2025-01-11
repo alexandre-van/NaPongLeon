@@ -3,9 +3,10 @@ from .timer import Timer
 from .getdata import get_data
 
 class Player:
-	def __init__(self, player_consumer, side, game_mode, modifiers):
+	def __init__(self, username, player_consumer, side, game_mode, modifiers):
 		self.player_consumer = player_consumer
 		self.side = side
+		self.username = username
 		self.padel = Padel(self, game_mode, modifiers)
 		self.input_data = get_data(modifiers, 'input_data')
 

@@ -24,8 +24,8 @@ class Game_manager:
 		self._current_games = {}
 		self._current_games_mutex = threading.Lock()
 		self.status_timer = {
-			'waiting': 3600,
-			'loading' : 3600,
+			'waiting': 15,
+			'loading' : 15,
 			'in_progress': 3600
 		}
 
@@ -64,11 +64,18 @@ class Game_manager:
 		if not history:
 			return {}
 		game_entries = await self.extract_game_ids(history)
-		logger.debug(f"Extracted game entries: {game_entries}")
 		history_dict = {}
 		for game_date, game_id in game_entries:
 			game_data = await self.get_game_data(game_id)
 			if game_data:
+				game_data['self_team'] = ''
+				teams = game_data.get('teams')
+				if teams:
+					for team_name in teams:
+						for playername in teams[team_name]:
+							logger.debug(f"{playername} == {username}")
+							if playername == username:
+								game_data['self_team'] = team_name
 				date_key = game_date.strftime("%Y-%m-%d %H:%M:%S")
 				history_dict[date_key] = game_data
 		return history_dict
@@ -157,7 +164,7 @@ class Game_manager:
 	
 	async def game_notify(self, game_id, admin_id, game_mode, modifiers, players, teams_list, special_id=None):
 		game_service_url = settings.GAME_MODES.get(game_mode).get('service_url_new_game')
-		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players}
+		send = {'gameId': game_id, 'adminId': admin_id, 'gameMode': game_mode, 'playersList': players, 'teamsList': teams_list, 'special_id': special_id}
 		logger.debug(f"send to {game_service_url}: {send}")
 		try:
 			async with httpx.AsyncClient() as client:
@@ -286,7 +293,32 @@ class Game_manager:
 			if self._task:
 				self._task.cancel()
 
+	async def get_user_status(self, username):
+		status = await self.get_player_status(username)
+		if status:
+			ret = {'status': status}
+			if status in ['pending', 'waiting', 'loading', 'in_game']:
+				player_history = await self.fetch_history(await self.fetch_player(username))
+				game_id = await self.get_last_game_id(player_history)
+				if game_id:
+					game_data = await self.get_game_data(game_id)
+					ret['game_mode'] = game_data['game_mode']
+					ret['game_id'] = game_data['game_id']
+					game_mode_data = settings.GAME_MODES.get(ret['game_mode'])
+					ret['game_service'] = game_mode_data['service_name']
+			return ret
+		else:
+			return None
+	
+
 	# db
+
+	@sync_to_async
+	def get_last_game_id(self, player_history):
+		if player_history:
+			latest_game = player_history[-1]
+			return latest_game.game.game_id
+		return None
 
 	async def create_new_game_instance(self, game_id, game_mode, modifiers, players):
 		game = await self.create_game_instance(game_id, game_mode, modifiers, players)
@@ -299,6 +331,10 @@ class Game_manager:
 		
 	async def create_new_player_instance(self, username):
 		await self.create_player_instance(username)
+
+	@sync_to_async
+	def get_game_instance(self, game_id):
+		return GameInstance.get_game(game_id)
 
 	@sync_to_async
 	def create_game_instance(self, game_id, game_mode, modifiers, players):
@@ -364,6 +400,8 @@ class Game_manager:
 			for player_entry in game_players:
 				if player_entry.team_name not in teams_distribution:
 					teams_distribution[player_entry.team_name] = []
+				username = player_entry.player.username
+				#nickname = player_entry.player.nickname
 				teams_distribution[player_entry.team_name].append(player_entry.player.username)
 			game_scores = GameScore.objects.filter(game=game_instance)
 			teams_scores = {score.team_name: score.score for score in game_scores}
@@ -390,10 +428,15 @@ class Game_manager:
 
 	def parse_modifier(self, modifiers, game_mode):
 		modifiers_list = modifiers.split(",") if modifiers else []
+		modifiers_list = self.check_modifier(modifiers_list, game_mode)
+		return modifiers_list
+
+	def check_modifier(self, modifiers_list, game_mode):
 		valid_modifiers = settings.GAME_MODES.get(game_mode).get("modifier_list")
-		if not all(mod in valid_modifiers for mod in modifiers_list):
-			return None
-		modifiers_list.sort()
+		if modifiers_list:
+			if not all(mod in valid_modifiers for mod in modifiers_list):
+				return None
+			modifiers_list.sort()
 		return modifiers_list
 
 def create_game_manager_instance():

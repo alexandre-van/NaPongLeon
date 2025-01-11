@@ -1,5 +1,6 @@
 from .match import Match
 from ..utils.logger import logger
+from .status import match_status
 
 class Branch:
 	def __init__(self, level_max, level, prev_branch, id, id_set):
@@ -65,6 +66,10 @@ class Branch:
 	def ascend_team(self, team):
 		if self.prev_branch.is_free():
 			self.prev_branch.bench = team
+			if self.prev_branch.level > 0:
+				for branch in self.prev_branch.next_branches:
+					if branch and branch.match and match_status['aborted'] == branch.match.status and not branch.match.winner:
+						self.prev_branch.ascend_team(team)
 		elif self.prev_branch.id != 0 and self.prev_branch.match is None \
 			and self.prev_branch.bench != team:
 			self.prev_branch.init_match(
