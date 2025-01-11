@@ -75,29 +75,22 @@ const FriendsButton = () => {
       case "in_queue":
       case "loading_game":
       case "in_game": return "blue";
-      case "waiting":
+      case "waiting": 
+      case "pending": return "orange";
       default: return "black";
     }
   };
 
   const getStatusTxt = (status) => {
     switch (status) {
-        case "inactive":
-            return "Online";
-        case "spectate":
-            return "Spectate a game";
-        case "pending":
-            return "Expected in game";
-        case "in_queue":
-            return "In queue";
+        case "inactive": return "Online";
+        case "spectate": return "Spectate";
+        case "pending": return "Expected";
+        case "in_queue": return "In queue";
         case "in_game":
-            return "In game";
-        case "waiting":
-            return "Waiting";
-        case "loading_game":
-            return "In game";
-        default:
-            return "";
+        case "loading_game": return "In game";
+        case "waiting": return "Waiting";
+        default: return "";
     }
   };
 
