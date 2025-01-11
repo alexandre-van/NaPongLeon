@@ -45,6 +45,36 @@ function launch_game(teams, nickname, game_private_id){
 	}
 }
 
+function spectate_game(game) {
+    const { id, service_name, spectator_id } = game;
+
+    // Construire l'URL pour spectater le jeu
+    const gameUrl = `${location.origin}/api/${service_name}/?gameId=${id}&specialId=${spectator_id}`;
+    console.log(gameUrl);
+
+    // Créer une iframe pour afficher le jeu
+    const iframe = document.createElement('iframe');
+    iframe.src = gameUrl;
+    iframe.style.position = "fixed"; // Fixe pour qu'il reste à la même position
+    iframe.style.top = "0";          // Aligner en haut de la page
+    iframe.style.left = "0";         // Aligner à gauche de la page
+    iframe.style.width = "100vw";    // Largeur : 100% de la fenêtre
+    iframe.style.height = "100vh";   // Hauteur : 100% de la fenêtre
+    iframe.style.border = "none";    // Supprimer les bordures
+    iframe.style.zIndex = "9999";    // Mettre l'iframe au premier plan
+    iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
+
+    // Supprimer l'ancienne iframe s'il en existe une
+    const existingIframe = document.querySelector('#gameInTournamentFrame');
+    if (existingIframe) {
+        existingIframe.remove();
+    }
+
+    iframe.id = "gameInTournamentFrame";
+    document.body.appendChild(iframe);
+}
+
+
 function close_game(){
 	const iframe = document.querySelector('#gameInTournamentFrame');
 	if (iframe) {
@@ -52,4 +82,4 @@ function close_game(){
 	}
 }
 
-export { launch_game, close_game }
+export { launch_game, close_game, spectate_game }

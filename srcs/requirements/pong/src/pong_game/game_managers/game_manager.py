@@ -46,6 +46,8 @@ class game_manager:
 			private_id = ids.get('private')
 			if private_id == special_id:
 				public_id = ids.get('public')
+				if public_id == 'randomize':
+					public_id = str(uuid.uuid4())
 				if public_id:
 					return public_id
 				else:

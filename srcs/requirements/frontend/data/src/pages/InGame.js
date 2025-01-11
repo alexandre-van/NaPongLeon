@@ -26,9 +26,9 @@ export default function InGame() {
             iframe.src = `${gameService}/?gameId=${gameId}`;
             iframe.style.position = "fixed";
             iframe.style.top = "56px";
-            iframe.style.left = "-2.5%";
-            iframe.style.width = "105%";
-            iframe.style.height = "100%";
+            iframe.style.left = "-1%";
+            iframe.style.width = "102%";
+            iframe.style.height = "93%";
             iframe.style.border = "none";
             iframe.style.zIndex = "999";
             iframe.scrolling = "no";

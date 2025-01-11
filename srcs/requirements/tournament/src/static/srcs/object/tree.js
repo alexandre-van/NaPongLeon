@@ -316,6 +316,7 @@ function manageSpectateButton(box, branch, playerTeamMultiplier) {
 			box.spectateButton = new THREE.Mesh(buttonGeometry, materials);
 			box.spectateButton.position.set(box.position.x, box.position.y - boxHeight / 2.25, zOffset);
 			box.spectateButton.userData.isSpectateButton = true;
+			box.spectateButton.userData.game = branch.match.game;
 			scene = get_scene()
     		if (scene)
 				scene.add(box.spectateButton);

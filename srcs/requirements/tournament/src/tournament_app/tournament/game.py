@@ -13,11 +13,13 @@ class Game:
 		self.i_limiter = 0
 		# Dictionnaire pour mapper usernames et leurs IDs (public et privé)
 		self.username_to_id = {}
+		self.spectator_connection_id = None
 
 	def export(self):
 		return {
 			'id': self.id,
-			'service_name': self.service_name
+			'service_name': self.service_name,
+			'spectator_id': self.spectator_connection_id
 		}
 
 	def _generate_ids(self, team1, team2):
@@ -62,6 +64,12 @@ class Game:
 		special_id = []
 		for username in self.username_to_id:
 			special_id.append(self.username_to_id[username])
+		self.spectator_connection_id = str(uuid.uuid4())
+		special_id.append({
+			'private': self.spectator_connection_id,
+			'public': 'randomize',
+			'nickname': 'spectator'
+		})
 		return special_id
 
 	async def create_game(self):

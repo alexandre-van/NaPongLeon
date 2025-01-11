@@ -1,6 +1,7 @@
 import * as THREE from '../../js/three.module.js';
 import { camera } from '../renderer.js';
 import { get_scene, scene } from '../scene.js';
+import { spectate_game } from '../launch_game.js'
 import { showParchment } from './parchment.js'
 import { set_current_branch_inspect } from './tree.js'
 
@@ -97,8 +98,10 @@ function getInteractiveObjects() {
 // Gérer le clic sur un objet
 function handleClickedObject(clickedObject) {
     if (clickedObject.userData.isSpectateButton) {
-        console.log(`Spectating match ${clickedObject.userData.branch.match.id}`);
-        // Logique pour spectateur
+        console.log(`Spectating match ${clickedObject.userData.game}`);
+        const game = clickedObject.userData.game;
+        if (game)
+            spectate_game(game)
     } else {
         // Si l'objet cliqué est une boîte avec des données de branche
         set_current_branch_inspect(clickedObject.userData.branch);
