@@ -17,6 +17,12 @@ export function initUI() {
 }
 
 export function updateUI() {
+    // Vérifier si on est toujours dans le jeu
+    const gameContainer = document.getElementById('gameContainer');
+    if (!gameContainer || gameContainer.style.display === 'none'){
+        console.log('gameContainer not found');
+        return;
+    }
     updateScoreboard();
     updateMinimap();
     updateSpeedometer();
@@ -24,6 +30,11 @@ export function updateUI() {
 
 export function updateScoreboard() {
     const scoreboard = document.getElementById('scoreboard');
+    if (!scoreboard) {
+        console.log('scoreboard not found');
+        return; // Sortir si l'élément n'existe pas
+    }
+    
     const players = getPlayers();
     const myPlayerId = getMyPlayerId();
     const sortedPlayers = Object.values(players).sort((a, b) => b.score - a.score);

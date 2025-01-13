@@ -370,6 +370,59 @@
         .game-over-message {
             color: #FFB6C1;
         }
+
+        /* Ajouter ces styles pour l'écran de fin de partie */
+        .game-end-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-end-content {
+            background: rgba(20, 20, 20, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-end-title {
+            font-size: 2.5em;
+            margin-bottom: 1rem;
+            font-family: 'Righteous', cursive;
+        }
+
+        .game-end-message {
+            font-size: 1.2em;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .menu-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .menu-button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>

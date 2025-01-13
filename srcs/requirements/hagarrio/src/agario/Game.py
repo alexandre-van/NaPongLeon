@@ -136,7 +136,7 @@ class Game:
 	def add_player(self, player_id, player_name):
 		if player_id not in self.expected_players:
 			return False
-		logger.debug(f"{player_id} : {player_name}")
+		# logger.debug(f"ADDING A PLAYER :{player_id} : {player_name}")
 		self.players[player_id] = {
 			'id': player_id,
 			'name': player_name,
@@ -215,11 +215,8 @@ class Game:
 		logger.debug("game loop starting...")
 		"""Boucle de jeu principale"""
 		try:
-			logger.debug("get_last_update...")
 			last_update = asyncio.get_event_loop().time()
-			logger.debug("broadcast_callback...")
 			await broadcast_callback(self.game_id, self.update_state(food_changes=True))
-			logger.debug("game loop started !")
 			while self.status != "finished" and self.status != 'aborted':
 				while self.status == 'waiting':
 					await asyncio.sleep(1/60)
@@ -384,7 +381,6 @@ class Game:
 		player = self.players.get(player_id)
 		if not player:
 			return False
-		
 		try:
 			# Vérifier que l'index est valide et que le slot n'est pas vide
 			if 0 <= slot_index < len(player['inventory']) and player['inventory'][slot_index] is not None:
@@ -394,7 +390,12 @@ class Game:
 				
 				# Appliquer l'effet du power-up
 				self.apply_power_up(player_id, power_up)
-				return True
+				return {
+					'type': 'power_up_used',
+					'player_id': player_id,
+					'power_up': power_up,
+					'players': self.players,
+				}
 		except Exception as e:
 			logger.error(f"Error using power-up: {e}")
 		return False
@@ -421,19 +422,28 @@ class Game:
 		"""Nettoie les ressources de la partie"""
 		logger.info(f"Cleaning up game {self.game_id}")
 		
+		# Arrêter la boucle de jeu
 		if self.game_loop_task:
 			self.game_loop_task.cancel()
 			try:
 				await self.game_loop_task
 			except asyncio.CancelledError:
 				logger.debug(f"Game loop for game {self.game_id} cancelled successfully")
-				pass
 			except Exception as e:
 				logger.error(f"Error while cancelling game loop for game {self.game_id}: {e}")
+		
+		# Réinitialiser tous les états
 		if self.status != "finished":
 			self.status = "aborted"
+		
 		self.players.clear()
 		self.food.clear()
+		self.power_ups.clear()
 		self.player_inputs.clear()
 		self.player_movements.clear()
+		self.power_up_spawn_timer = 0
+		
+		# # Réinitialiser la nourriture
+		# self.initialize_food()
+		
 		logger.info(f"Game {self.game_id} cleaned up successfully")

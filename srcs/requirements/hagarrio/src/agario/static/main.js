@@ -76,11 +76,12 @@ export function startGameLoop(initialGameState) {
         updateUI();
         render(scene, camera, renderer);
     }
-    // window.addEventListener('beforeunload', () => {
-    //     cleanup();
-    // });
     const throttledGameLoop = throttle(gameLoop, 8);// 120 FPS
     throttledGameLoop();
+}
+
+export function isGameRunning() {
+    return gameLoopId !== null;
 }
 
 export function stopGameLoop() {

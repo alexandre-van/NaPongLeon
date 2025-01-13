@@ -1,5 +1,4 @@
 import { getScene } from './scene.js';
-import { getRandomColor } from './utils.js';
 import * as THREE from './three/three.module.js';
 
 let players = {};

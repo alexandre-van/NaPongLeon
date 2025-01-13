@@ -50,7 +50,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect(self, close_code):
 		logger.info(f"Player {self.player_id} disconnected with code {close_code}")
-
 		if self.player_id in GameConsumer.players:
 			del GameConsumer.players[self.player_id]
 			logger.debug(f"Removed player {self.player_id} from players list")
@@ -96,6 +95,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 		data = json.loads(text_data)
 
 		if data['type'] == 'start_game':
+			# Si le joueur était déjà dans une partie, nettoyons-la d'abord
+			if self.current_game_id and self.current_game_id in GameConsumer.active_games:
+				old_game = GameConsumer.active_games[self.current_game_id]
+				if old_game.status == "finished":
+					await old_game.cleanup()
+					if len(old_game.players) == 0:
+						del GameConsumer.active_games[self.current_game_id]
+			
 			self.current_game_id = data['game_id']
 			# Recuperer la partie demander
 			game = GameConsumer.active_games.get(self.current_game_id)
@@ -171,7 +178,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
-		logger.debug("broadcast_game_state")
 		"""Diffuse les mises à jour du jeu aux joueurs"""
 		if game_id not in GameConsumer.active_games:
 			logger.error(f"Game {game_id} not found in active games.")
@@ -218,33 +224,39 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if not loser:
 				logger.error("Missing 'loser' in state update.")
 				return
-			# Notifier le gagnant
+			logger.info(f"state_update dans game_finish: {state_update}")
+			
+			# Récupérer les IDs des joueurs
 			winner = state_update.get('winner')
-			if winner in GameConsumer.players:
-				await GameConsumer.players[winner].send(text_data=json.dumps({
-					'type': 'game_finish',
+			winner_id = winner.get('id')
+			loser_id = loser.get('id')
+			
+			# Notifier le gagnant
+			if winner_id in GameConsumer.players:
+				await GameConsumer.players[winner_id].send(text_data=json.dumps({
+					'type': 'victory',
 					'game_id': game_id,
-					'players': game.players,
+					'players': state_update.get('players'),
 					'winner': winner,
 					'loser': loser,
 					'message_winner': state_update.get('message_winner'),
 					'message_loser': state_update.get('message_loser')
 				}))
+				
 			# Gérer le joueur mangé (loser)
-			if loser in GameConsumer.players:
-				# Retourner le joueur dans la salle d'attente
-				await GameConsumer.players[loser].send(text_data=json.dumps({
-					'type': 'game_finish',
+			if loser_id in GameConsumer.players:
+				await GameConsumer.players[loser_id].send(text_data=json.dumps({
+					'type': 'game_over',
 					'game_id': game_id,
-					'players': game.players,
+					'players': state_update.get('players'),
 					'winner': winner,
 					'loser': loser,
 					'message_winner': state_update.get('message_winner'),
 					'message_loser': state_update.get('message_loser')
 				}))
-				await GameConsumer.players[loser].send_games_info()
+				await GameConsumer.players[loser_id].send_games_info()
 			else:
-				logger.warning(f"Eaten player {loser} not found in active players.")
+				logger.warning(f"Eaten player {loser_id} not found in active players.")
 			return
 
 		# Envoie la mise à jour à tous les joueurs

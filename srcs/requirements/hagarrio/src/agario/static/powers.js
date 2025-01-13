@@ -146,12 +146,6 @@ export function getPowerUps() {
 
 export function usePowerUp(socket, slotIndex) {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        // Envoyer d'abord la requête au serveur
-        socket.send(JSON.stringify({
-            type: 'use_power_up',
-            slot: slotIndex
-        }));
-        
         // Mettre à jour l'affichage uniquement pour le slot utilisé
         const slots = document.querySelectorAll('.hotbar-slot');
         const slotToUpdate = slots[slotIndex];
@@ -162,6 +156,11 @@ export function usePowerUp(socket, slotIndex) {
             if (hotkey) {
                 slotToUpdate.appendChild(hotkey);
             }
+        // Envoyer d'abord la requête au serveur
+        socket.send(JSON.stringify({
+            type: 'use_power_up',
+            slot: slotIndex
+        }));
         }
     }
 }

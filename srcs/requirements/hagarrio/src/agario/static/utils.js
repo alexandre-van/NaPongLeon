@@ -1,6 +1,6 @@
 import { joinGame } from './network.js';
 import { getScene } from './scene.js';
-import { stopGameLoop } from './main.js';
+import { stopGameLoop, isGameRunning } from './main.js';
 import { cleanup as cleanupPlayers, getMyPlayerId } from './player.js';
 
 export function throttle(func, limit) {
@@ -43,6 +43,9 @@ export function updateGameInfo(data) {
     }
 
     games.forEach((game, index) => {
+        // Ne pas afficher les parties terminées
+        if (game.status === 'finished' || game.status === 'aborted') return;
+        
         const row = document.createElement('tr');
         const playerNames = Array.isArray(game.players) ? game.players.map(player => player.name).join(', ') : '';
         
@@ -69,72 +72,104 @@ export function updateGameInfo(data) {
 }
 
 export function showGameEndScreen(data) {
-    // 1. Nettoyage commun
-    stopGameLoop();
-    cleanupPlayers();
-    cleanupScene();
-    cleanupGameElements();
+    // S'assurer qu'il n'y a pas déjà un overlay
+    const existingOverlay = document.querySelector('.game-end-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
 
-    // 2. Déterminer le type d'écran à afficher
-    const myId = getMyPlayerId();
-    const isWinner = data.winner === myId;
-
-    // 3. Créer l'overlay approprié
     const overlay = document.createElement('div');
-    overlay.className = isWinner ? 'game-win-overlay' : 'game-over-overlay';
+    overlay.className = 'game-end-overlay';
     overlay.style.animation = 'fadeIn 0.5s ease-in';
     
     const content = document.createElement('div');
-    content.className = isWinner ? 'game-win-content' : 'game-over-content';
+    content.className = 'game-end-content';
     
-    const title = document.createElement('div');
-    title.className = isWinner ? 'game-win-title' : 'game-over-title';
+    const title = document.createElement('h2');
+    title.className = 'game-end-title';
+    const isWinner = data.winner === true;
+    title.textContent = isWinner ? '🏆 Victoire !' : '💀 Défaite';
+    title.style.color = isWinner ? '#FFD700' : '#FF6B6B';
     
-    const messageText = document.createElement('div');
-    messageText.className = isWinner ? 'game-win-score' : 'game-over-score';
-
-    // 4. Personnaliser le contenu selon le cas
-    if (data.reason === 'forfeit') {
-        if (isWinner) {
-            title.textContent = 'VICTOIRE PAR FORFAIT!';
-            messageText.textContent = `Score final: ${data.winner_score}`;
+    const messageText = document.createElement('p');
+    messageText.className = 'game-end-message';
+    messageText.textContent = data.message;
+    
+    const menuButton = document.createElement('button');
+    menuButton.className = 'menu-button';
+    menuButton.textContent = 'Menu Principal';
+    menuButton.onclick = () => {
+        window.parent.postMessage('refresh', '*');
+        // Vérifier si le jeu est encore en cours
+        if (isGameRunning()) {
+            stopGameLoop();
         }
-    } else if (data.reason === 'victory') {
-        if (isWinner) {
-            title.textContent = 'VICTOIRE!';
-            messageText.textContent = `Vous avez gagné avec un score de ${data.winner_score}!`;
-        } else {
-            title.textContent = 'DÉFAITE';
-            messageText.textContent = `Vous avez perdu avec un score de ${data.loser_score}`;
-        }
-    }
-    
-    // 5. Ajouter des détails supplémentaires si disponibles
-    if (data.message) {
-        const additionalInfo = document.createElement('div');
-        additionalInfo.className = isWinner ? 'game-win-message' : 'game-over-message';
-        additionalInfo.textContent = data.message;
-        content.appendChild(additionalInfo);
-    }
-    
-    content.appendChild(title);
-    content.appendChild(messageText);
-    overlay.appendChild(content);
-    document.body.appendChild(overlay);
-    
-    // 6. Retour à la waiting room après délai
-    setTimeout(() => {
+        
+        // Animation de sortie
         overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
         overlay.addEventListener('animationend', () => {
+            // Nettoyage complet
+            cleanupAll();
+            
+            // Reset de la waiting room
+            resetWaitingRoom();
+            
+            // Retour à la waiting room
+            const waitingRoom = document.getElementById('waitingRoom');
+            const gameContainer = document.getElementById('gameContainer');
+            if (waitingRoom) waitingRoom.style.display = 'block';
+            if (gameContainer) gameContainer.style.display = 'none';
+            
+            // Supprimer l'overlay
             if (overlay && overlay.parentNode) {
                 overlay.remove();
-                const waitingRoom = document.getElementById('waitingRoom');
-                if (waitingRoom) {
-                    waitingRoom.style.display = 'block';
-                }
             }
         }, { once: true });
-    }, 3000);
+    };
+    // return;    
+    content.appendChild(title);
+    content.appendChild(messageText);
+    content.appendChild(menuButton);
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+}
+
+function cleanupAll() {
+    // Nettoyer la scène
+    cleanupScene();
+    
+    // Nettoyer les éléments du jeu
+    cleanupGameElements();
+    
+    // Nettoyer l'UI
+    cleanupUI();
+    
+    // Nettoyer les joueurs
+    cleanupPlayers();
+    
+    // Réinitialiser les variables globales si nécessaire
+    resetGameState();
+}
+
+function cleanupUI() {
+    const elementsToRemove = [
+        'scoreboard',
+        'minimap',
+        'speedometer',
+        'hotbar'
+    ];
+    
+    elementsToRemove.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.remove();
+    });
+}
+
+function resetGameState() {
+    // Réinitialiser toutes les variables globales du jeu
+    window.players = {};
+    window.myPlayerId = null;
+    // ... autres réinitialisations nécessaires
 }
 
 function cleanupScene() {
@@ -167,6 +202,26 @@ function cleanupGameElements() {
     if (gameContainer) {
         gameContainer.style.display = 'none';
         gameContainer.innerHTML = '';
+    }
+}
+
+function resetWaitingRoom() {
+    // Reset des boutons de matchmaking
+    const joinBtn = document.getElementById('joinMatchmakingBtn');
+    const leaveBtn = document.getElementById('leaveMatchmakingBtn');
+    if (joinBtn) joinBtn.style.display = 'block';
+    if (leaveBtn) leaveBtn.style.display = 'none';
+
+    // Reset de la game info
+    const gameList = document.getElementById('gameList');
+    if (gameList) {
+        gameList.innerHTML = '<tr><td colspan="3" style="text-align: center;">No games available</td></tr>';
+    }
+
+    // Reset du game info container
+    const gameInfoContainer = document.getElementById('gameInfoContainer');
+    if (gameInfoContainer) {
+        gameInfoContainer.style.display = 'block';
     }
 }
 
