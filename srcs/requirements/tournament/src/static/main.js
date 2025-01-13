@@ -6,7 +6,7 @@ const host = window.location.hostname;
 const port = window.location.port;
 const tournamentId = new URLSearchParams(window.location.search).get('gameId');
 const socket = new WebSocket(`${wsProtocol}//${host}:${port}/ws/tournament/${tournamentId}/`);
-let nickname = '' 
+let nickname = ''
 //const socket = new WebSocket(`ws://${host}:${port}/ws/pong/_/_/`);
 
 socket.onopen = function() {

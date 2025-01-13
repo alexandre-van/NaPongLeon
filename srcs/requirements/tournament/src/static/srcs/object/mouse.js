@@ -1,5 +1,6 @@
 import * as THREE from '../../js/three.module.js';
 import { camera } from '../renderer.js';
+import { create_interface, remove_interface} from '../init.js'
 import { get_scene, scene } from '../scene.js';
 import { spectate_game } from '../launch_game.js'
 import { showParchment } from './parchment.js'
@@ -31,7 +32,7 @@ function isMouseOnPanel() {
 }
 
 // Gérer les clics de souris
-function onClick(event) {
+async function onClick(event) {
     if (isMouseOnPanel()) {
         return;
     }
@@ -50,7 +51,7 @@ function onClick(event) {
 
     if (intersects.length > 0) {
         const clickedObject = intersects[0].object;
-        handleClickedObject(clickedObject);
+        await handleClickedObject(clickedObject);
     }
 }
 
@@ -96,12 +97,13 @@ function getInteractiveObjects() {
 }
 
 // Gérer le clic sur un objet
-function handleClickedObject(clickedObject) {
+async function handleClickedObject(clickedObject) {
     if (clickedObject.userData.isSpectateButton) {
         console.log(`Spectating match ${clickedObject.userData.game}`);
         const game = clickedObject.userData.game;
         if (game)
-            spectate_game(game)
+            spectate_game(game);
+            await remove_interface();
     } else {
         // Si l'objet cliqué est une boîte avec des données de branche
         set_current_branch_inspect(clickedObject.userData.branch);
