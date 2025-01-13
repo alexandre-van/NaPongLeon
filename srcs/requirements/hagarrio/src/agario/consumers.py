@@ -183,6 +183,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.error(f"Game {game_id} not found in active games.")
 			return
 		game = GameConsumer.active_games[game_id]
+		if state_update:
+			await self.notify_admin_teams(game_id, self.generate_teams(game.players))
+			self.last_status = ""
 		if game.status != self.last_status:
 			win_team = None
 			score = None
@@ -193,6 +196,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 						win_team = player['id']
 						score = player['score']
 			await self.notify_admin_game_status(game_id, game.status, win_team, score)
+		self.last_status = game.status
 		message = {
 			'type': state_update.get('type'),
 			'game_id': state_update.get('game_id'),
@@ -221,6 +225,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			})
 		elif state_update['type'] == 'game_finish':
 			loser = state_update.get('loser')
+			loser_score = state_update.get('loser_score')
 			if not loser:
 				logger.error("Missing 'loser' in state update.")
 				return
@@ -230,6 +235,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			winner = state_update.get('winner')
 			winner_id = winner.get('id')
 			loser_id = loser.get('id')
+			await self.notify_admin_score_update(game_id, loser_id, loser_score)
 			
 			# Notifier le gagnant
 			if winner_id in GameConsumer.players:
@@ -360,5 +366,28 @@ class GameConsumer(AsyncWebsocketConsumer):
 				'score': score
 			}))
 			logger.info(f"Notified admin of game {game_id} about score update for team {team}.")
+		else:
+			logger.warning(f"Admin for game {game_id} is not connected.")
+
+	def generate_teams(self, players):
+		teams = {}
+		if not players or len(players) < 1:
+			return teams
+		for username in players:
+			teams[username] = [ username ]
+		return teams
+
+	async def notify_admin_teams(self, game_id, teams):
+		game = GameConsumer.active_games.get(game_id)
+		if not game:
+			logger.warning(f"Game {game_id} not found.")
+			return
+		admin_consumer = getattr(game, 'admin_consumer', None)
+		if admin_consumer:
+			await admin_consumer.send(text_data=json.dumps({
+					'type': "export_teams",
+					'teams': teams
+				}))
+			logger.info(f"Notified admin of game {game_id} about team composition {teams}.")
 		else:
 			logger.warning(f"Admin for game {game_id} is not connected.")
