@@ -44,14 +44,17 @@ export function UserProvider({ children }) {
 	const login = async (userData) => {
 		const response = await api.post('/authentication/auth/login/', userData);
 		console.log('response:', response);
-		if (response.data && response.data.message !== "Login successful") {
+		/*if (response.data && response.data.message !== "Login successful") {
 			console.log('Login failed');
 			throw new Error("Login failed");
-		}
-		if (response.requires_2fa) {
-			return true;
+		}*/
+		console.log('requires_2fa:', response.data.requires_2fa);
+		if (response.data.requires_2fa) {
+			window.location.href = `/login/2fa?token=${encodeURIComponent(response.data.temp_token)}`;
+        	return ;
 		}
 		await checkAuth();
+      	navigate('/');
 		return false;
 	};
 

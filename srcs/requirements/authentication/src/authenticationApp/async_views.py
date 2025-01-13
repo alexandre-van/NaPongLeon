@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
+from rest_framework_simplejwt.tokens import AccessToken
 
 # for LoginView and Setup2FAView
 from django_otp import user_has_device
@@ -15,8 +16,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 async def LoginView(request):
-    from django.contrib.auth import authenticate
-    from .utils.two_factor_auth import create_login_response, validate_totp
+    from django.contrib.auth import authenticate, logout
+    from .utils.two_factor_auth import create_login_response
+    from datetime import timedelta
+    from django.utils import timezone
 
     if request.method != 'POST':
         return HttpResponseBadRequestJD('Method not allowed')
@@ -25,14 +28,10 @@ async def LoginView(request):
         data = json.loads(request.body)
         username = data.get('username')
         password = data.get('password')
-        totp_token = data.get('totpToken') # Optional 2FA token
     except json.JSONDecodeError:
         return HttpResponseJD('Invalid JSON', 400)
 
-    #    if not check_password(password):
-
     user = await database_sync_to_async(authenticate)(username=username, password=password)
-
 
     if user is None:
         return HttpResponseJD('Invalid credentials', 401)
@@ -40,14 +39,49 @@ async def LoginView(request):
     has_2fa = await database_sync_to_async(user_has_device)(user)
     if not has_2fa:
         return await create_login_response(user, request)
+    
+    temp_token = AccessToken()
+    temp_token['type'] = '2fa_pending'
+    temp_token['user_id'] = user.id
+    temp_token.set_exp(from_time=timezone.now(), lifetime=timedelta(minutes=5))
 
-    # If 2FA enabled but no token provided
-    if not totp_token:
-        return HttpResponseJD('2FA token required', 403, {'requires_2fa': True})
+    await database_sync_to_async(logout)(request)
 
-    is_valid = await validate_totp(user, totp_token)
-    if not is_valid:
-        return HttpResponseJD('Invalid 2FA token', 401)
+    return HttpResponseJD('2FA required', 200, {
+        'requires_2fa': True,
+        'temp_token': str(temp_token)
+    })
+
+async def Login2FAView(request):
+    from .utils.two_factor_auth import create_login_response, validate_totp
+
+    if request.method != 'POST':
+        return HttpResponseBadRequestJD('Method not allowed')
+
+    try:
+        data = json.loads(request.body)
+        totp_token = data.get('code')
+        temp_token = data.get('temp_token')
+
+        if not temp_token:
+            return HttpResponseBadRequestJD('Missing fields')
+        if not totp_token:
+            return HttpResponseJD('2FA token required', 403)
+
+        try:
+            token = AccessToken(temp_token)
+            if token['type'] != '2fa_pending':
+                return HttpResponseJD('Invalid token type', 401)
+
+            user = await database_sync_to_async(CustomUser.objects.get)(id=token['user_id'])
+        except :
+            return HttpResponseJD('Invalid or expired token', 401)
+
+        is_valid = await validate_totp(user, totp_token)
+        if not is_valid:
+            return HttpResponseJD('Invalid 2FA token', 401)
+    except json.JSONDecodeError:
+        return HttpResponseJD('Invalid JSON', 400)
 
     return await create_login_response(user, request)
 

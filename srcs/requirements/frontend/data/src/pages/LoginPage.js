@@ -13,8 +13,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(userData);
-      navigate('/');
+      const response = await login(userData);
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {
         setError(err.response.data.error); // Récupération du message d'erreur

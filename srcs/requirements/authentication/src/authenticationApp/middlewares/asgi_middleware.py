@@ -176,6 +176,7 @@ class CsrfAsgiMiddleware:
         # Exempt routes
         exempt_patterns = [
             '/api/authentication/auth/login/',
+            '/api/authentication/auth/login/2fa/',
             '/api/authentication/users/',
             '/api/authentication/users/password-reset/',
             '/api/authentication/users/password-reset-confirmation/{uid}/{token}/',
@@ -184,6 +185,7 @@ class CsrfAsgiMiddleware:
             '/api/authentication/verify_token/',
             '/api/authentication/verify_friends/',
         ]
+        logger.debug(f'request.path = {request.path}')
 
         # Vérifie si le chemin correspond à l'un des patterns exemptés
         for pattern in exempt_patterns:
