@@ -7,11 +7,7 @@ const NicknameForm = ({ onSubmit, onError }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!nickname) {
-      onSubmit({ value: null, error: 'Please submit a nickname' });
-    } else {
-      onSubmit({ value: nickname, error: null });
-    }
+    onSubmit({ value: nickname, error: null });
   };
 
   return (

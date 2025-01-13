@@ -150,9 +150,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		type_name = None
 		if self.username in self.room['players']:
 			type_name = 'player_disconnection'
+			del self.room['players'][self.username]
 		elif self.username in self.room['spectator']:
 			type_name = 'spectator_disconnection'
 		else:
+			return
+		if len(self.room['players']) < 1:
+			await self.tournament_end()
 			return
 		admin = self.room['admin']
 		groups = [admin['id'], self.tournament_id]
@@ -355,7 +359,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
-					event['state']['nickname'] = self.username
+					event['state']['username'] = self.username
+					event['state']['nickname'] = self.nickname
 				event['state']['game_private_id'] = self.game_private_id
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True

@@ -1,5 +1,6 @@
 import * as THREE from './three/three.module.js';
 import { scene } from './scene.js';
+import { updateHotbar } from './hotbar.js';
 
 const powerUps = new Map();
 
@@ -59,6 +60,7 @@ export function createNewPowerUp(newPowerUp) {
 export function updatePowerUps(newPowerUps) {
     // S'assurer que newPowerUps est un tableau
     const powerUpArray = Array.isArray(newPowerUps) ? newPowerUps : [newPowerUps];
+
     // Mise à jour des power-ups existants
     powerUps.forEach((sprite, id) => {
         if (!powerUpArray.find(p => p.id === id)) {
@@ -144,9 +146,21 @@ export function getPowerUps() {
 
 export function usePowerUp(socket, slotIndex) {
     if (socket && socket.readyState === WebSocket.OPEN) {
+        // Mettre à jour l'affichage uniquement pour le slot utilisé
+        const slots = document.querySelectorAll('.hotbar-slot');
+        const slotToUpdate = slots[slotIndex];
+        if (slotToUpdate) {
+            // Conserver uniquement la touche (hotkey)
+            const hotkey = slotToUpdate.querySelector('.hotkey');
+            slotToUpdate.innerHTML = '';
+            if (hotkey) {
+                slotToUpdate.appendChild(hotkey);
+            }
+        // Envoyer d'abord la requête au serveur
         socket.send(JSON.stringify({
             type: 'use_power_up',
             slot: slotIndex
         }));
+        }
     }
 }

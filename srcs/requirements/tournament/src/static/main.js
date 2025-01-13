@@ -29,7 +29,9 @@ socket.onmessage = function(event) {
 			console.log("Game created! \Tournament ID :", tournamentId);
 			console.log("export_data : ", data);
 			console.log("nickname : ", data.nickname);
-			nickname = data.nickname;
+			nickname = data.username;
+			if (data.nickname)
+				nickname = data.nickname;
 			init(data.data, socket, nickname);
 			break;
 		case "tournament_update":
