@@ -217,7 +217,7 @@ const FriendsList = () => {
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                   >
                     <img
-                      src={friend.avatar ? `media/${friend.avatar}` : "static_files/images/default_avatar.png"}
+                      src={friend.avatar ? `/media/${friend.avatar}` : "/static_files/images/default_avatar.png"}
                       alt={`${friend.username}'s avatar`}
                       style={{
                         width: "40px",
@@ -249,7 +249,7 @@ const FriendsList = () => {
             textAlign: "center",
           }}>
             <img
-              src={selectedFriend.avatar ? `media/${selectedFriend.avatar}` : "/static_files/images/default_avatar.png"}
+              src={selectedFriend.avatar ? `/media/${selectedFriend.avatar}` : "/static_files/images/default_avatar.png"}
               alt={`${selectedFriend.username}'s avatar`}
               style={{
                 width: "100px",
