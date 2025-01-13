@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button, Form } from 'react-bootstrap'; // Importation de React-Bootstrap
 
 const RegisterForm = ({ onRegister, errors }) => {
   const [formData, setFormData] = useState({
@@ -25,46 +26,54 @@ const RegisterForm = ({ onRegister, errors }) => {
     <div>
       <h1 className="title">REGISTER</h1>
       <div className="BorderBox">
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="username">Username</label>
-            <input
+        <Form onSubmit={handleSubmit}>
+          <Form.Group controlId="formBasicUsername">
+            <Form.Label>Username</Form.Label>
+            <Form.Control
               type="text"
-              id="username"
+              placeholder="Enter your username"
               name="username"
               value={formData.username}
               onChange={handleChange}
               required
             />
-            {errors.username && <p className="error-message">{errors.username[0]}</p>}
-          </div>
-          <div>
-            <label htmlFor="email">Email</label>
-            <input
-              type="text"
-              id="email"
+            {errors.username && <p className="error-message text-danger">{errors.username[0]}</p>}
+          </Form.Group>
+
+          <Form.Group controlId="formBasicEmail">
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="Enter your email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
             />
-            {errors.email && <p className="error-message">{errors.email[0]}</p>}
-          </div>
-          <div>
-            <label htmlFor="password">Password</label>
-            <input
+            {errors.email && <p className="error-message text-danger">{errors.email[0]}</p>}
+          </Form.Group>
+
+          <Form.Group controlId="formBasicPassword">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
               type="password"
-              id="password"
+              placeholder="Enter your password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
             />
-            {errors.password && <p className="error-message">{errors.password[0]}</p>}
-          </div>
-          <button type="submit">SIGN UP</button>
-        </form>
-        <Link to="/login">Return to login page</Link>
+            {errors.password && <p className="error-message text-danger">{errors.password[0]}</p>}
+          </Form.Group>
+
+          <Button className="options mt-3" variant="primary" type="submit">
+            SIGN UP
+          </Button>
+        </Form>
+        
+        <div className="mt-3">
+          <Link to="/login">Return to login page</Link>
+        </div>
       </div>
     </div>
   );
