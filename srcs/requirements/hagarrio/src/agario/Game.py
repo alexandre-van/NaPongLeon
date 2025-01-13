@@ -136,7 +136,7 @@ class Game:
 	def add_player(self, player_id, player_name):
 		if player_id not in self.expected_players:
 			return False
-		logger.debug(f"{player_id} : {player_name}")
+		# logger.debug(f"ADDING A PLAYER :{player_id} : {player_name}")
 		self.players[player_id] = {
 			'id': player_id,
 			'name': player_name,
@@ -148,7 +148,7 @@ class Game:
 			'speed_multiplier': 1,
 			'invulnerable': False,
 			'score_multiplier': 1,
-			'inventory': []
+			'inventory': [None, None, None]
 		}
 		if len(self.players) == len(self.expected_players):
 			self.status = 'in_progress'
@@ -157,13 +157,24 @@ class Game:
 	def remove_player(self, player_id):
 		"""Retire un joueur de la partie"""
 		if player_id in self.players:
+			loser = self.players[player_id]
+			loser_score = self.players[player_id]['score']
 			del self.players[player_id]
 			if player_id in self.player_inputs:
 				del self.player_inputs[player_id]
 			if player_id in self.player_movements:
 				del self.player_movements[player_id]
-		if len(self.players) <= 1:
-			self.status = "finished"
+			if len(self.players) <= 1:
+				self.status = "finished"
+				winner = list(self.players.values())[0]
+				return {
+					'type': 'game_finish',
+					'loser': loser,
+					'winner': winner,
+					'message_winner': f"Score final : {winner['score']:.0f}",
+					'message_loser': f"Score final : {loser_score:.0f}",
+				}
+		return None
 
 	def get_food_state(self):
 		"""Retourne l'état complet de la partie"""
@@ -204,11 +215,8 @@ class Game:
 		logger.debug("game loop starting...")
 		"""Boucle de jeu principale"""
 		try:
-			logger.debug("get_last_update...")
 			last_update = asyncio.get_event_loop().time()
-			logger.debug("broadcast_callback...")
 			await broadcast_callback(self.game_id, self.update_state(food_changes=True))
-			logger.debug("game loop started !")
 			while self.status != "finished" and self.status != 'aborted':
 				while self.status == 'waiting':
 					await asyncio.sleep(1/60)
@@ -218,21 +226,16 @@ class Game:
 				positions_updated = self.update_positions(delta_time)
 				if positions_updated:
 					await broadcast_callback(self.game_id, self.update_state(food_changes=False)) # Send only updated positions to all players
-				player_ids = list(self.players.keys())     # Créer une copie des IDs des joueurs pour l'itération
-				players_eaten = []                        # Liste pour stocker les joueurs qui se font manger
-				# Vérifier les collisions entre les joueurs
-				for player_id in player_ids:
-					if player_id not in self.players:  # Le joueur a peut-être été mangé
-						continue
-					for other_player_id in player_ids:
-						if player_id != other_player_id and other_player_id in self.players:
-							if self.player_eat_other_player(player_id, other_player_id):
-								players_eaten.append((player_id, other_player_id))
-								break  # Sortir de la boucle interne car le joueur a été mangé
-
-				# Traiter les joueurs mangés après la boucle
-				for player_id, other_player_id in players_eaten:
-					await broadcast_callback(self.game_id, self.state_player_eat_other_player(player_id, other_player_id))
+				
+				# Vérifier les collisions entre les deux joueurs
+				if len(self.players) == 2:
+					player_ids = list(self.players.keys())
+					state_details = self.player_eat_other_player(player_ids[0], player_ids[1])
+					if state_details:
+						await broadcast_callback(self.game_id, state_details)
+					state_details = self.player_eat_other_player(player_ids[1], player_ids[0])
+					if state_details:
+						await broadcast_callback(self.game_id, state_details)
 
 				player_food_changes = self.check_all_food_collisions()
 				if player_food_changes:
@@ -247,7 +250,8 @@ class Game:
 							'game_id': self.game_id,
 							'players': self.players,
 							'power_up': collected_power_up['power_up'],
-							'power_ups': self.power_ups
+							'power_ups': self.power_ups,
+							'player_id': player_id
 						})
 				# Gestion des power-ups
 				self.power_up_spawn_timer += delta_time
@@ -330,14 +334,20 @@ class Game:
 		player = self.players.get(player_id)
 		if not player:
 			return False
-		
+
 		for power_up in self.power_ups[:]:
 			if self.distance(player, power_up) < player['size']:
-				if len(player['inventory']) < 3:  # Vérifier si l'inventaire n'est pas plein
+				# Trouver le premier slot vide
+				empty_slot = next((i for i, slot in enumerate(player['inventory']) if slot is None), -1)
+				if empty_slot != -1:  # Si un slot vide est trouvé
 					collected_power_up = power_up
-					player['inventory'].append(power_up)
+					player['inventory'][empty_slot] = power_up
 					self.power_ups.remove(power_up)
-					return {'type': 'power_up_collected', 'power_up': collected_power_up}
+					return {
+						'type': 'power_up_collected',
+						'power_up': collected_power_up,
+						'player_id': player_id,
+					}
 		return False
 
 	def apply_power_up(self, player_id, power_up):
@@ -369,28 +379,26 @@ class Game:
 
 	def use_power_up(self, player_id, slot_index):
 		player = self.players.get(player_id)
-		if not player or slot_index >= len(player['inventory']):
+		if not player:
 			return False
-		
-		power_up = player['inventory'].pop(slot_index)
-		self.apply_power_up(player_id, power_up)
-		# Retourner les informations mises à jour pour le broadcast
-		return {
-			'type': 'power_up_used',
-			'game_id': self.game_id,
-			'players': self.players,
-			'slot_index': slot_index,
-			'power_up': power_up
-		}
-
-	def state_player_eat_other_player(self, player_id, other_player_id):
-		return {
-			'type': 'player_eat_other_player',
-			'game_id': self.game_id,
-			'players': self.players,
-			'player_id': player_id,
-			'other_player_id': other_player_id
-		}
+		try:
+			# Vérifier que l'index est valide et que le slot n'est pas vide
+			if 0 <= slot_index < len(player['inventory']) and player['inventory'][slot_index] is not None:
+				power_up = player['inventory'][slot_index]
+				# Vider le slot spécifique
+				player['inventory'][slot_index] = None
+				
+				# Appliquer l'effet du power-up
+				self.apply_power_up(player_id, power_up)
+				return {
+					'type': 'power_up_used',
+					'player_id': player_id,
+					'power_up': power_up,
+					'players': self.players,
+				}
+		except Exception as e:
+			logger.error(f"Error using power-up: {e}")
+		return False
 
 	def player_eat_other_player(self, player_id, other_player_id):
 		player = self.players.get(player_id)
@@ -398,39 +406,44 @@ class Game:
 		if not player or not other_player:
 			return False
 
-		# Vérifier si les joueurs se touchent
 		if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
 			if player['size'] > other_player['size'] * 1.2:
-				# Stocker les informations avant de supprimer le joueur
-				eaten_player_info = {
-					'eaten': True,
-					'score': other_player['score']
-				}
 				# Mettre à jour le joueur qui mange
 				player['size'] += other_player['size'] * 0.25
 				player['score'] += other_player['score'] * 0.25
-				# Supprimer le joueur mangé
-				self.remove_player(other_player_id)
-				return eaten_player_info
+				
+				# Supprimer le joueur mangé et retourner le résultat
+				eaten = self.remove_player(other_player_id)
+				if eaten:
+					return eaten
 		return False
 
 	async def cleanup(self):
 		"""Nettoie les ressources de la partie"""
 		logger.info(f"Cleaning up game {self.game_id}")
 		
+		# Arrêter la boucle de jeu
 		if self.game_loop_task:
 			self.game_loop_task.cancel()
 			try:
 				await self.game_loop_task
 			except asyncio.CancelledError:
 				logger.debug(f"Game loop for game {self.game_id} cancelled successfully")
-				pass
 			except Exception as e:
 				logger.error(f"Error while cancelling game loop for game {self.game_id}: {e}")
+		
+		# Réinitialiser tous les états
 		if self.status != "finished":
 			self.status = "aborted"
+		
 		self.players.clear()
 		self.food.clear()
+		self.power_ups.clear()
 		self.player_inputs.clear()
 		self.player_movements.clear()
+		self.power_up_spawn_timer = 0
+		
+		# # Réinitialiser la nourriture
+		# self.initialize_food()
+		
 		logger.info(f"Game {self.game_id} cleaned up successfully")

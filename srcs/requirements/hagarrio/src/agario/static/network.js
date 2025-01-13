@@ -1,7 +1,7 @@
 import { updatePlayers, removePlayer, getMyPlayerId } from './player.js';
 import { updateFood } from './food.js';
-import { startGameLoop } from './main.js';
-import { updateGameInfo, showGameOverMessage } from './utils.js';
+import { startGameLoop, stopGameLoop } from './main.js';
+import { updateGameInfo, showGameEndScreen } from './utils.js';
 import { updatePowerUps, displayPowerUpCollected, createNewPowerUp, usePowerUp } from './powers.js';
 import { updateHotbar } from './hotbar.js';
 
@@ -89,42 +89,61 @@ function connectWebSocket() {
 					// console.log('PLAYERS_UPDATE:', data);
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
-				case 'player_disconnected':
-					removePlayer(data.playerId);
-					console.log('Game stopped');
-					updateGameInfo(data);
-					break;
 				case 'power_up_spawned':
 					console.log('Power-up spawned:', data);
 					createNewPowerUp(data.power_up);
 					updatePowerUps(data.power_ups);
 					break;
 				case 'power_up_collected':
-					console.log('Power-up collected:', data);
-					updatePowerUps(data.power_ups);
-					if (data.yourPlayerId === getMyPlayerId()) {
-						updateHotbar(data.players[data.yourPlayerId].inventory);
+					updatePowerUps(data.power_ups);	
+					// console.log('Power-up collected data:', {
+					// 	player_id: data.player_id,
+					// 	myPlayerId: getMyPlayerId(),
+					// 	areEqual: data.player_id === getMyPlayerId()
+					// });
+					if (data.player_id === getMyPlayerId()) {
 						displayPowerUpCollected(data.power_up, true);
+						updateHotbar(data.players[data.player_id].inventory);
 					}
 					break;
 				case 'power_up_used':
 					console.log('Power-up used:', data);
-					if (data.yourPlayerId === getMyPlayerId()) {
-						updateHotbar(data.players[data.yourPlayerId].inventory, data.slot_index);
+					if (data.player_id === getMyPlayerId()) {
+						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
 					}
 					break;
-				case 'player_eat_other_player':
-					console.log('Player ate other player:', data);
-					updatePlayers(data.players, data.yourPlayerId);
-					removePlayer(data.player_eaten);
+				case 'player_disconnected':
+					if (data.playerId) {
+						removePlayer(data.playerId);
+					}
+					if (data.games) {
+						// Mise à jour de la liste des jeux dans la waiting room
+						updateGameInfo(data);
+					}
 					break;
-				case 'return_to_waiting_room':
-					console.log('Returning to waiting room:', data);
-					showGameOverMessage(data.message);
-					updateGameInfo(data);
-					break;
+
 				case 'error':
 					console.log('Error:', data.message);
+					break;
+				case 'game_over':
+					console.log('Game over:', data.loser.name);
+					stopGameLoop();
+					showGameEndScreen({
+						winner: false,
+						message: data.message_loser || `Score final : ${data.loser?.score || 0}`,
+						killer: data.winner?.name
+					});
+					resetGameConnection();
+					break;
+				case 'victory':
+					console.log('Victory:', data.winner.name);
+					stopGameLoop();
+					showGameEndScreen({
+						winner: true,
+						message: data.message_winner || `Score final : ${data.winner?.score || 0}`,
+						victim: data.loser?.name
+					});
+					resetGameConnection();
 					break;
 				default:
 					console.log('Unknown message type:', data.type);
@@ -255,5 +274,22 @@ export function joinGame(gameId) {
 		type: 'start_game',
 		game_id: gameId
 	}));
+}
+
+export function resetGameConnection() {
+    // Réinitialiser l'état du jeu sans fermer les WebSockets
+    if (socket) {
+        // Envoyer un message au serveur pour indiquer que le joueur est prêt pour une nouvelle partie
+        socket.send(JSON.stringify({
+            type: 'reset_player_state'
+        }));
+    }
+    
+    if (gameManagerSocket) {
+        // Réinitialiser l'état du matchmaking
+        gameManagerSocket.send(JSON.stringify({
+            type: 'ready_for_matchmaking'
+        }));
+    }
 }
 

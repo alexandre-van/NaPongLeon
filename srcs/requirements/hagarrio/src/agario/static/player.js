@@ -1,5 +1,4 @@
 import { getScene } from './scene.js';
-import { getRandomColor } from './utils.js';
 import * as THREE from './three/three.module.js';
 
 let players = {};
@@ -8,6 +7,7 @@ let playerAnimations = new Map();
 let animationFrame;
 
 export function updatePlayers(newPlayers, newMyPlayerId) {
+    // console.log('Updating players:', newPlayers, 'with myPlayerId:', newMyPlayerId);
     const currentScene = getScene();
     if (!currentScene) return;
     // Mettre à jour les joueurs
@@ -235,10 +235,15 @@ export function initPlayers() {
 }
 
 export function cleanup() {
+    // Arrêter toutes les animations en cours
     if (animationFrame) {
         cancelAnimationFrame(animationFrame);
     }
+    
+    // Nettoyer les animations
     playerAnimations.clear();
+    
+    // Nettoyer les références aux joueurs
     players = {};
     myPlayerId = null;
 }

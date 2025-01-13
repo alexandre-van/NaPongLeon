@@ -17,6 +17,12 @@ export function initUI() {
 }
 
 export function updateUI() {
+    // Vérifier si on est toujours dans le jeu
+    const gameContainer = document.getElementById('gameContainer');
+    if (!gameContainer || gameContainer.style.display === 'none'){
+        console.log('gameContainer not found');
+        return;
+    }
     updateScoreboard();
     updateMinimap();
     updateSpeedometer();
@@ -24,6 +30,11 @@ export function updateUI() {
 
 export function updateScoreboard() {
     const scoreboard = document.getElementById('scoreboard');
+    if (!scoreboard) {
+        console.log('scoreboard not found');
+        return; // Sortir si l'élément n'existe pas
+    }
+    
     const players = getPlayers();
     const myPlayerId = getMyPlayerId();
     const sortedPlayers = Object.values(players).sort((a, b) => b.score - a.score);
@@ -68,10 +79,22 @@ export function initMinimap() {
     if (myPlayerId && players[myPlayerId]) {
         const player = players[myPlayerId];
         const x = (player.x / mapWidth) * minimapSize;
-        const y = ((mapHeight - player.y) / mapHeight) * minimapSize;//Inverser l'axe Y
+        const y = ((mapHeight - player.y) / mapHeight) * minimapSize;
+        
+        // Ajuster le calcul pour une meilleure proportion par rapport à la taille réelle
+        const minimapScaleFactor = minimapSize / mapWidth; // Facteur d'échelle entre la minimap et la carte
+        const minimapRadius = Math.max(2, Math.sqrt(player.size) * minimapScaleFactor);
+        
+        // Ajouter un effet de halo pour mieux voir l'avatar
+        minimapCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        minimapCtx.beginPath();
+        minimapCtx.arc(x, y, minimapRadius + 1, 0, 2 * Math.PI);
+        minimapCtx.fill();
+        
+        // Dessiner l'avatar
         minimapCtx.fillStyle = 'red';
         minimapCtx.beginPath();
-        minimapCtx.arc(x, y, 4, 0, 2 * Math.PI);
+        minimapCtx.arc(x, y, minimapRadius, 0, 2 * Math.PI);
         minimapCtx.fill();
     }
 
@@ -102,41 +125,7 @@ export function updateMinimap() {
     
     minimapCtx.clearRect(0, 0, minimapSize, minimapSize);
 
-    // // Dessiner le fond
-    // minimapCtx.fillStyle = 'rgba(0, 0, 0, 1)';
-    // minimapCtx.fillRect(0, 0, minimapSize, minimapSize);
-    
-    // // Dessiner les axes
-    // minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-    // minimapCtx.beginPath();
-    // minimapCtx.moveTo(0, minimapSize / 2);
-    // minimapCtx.lineTo(minimapSize, minimapSize / 2);
-    // minimapCtx.moveTo(minimapSize / 2, 0);
-    // minimapCtx.lineTo(minimapSize / 2, minimapSize);
-    // minimapCtx.stroke();
-
-    // // Dessiner la grille
-    // minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-    // minimapCtx.beginPath();
-    // minimapCtx.moveTo(0, minimapSize / 2);
-    // minimapCtx.lineTo(minimapSize, minimapSize / 2);
-    // minimapCtx.moveTo(minimapSize / 2, 0);
-    // minimapCtx.lineTo(minimapSize / 2, minimapSize);
-    // minimapCtx.stroke();
-    
-    // Dessiner uniquement le joueur actuel
-    const myPlayerId = getMyPlayerId();
-    if (myPlayerId && players[myPlayerId]) {
-        const player = players[myPlayerId];
-        const x = (player.x / mapWidth) * minimapSize;
-        const y = ((mapHeight - player.y) / mapHeight) * minimapSize;//Inverser l'axe Y
-        minimapCtx.fillStyle = 'red';
-        minimapCtx.beginPath();
-        minimapCtx.arc(x, y, 4, 0, 2 * Math.PI);
-        minimapCtx.fill();
-    }
-
-    // Dessiner la nourriture
+    // Dessiner la nourriture d'abord
     if (Array.isArray(food) && food.length > 0) {
         food.forEach(f => {
             const x = (f.x / mapWidth) * minimapSize;
@@ -155,7 +144,7 @@ export function updateMinimap() {
         });
     }
 
-    // Dessiner les power-ups sur la minimap
+    // Dessiner les power-ups ensuite
     if (powerUps && powerUps.length > 0) {
         powerUps.forEach(powerUp => {
             const x = (powerUp.x / mapWidth) * minimapSize;
@@ -170,6 +159,29 @@ export function updateMinimap() {
             minimapCtx.lineWidth = 1;
             minimapCtx.stroke();
         });
+    }
+
+    // Dessiner l'avatar du joueur en dernier pour qu'il soit au premier plan
+    const myPlayerId = getMyPlayerId();
+    if (myPlayerId && players[myPlayerId]) {
+        const player = players[myPlayerId];
+        const x = (player.x / mapWidth) * minimapSize;
+        const y = ((mapHeight - player.y) / mapHeight) * minimapSize;
+        
+        const scaleFactor = 0.5;
+        const minimapRadius = Math.max(3, Math.sqrt(player.size) / 2 * scaleFactor);
+        
+        // Ajouter un effet de halo pour mieux voir l'avatar
+        minimapCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        minimapCtx.beginPath();
+        minimapCtx.arc(x, y, minimapRadius + 1, 0, 2 * Math.PI);
+        minimapCtx.fill();
+        
+        // Dessiner l'avatar
+        minimapCtx.fillStyle = 'red';
+        minimapCtx.beginPath();
+        minimapCtx.arc(x, y, minimapRadius, 0, 2 * Math.PI);
+        minimapCtx.fill();
     }
 }
 
