@@ -2,6 +2,7 @@ from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpRe
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .services.FriendRequestService import FriendRequestService
+from django.core.exceptions import ValidationError
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
@@ -68,7 +69,7 @@ async def Setup2FAView(request):
         config_url = await setup_2fa(user)
         return HttpResponseJD('2FA setup initiated', 200, {
             'config_url': config_url,
-            #'secret_key': config_url.split('secret=')[1].split('&')[0]
+            'secret_key': config_url.split('secret=')[1].split('&')[0]
         })
     
     # Register device
@@ -131,16 +132,18 @@ async def UserNicknameView(request):
     try:
         data = json.loads(request.body)
         nickname = data.get('nickname')
+
+        user = request.user
+        if user.is_authenticated:
+            await user.update_nickname(nickname)
+            data = {
+                'nickname': nickname
+            }
+            return HttpResponseJD('Nickname updated', 200, data)
     except json.JSONDecodeError:
         return HttpResponseBadRequestJD('Invalid JSON')
-
-    user = request.user
-    if user.is_authenticated:
-        await user.update_nickname(nickname)
-        data = {
-            'nickname': nickname
-        }
-        return HttpResponseJD('Nickname updated', 200, data)
+    except Exception as e:
+            return HttpResponseBadRequestJD(f"{e}")
     return HttpResponseBadRequestJD('Anonymous user')
 
 async def UserAvatarView(request):
