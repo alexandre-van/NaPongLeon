@@ -54,19 +54,19 @@ function connectWebSocket() {
 			const data = JSON.parse(e.data);
 			switch (data.type) {
 				case 'waiting_room':
-					console.log('Waiting room:', data);
+					// console.log('Waiting room:', data);
 					document.getElementById('waitingRoom').style.display = 'block';
 					document.getElementById('gameContainer').style.display = 'none';
 					updateGameInfo(data);
 					document.getElementById('gameInfoContainer').style.display = 'block';
 					break;
 				case 'update_waiting_room':
-					console.log('Update waiting room:', data);
+					// console.log('Update waiting room:', data);
 					updateGameInfo(data);
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
 				case 'game_started':
-					console.log('Game started:', data);
+					// console.log('Game started:', data);
 					updateGameInfo(data);
 					document.getElementById('waitingRoom').style.display = 'none';
 					document.getElementById('gameInfoContainer').style.display = 'none';
@@ -74,7 +74,7 @@ function connectWebSocket() {
 					startGameLoop(data);
 					break;
 				case 'game_joined':
-					console.log('Joined existing game:', data);
+					// console.log('Joined existing game:', data);
 					document.getElementById('waitingRoom').style.display = 'none';
 					document.getElementById('gameInfoContainer').style.display = 'none';
 					document.getElementById('gameContainer').style.display = 'block';
@@ -90,7 +90,7 @@ function connectWebSocket() {
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
 				case 'power_up_spawned':
-					console.log('Power-up spawned:', data);
+					// console.log('Power-up spawned:', data);
 					createNewPowerUp(data.power_up);
 					updatePowerUps(data.power_ups);
 					break;
@@ -107,7 +107,7 @@ function connectWebSocket() {
 					}
 					break;
 				case 'power_up_used':
-					console.log('Power-up used:', data);
+					// console.log('Power-up used:', data);
 					if (data.player_id === getMyPlayerId()) {
 						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
 					}
@@ -123,10 +123,10 @@ function connectWebSocket() {
 					break;
 
 				case 'error':
-					console.log('Error:', data.message);
+					// console.log('Error:', data.message);
 					break;
 				case 'game_over':
-					console.log('Game over:', data.loser.name);
+					// console.log('Game over:', data.loser.name);
 					stopGameLoop();
 					showGameEndScreen({
 						winner: false,
@@ -136,7 +136,7 @@ function connectWebSocket() {
 					resetGameConnection();
 					break;
 				case 'victory':
-					console.log('Victory:', data.winner.name);
+					// console.log('Victory:', data.winner.name);
 					stopGameLoop();
 					showGameEndScreen({
 						winner: true,

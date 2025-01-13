@@ -1,6 +1,5 @@
-import { getPlayers } from './player.js';
 import { getFood } from './food.js';
-import { getMyPlayerId } from './player.js';
+import { getMyPlayerId, getPlayers } from './player.js';
 import { mapHeight, mapWidth } from './main.js';
 import { getPowerUps } from './powers.js';
 
@@ -122,29 +121,41 @@ export function updateMinimap() {
     const players = getPlayers();
     const food = getFood();
     const powerUps = getPowerUps();
+    const myPlayerId = getMyPlayerId();
     
     minimapCtx.clearRect(0, 0, minimapSize, minimapSize);
 
-    // Dessiner la nourriture d'abord
-    if (Array.isArray(food) && food.length > 0) {
+    // Dessiner uniquement les nourritures épiques proches du joueur
+    if (Array.isArray(food) && food.length > 0 && myPlayerId && players[myPlayerId]) {
+        const player = players[myPlayerId];
+        // Ajuster le rayon de vision en fonction des proportions de la fenêtre
+        const aspectRatio = window.innerWidth / window.innerHeight;
+        const baseViewRadius = aspectRatio > 1 ? 800 * aspectRatio : 800;
+        const maxViewRadius = 2600;
+        const viewRadius = Math.min(baseViewRadius + player.size * 2, maxViewRadius);
+
         food.forEach(f => {
-            const x = (f.x / mapWidth) * minimapSize;
-            const y = ((mapHeight - f.y) / mapHeight) * minimapSize;//Inverser l'axe Y
+            // Ne dessiner que les nourritures épiques
             if (f.type === 'epic') {
-                minimapCtx.fillStyle = f.color;
-                minimapCtx.beginPath();
-                minimapCtx.arc(x, y, 2, 0, 2 * Math.PI);
-                minimapCtx.fill();
-            } else {
-                minimapCtx.fillStyle = f.type === 'rare' ? f.color : 'green';
-                minimapCtx.beginPath();
-                minimapCtx.arc(x, y, 1, 0, 2 * Math.PI);
-                minimapCtx.fill();
+                // Calculer la distance entre le joueur et la nourriture
+                const dx = f.x - player.x;
+                const dy = f.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Ne dessiner que si la nourriture est dans le rayon de vision
+                if (distance <= viewRadius) {
+                    const x = (f.x / mapWidth) * minimapSize;
+                    const y = ((mapHeight - f.y) / mapHeight) * minimapSize;
+                    minimapCtx.fillStyle = f.color;
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(x, y, 2, 0, 2 * Math.PI);
+                    minimapCtx.fill();
+                }
             }
         });
     }
 
-    // Dessiner les power-ups ensuite
+    // Dessiner tous les power-ups
     if (powerUps && powerUps.length > 0) {
         powerUps.forEach(powerUp => {
             const x = (powerUp.x / mapWidth) * minimapSize;
@@ -161,8 +172,7 @@ export function updateMinimap() {
         });
     }
 
-    // Dessiner l'avatar du joueur en dernier pour qu'il soit au premier plan
-    const myPlayerId = getMyPlayerId();
+    // Dessiner l'avatar du joueur
     if (myPlayerId && players[myPlayerId]) {
         const player = players[myPlayerId];
         const x = (player.x / mapWidth) * minimapSize;

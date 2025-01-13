@@ -77,10 +77,15 @@ export function showGameEndScreen(data) {
     if (existingOverlay) {
         existingOverlay.remove();
     }
-
+    
+    // Cacher la waiting room pendant l'affichage de l'overlay
+    const waitingRoom = document.getElementById('waitingRoom');
+    if (waitingRoom) waitingRoom.style.display = 'none';
+    
     const overlay = document.createElement('div');
     overlay.className = 'game-end-overlay';
     overlay.style.animation = 'fadeIn 0.5s ease-in';
+    document.body.appendChild(overlay);
     
     const content = document.createElement('div');
     content.className = 'game-end-content';
@@ -114,24 +119,20 @@ export function showGameEndScreen(data) {
             // Reset de la waiting room
             resetWaitingRoom();
             
-            // Retour à la waiting room
-            const waitingRoom = document.getElementById('waitingRoom');
-            const gameContainer = document.getElementById('gameContainer');
+            // Retour à la waiting room seulement après la fin de l'animation
             if (waitingRoom) waitingRoom.style.display = 'block';
+            const gameContainer = document.getElementById('gameContainer');
             if (gameContainer) gameContainer.style.display = 'none';
             
             // Supprimer l'overlay
-            if (overlay && overlay.parentNode) {
-                overlay.remove();
-            }
+            overlay.remove();
         }, { once: true });
     };
-    // return;    
+    
     content.appendChild(title);
     content.appendChild(messageText);
     content.appendChild(menuButton);
     overlay.appendChild(content);
-    document.body.appendChild(overlay);
 }
 
 function cleanupAll() {
