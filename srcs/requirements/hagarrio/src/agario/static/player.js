@@ -8,6 +8,7 @@ let playerAnimations = new Map();
 let animationFrame;
 
 export function updatePlayers(newPlayers, newMyPlayerId) {
+    // console.log('Updating players:', newPlayers, 'with myPlayerId:', newMyPlayerId);
     const currentScene = getScene();
     if (!currentScene) return;
     // Mettre à jour les joueurs

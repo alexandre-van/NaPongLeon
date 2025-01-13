@@ -9,7 +9,6 @@ logger = setup_logger()
 class GameConsumer(AsyncWebsocketConsumer):
 	players = {}  # {player_id: websocket}
 	active_games = {}  # {game_id: Game()}
-	player_count = 0
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -35,7 +34,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 			return
 		await self.accept()
 		self.player_id = username
-		GameConsumer.player_count += 1
 		self.player_name = nickname if nickname else username
 		GameConsumer.players[self.player_id] = self
 
@@ -54,7 +52,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 		logger.info(f"Player {self.player_id} disconnected with code {close_code}")
 
 		if self.player_id in GameConsumer.players:
-			GameConsumer.player_count -= 1
 			del GameConsumer.players[self.player_id]
 			logger.debug(f"Removed player {self.player_id} from players list")
 
@@ -169,7 +166,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 			await player.send(text_data=json.dumps({
 				'type': 'update_waiting_room',
 				'games': games_info,
-				'players': game.players
+				'players': game.players,
+				'yourPlayerId': self.player_id
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
@@ -194,14 +192,21 @@ class GameConsumer(AsyncWebsocketConsumer):
 			'game_id': state_update.get('game_id'),
 			'players': state_update.get('players', {}),
 		}
-
 		# Ajout des mises à jour spécifiques
-		if state_update['type'] == 'food_update':
-			message.update({'food': state_update.get('food', [])})
-		elif state_update['type'] in ['power_up_spawned', 'power_up_collected']:
+		if state_update.get('type') == 'players_update':
+			message.update({'yourPlayerId': self.player_id})
+		elif state_update['type'] == 'food_update':
+			message.update({'food': state_update.get('food', []), 'yourPlayerId': self.player_id})
+		elif state_update['type'] == 'power_up_spawned':
 			message.update({
 				'power_up': state_update.get('power_up'),
 				'power_ups': state_update.get('power_ups', [])
+			})
+		elif state_update['type'] == 'power_up_collected':
+			message.update({
+				'power_up': state_update.get('power_up'),
+				'power_ups': state_update.get('power_ups', []),
+				'player_id': state_update.get('player_id')
 			})
 		elif state_update['type'] == 'power_up_used':
 			message.update({
@@ -213,7 +218,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if not loser:
 				logger.error("Missing 'loser' in state update.")
 				return
-
 			# Notifier le gagnant
 			winner = state_update.get('winner')
 			if winner in GameConsumer.players:
@@ -226,7 +230,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 					'message_winner': state_update.get('message_winner'),
 					'message_loser': state_update.get('message_loser')
 				}))
-			# Gérer le joueur mangé
+			# Gérer le joueur mangé (loser)
 			if loser in GameConsumer.players:
 				# Retourner le joueur dans la salle d'attente
 				await GameConsumer.players[loser].send(text_data=json.dumps({

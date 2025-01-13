@@ -1,4 +1,10 @@
 export function createHotbar() {
+    // Supprimer l'ancien hotbar s'il existe
+    const existingHotbar = document.getElementById('hotbar');
+    if (existingHotbar) {
+        existingHotbar.remove();
+    }
+
     const hotbarDiv = document.createElement('div');
     hotbarDiv.id = 'hotbar';
     
@@ -18,28 +24,32 @@ export function createHotbar() {
 }
 
 export function updateHotbar(inventory = [], slot_index = null) {
+    console.log('Updating hotbar with inventory:', inventory);
     const slots = document.querySelectorAll('.hotbar-slot');
+    
+    if (!slots.length) {
+        console.error('No hotbar slots found');
+        return;
+    }
+
     slots.forEach((slot, index) => {
         const powerUp = inventory[index];
         const hotkey = slot.querySelector('.hotkey');
         
         // Nettoyer le slot sauf la touche
         Array.from(slot.children).forEach(child => {
-            if (child !== hotkey) child.remove();
+            if (child !== hotkey) {
+                child.remove();
+            }
         });
         
-        if (powerUp) {
+        // Ajouter l'icône uniquement si le powerUp existe (n'est pas null)
+        if (powerUp !== null) {
             const icon = document.createElement('div');
             icon.className = 'power-up-icon';
             icon.innerHTML = getPowerUpIcon(powerUp.type);
             icon.style.color = powerUp.properties.color;
-            
-            // Si un slot_index est fourni et correspond au slot actuel, on le vide
-            if (slot_index !== null && slot_index === index) {
-                // Ne pas ajouter l'icône car le power-up a été utilisé
-            } else {
-                slot.appendChild(icon);
-            }
+            slot.appendChild(icon);
         }
     });
 }

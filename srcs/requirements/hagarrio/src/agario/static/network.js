@@ -89,29 +89,35 @@ function connectWebSocket() {
 					// console.log('PLAYERS_UPDATE:', data);
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
-				case 'player_disconnected':
-					removePlayer(data.playerId);
-					console.log('Game stopped');
-					updateGameInfo(data);
-					break;
 				case 'power_up_spawned':
 					console.log('Power-up spawned:', data);
 					createNewPowerUp(data.power_up);
 					updatePowerUps(data.power_ups);
 					break;
 				case 'power_up_collected':
-					console.log('Power-up collected:', data);
-					updatePowerUps(data.power_ups);
-					if (data.yourPlayerId === getMyPlayerId()) {
-						updateHotbar(data.players[data.yourPlayerId].inventory);
+					updatePowerUps(data.power_ups);	
+					console.log('Power-up collected data:', {
+						player_id: data.player_id,
+						myPlayerId: getMyPlayerId(),
+						areEqual: data.player_id === getMyPlayerId()
+					});
+					if (data.player_id === getMyPlayerId()) {
+						console.log('ON EST OU LAAAAAAAAAAAAAAAAAAAAAAAAA');
 						displayPowerUpCollected(data.power_up, true);
+						updateHotbar(data.players[data.player_id].inventory);
 					}
 					break;
 				case 'power_up_used':
 					console.log('Power-up used:', data);
-					if (data.yourPlayerId === getMyPlayerId()) {
-						updateHotbar(data.players[data.yourPlayerId].inventory, data.slot_index);
+					if (data.player_id === getMyPlayerId()) {
+						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
 					}
+					break;
+				case 'player_disconnected':
+					console.log('Player disconnected:', data);
+					removePlayer(data.playerId);
+					console.log('Game stopped');
+					updateGameInfo(data);
 					break;
 				case 'game_finish':
 					console.log('Game ending:', data);

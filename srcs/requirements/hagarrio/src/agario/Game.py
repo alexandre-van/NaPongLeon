@@ -148,7 +148,7 @@ class Game:
 			'speed_multiplier': 1,
 			'invulnerable': False,
 			'score_multiplier': 1,
-			'inventory': []
+			'inventory': [None, None, None]
 		}
 		if len(self.players) == len(self.expected_players):
 			self.status = 'in_progress'
@@ -253,7 +253,8 @@ class Game:
 							'game_id': self.game_id,
 							'players': self.players,
 							'power_up': collected_power_up['power_up'],
-							'power_ups': self.power_ups
+							'power_ups': self.power_ups,
+							'player_id': player_id
 						})
 				# Gestion des power-ups
 				self.power_up_spawn_timer += delta_time
@@ -336,14 +337,20 @@ class Game:
 		player = self.players.get(player_id)
 		if not player:
 			return False
-		
+
 		for power_up in self.power_ups[:]:
 			if self.distance(player, power_up) < player['size']:
-				if len(player['inventory']) < 3:  # Vérifier si l'inventaire n'est pas plein
+				# Trouver le premier slot vide
+				empty_slot = next((i for i, slot in enumerate(player['inventory']) if slot is None), -1)
+				if empty_slot != -1:  # Si un slot vide est trouvé
 					collected_power_up = power_up
-					player['inventory'].append(power_up)
+					player['inventory'][empty_slot] = power_up
 					self.power_ups.remove(power_up)
-					return {'type': 'power_up_collected', 'power_up': collected_power_up}
+					return {
+						'type': 'power_up_collected',
+						'power_up': collected_power_up,
+						'player_id': player_id,
+					}
 		return False
 
 	def apply_power_up(self, player_id, power_up):
@@ -375,19 +382,22 @@ class Game:
 
 	def use_power_up(self, player_id, slot_index):
 		player = self.players.get(player_id)
-		if not player or slot_index >= len(player['inventory']):
+		if not player:
 			return False
 		
-		power_up = player['inventory'].pop(slot_index)
-		self.apply_power_up(player_id, power_up)
-		# Retourner les informations mises à jour pour le broadcast
-		return {
-			'type': 'power_up_used',
-			'game_id': self.game_id,
-			'players': self.players,
-			'slot_index': slot_index,
-			'power_up': power_up
-		}
+		try:
+			# Vérifier que l'index est valide et que le slot n'est pas vide
+			if 0 <= slot_index < len(player['inventory']) and player['inventory'][slot_index] is not None:
+				power_up = player['inventory'][slot_index]
+				# Vider le slot spécifique
+				player['inventory'][slot_index] = None
+				
+				# Appliquer l'effet du power-up
+				self.apply_power_up(player_id, power_up)
+				return True
+		except Exception as e:
+			logger.error(f"Error using power-up: {e}")
+		return False
 
 	def player_eat_other_player(self, player_id, other_player_id):
 		player = self.players.get(player_id)
