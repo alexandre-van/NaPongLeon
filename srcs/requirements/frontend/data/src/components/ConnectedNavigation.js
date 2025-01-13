@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.js';
 import { useState, useEffect, useRef } from 'react';
 import "./Navigation.css";
@@ -10,6 +10,7 @@ export default function ConnectedNavigation() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
