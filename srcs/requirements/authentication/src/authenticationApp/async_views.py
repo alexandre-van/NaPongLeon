@@ -2,6 +2,7 @@ from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpRe
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .services.FriendRequestService import FriendRequestService
+from django.core.exceptions import ValidationError
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
@@ -90,6 +91,11 @@ async def Setup2FAView(request):
     user = request.user
     if not user.is_authenticated:
         return HttpResponseJD('Authentication required', 401)
+    
+    if user:
+        username = user.username
+        if '_42' in username:
+            return HttpResponseJD('Users from 42 cannot have 2FA', 401)
 
     # Give QR code
     if request.method == 'GET':
@@ -178,7 +184,6 @@ async def UserNicknameView(request):
     except Exception as e:
             return HttpResponseBadRequestJD(f"{e}")
     return HttpResponseBadRequestJD('Anonymous user')
-
 
 async def UserAvatarView(request):
     from django.core.files.base import ContentFile

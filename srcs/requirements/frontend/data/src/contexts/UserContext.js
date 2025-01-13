@@ -6,6 +6,7 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
 	const [user, setUser] = useState(null);
+	const [notFrom42, setNotFrom42] = useState(true);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -22,6 +23,9 @@ export function UserProvider({ children }) {
 			setUser(response.data.user);
 			setIsAuthenticated(true);
 			setError(null);
+			if (response.data.user.username.includes('_42')) {
+				setNotFrom42(false);
+			}
 		} catch (err) {
 			setUser(null);
 			setIsAuthenticated(false);
@@ -70,6 +74,7 @@ export function UserProvider({ children }) {
 		await api.post('/authentication/auth/logout/');
 		setUser(null);
 		setIsAuthenticated(false);
+		setNotFrom42(true);
 		navigate('/login');
 		await checkAuth();
 	};
@@ -175,6 +180,7 @@ export function UserProvider({ children }) {
     login42,
     logout,
     checkAuth,
+	notFrom42,
     register,
     resetPassword,
     sendFriendRequest,

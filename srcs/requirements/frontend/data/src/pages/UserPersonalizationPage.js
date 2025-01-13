@@ -12,7 +12,8 @@ function UserPersonalizationPage() {
   const [activeSection, setActiveSection] = useState(null);
   const { updateAvatar } = useAvatarUpload();
   const { updateNickname } = useNicknameUpdate();
-  const { user } = useUser();
+  const { user, notFrom42 } = useUser();
+//  const [notFrom42, setNotFrom42] = useState(true);
 
   const handleSubmit = async (type, data) => {
     const { error, value } = data;
@@ -105,7 +106,7 @@ function UserPersonalizationPage() {
             >
               Change Avatar
             </button>
-            <button
+            {notFrom42 && <button
               onClick={() => setActiveSection('2fa')}
               style={{
                 display: "block",
@@ -119,7 +120,7 @@ function UserPersonalizationPage() {
               }}
             >
               2FA Settings
-            </button>
+            </button>}
             <Link
               to="/profile"
               style={{
