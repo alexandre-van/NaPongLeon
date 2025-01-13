@@ -150,9 +150,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		type_name = None
 		if self.username in self.room['players']:
 			type_name = 'player_disconnection'
+			del self.room['players'][self.username]
 		elif self.username in self.room['spectator']:
 			type_name = 'spectator_disconnection'
 		else:
+			return
+		if len(self.room['players']) < 1:
+			await self.tournament_end()
 			return
 		admin = self.room['admin']
 		groups = [admin['id'], self.tournament_id]

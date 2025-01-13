@@ -88,12 +88,8 @@ class CustomUser(AbstractUser):
         await self.asave()
 
     async def update_nickname(self, nickname):
-        if nickname == "":
-            self.nickname = None  # Supprime la valeur du champ
-        else:
-            self.nickname = nickname
+        self.nickname = nickname
         await self.asave()
-
     
     async def update_avatar_url(self, avatar_url):
         self.avatar = avatar_url
