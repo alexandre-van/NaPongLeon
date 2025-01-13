@@ -11,12 +11,12 @@ const useNicknameUpdate = () => {
     if (nickname.length > 30) {
       throw new Error('Nickname must be 30 characters or fewer');
     }*/
-
+    console.log("hey");
     const response = await api.patch('/authentication/users/me/nickname/', { nickname });
     if (response.status !== 200) {
       throw new Error("Could not update nickname");
     }
-    if (response.data && response.data.nickname) {
+    if (response.data) {
       updateUser({ nickname: response.data.nickname });
       updateNicknameVersion();
     } else {

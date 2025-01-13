@@ -355,7 +355,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 			if self.is_closed is False:
 				if event['state']['type'] == 'export_data':
-					event['state']['nickname'] = self.username
+					event['state']['username'] = self.username
+					event['state']['nickname'] = self.nickname
 				event['state']['game_private_id'] = self.game_private_id
 				await self.send(text_data=json.dumps(event['state']))
 				self.can_be_disconnected = True
