@@ -68,7 +68,7 @@ class Branch:
 			self.prev_branch.bench = team
 			if self.prev_branch.level > 0:
 				for branch in self.prev_branch.next_branches:
-					if branch and branch.match and match_status['aborted'] == branch.match.status and not branch.match.winner:
+					if branch.is_free():
 						self.prev_branch.ascend_team(team)
 		elif self.prev_branch.id != 0 and self.prev_branch.match is None \
 			and self.prev_branch.bench != team:
@@ -88,7 +88,13 @@ class Branch:
 
 
 	def is_free(self):
-		return self.match is None and self.bench is None
+		ret = (self.match and (match_status['aborted'] == self.match.status or match_status['finished'] == self.match.status) and not self.match.winner) or (\
+			self.match is None and self.bench is None)
+		if ret:
+			logger.debug(f"\n\n{self.id} is FREE\n\n")
+		else:
+			logger.debug(f"\n\n{self.id} is OCCUPED\n\n")
+		return ret
 
 	def export(self):
 		return {

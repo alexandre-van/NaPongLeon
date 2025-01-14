@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
 import { useUser } from '../contexts/UserContext.js';
@@ -6,7 +6,7 @@ import { useUser } from '../contexts/UserContext.js';
 export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const { register } = useUser();
+  const { register, isAuthenticated } = useUser();
   const navigate = useNavigate();
 
   const handleRegister = async (userData) => {
@@ -25,6 +25,12 @@ export function RegisterPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="login-page">

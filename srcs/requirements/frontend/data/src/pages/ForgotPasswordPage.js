@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Form, Alert } from 'react-bootstrap'; // Importation de Alert pour les messages
+import { Button, Form, Alert } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext.js';
+import { useNavigate } from 'react-router-dom';
 
 export default function ForcedPasswordPage() {
+  const { resetPassword, isAuthenticated, user } = useUser();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
   });
-  const { resetPassword } = useUser();
-  const [successMessage, setSuccessMessage] = useState(''); // Stocke le message de succès
-  const [loading, setLoading] = useState(false); // Gère l'état du chargement
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,10 +24,12 @@ export default function ForcedPasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setSuccessMessage('If this email address exists, you will receive the password reset instructions'); // Réinitialise le message de succès
+    setSuccessMessage(''); // Réinitialise le message de succès
+
+    const email = isAuthenticated ? user?.email : formData.email;
 
     try {
-      const response = await resetPassword(formData);
+      const response = await resetPassword({ email });
       if (response.message) {
         setSuccessMessage(response.message); // Définit le message de succès depuis la réponse
       }
@@ -38,20 +42,31 @@ export default function ForcedPasswordPage() {
 
   return (
     <div>
-      <Form onSubmit={handleSubmit}>
-        <Form.Label>Please submit your email to reset your password</Form.Label>
-        <Form.Control
-          type="email"
-          placeholder="Enter your email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Submitting...' : 'Reset my password'}
-        </Button>
-      </Form>
+      {isAuthenticated ? (
+        <>
+          <p>
+            Email: <strong>{user.email}</strong>
+          </p>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Sending email...' : 'Send reset email'}
+          </Button>
+        </>
+      ) : (
+        <Form onSubmit={handleSubmit}>
+          <Form.Label>Please submit your email to reset your password</Form.Label>
+          <Form.Control
+            type="email"
+            placeholder="Enter your email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Submitting...' : 'Reset my password'}
+          </Button>
+        </Form>
+      )}
 
       <Link to="/login">
         Go back to login page

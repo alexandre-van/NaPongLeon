@@ -27,7 +27,7 @@ export default function GameModeSelector() {
     };
 
     const startMatchmaking = () => {
-        const state = { gameMode, modifiers };
+        const state = { gameMode, modifiers, hasCompetitors, checkedBox };
         if (hasCompetitors) state.number = checkedBox; // Ajouter le nombre de compétiteurs si nécessaire
         navigate("/pong/matchmaking", { state });
     };

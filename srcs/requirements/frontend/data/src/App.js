@@ -62,6 +62,7 @@ function AppContent() {
           <Route path='login/success' element={<Auth42Success />} />
           <Route path="profile" element={<Profile/>}/>
           <Route path="social-network" element={<SocialPage />} />
+          <Route path="reset-password" element={<ForgotPasswordPage />}/>
           <Route path="*" element={<HomePage />} />
         </Route>
 

@@ -17,9 +17,11 @@ const useAvatarUpload = () => {
       }
     });
 
-    if (uploadResponse.data.message !== 'Avatar uploaded successfully') {
-      throw new Error("Failed to update avatar");
+    if (!uploadResponse || !uploadResponse.data || uploadResponse.data.message !== 'Avatar uploaded successfully') {
+      const errorMessage = uploadResponse?.data?.error || "Failed to update avatar";
+      throw new Error(errorMessage);
     }
+    
 
     const avatarResponse = await api.get('/authentication/users/me/avatar/');
     if (avatarResponse.data && avatarResponse.data.avatar_url) {

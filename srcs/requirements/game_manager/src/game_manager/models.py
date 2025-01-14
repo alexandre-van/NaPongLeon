@@ -88,7 +88,7 @@ class GameInstance(models.Model):
 
 	game_id = models.CharField(max_length=100, unique=True)
 	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
-	winner = models.CharField(max_length=20, blank=True, null=True)
+	winner = models.CharField(max_length=42, blank=True, null=True)
 	game_date = models.DateTimeField(default=timezone.now)
 	game_mode = models.CharField(max_length=30)
 
@@ -172,14 +172,14 @@ class GameInstance(models.Model):
 class GamePlayer(models.Model):
 	game = models.ForeignKey(GameInstance, on_delete=models.CASCADE)
 	player = models.ForeignKey(Player, on_delete=models.CASCADE)
-	team_name = models.CharField(max_length=20)
+	team_name = models.CharField(max_length=42)
 
 	class Meta:
 		unique_together = ('game', 'player')
 
 class GameScore(models.Model):
 	game = models.ForeignKey(GameInstance, on_delete=models.CASCADE)
-	team_name = models.CharField(max_length=20)
+	team_name = models.CharField(max_length=42)
 	score = models.IntegerField(default=0)
 
 	class Meta:
