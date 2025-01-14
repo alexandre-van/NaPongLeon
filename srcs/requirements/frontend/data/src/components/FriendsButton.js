@@ -6,7 +6,7 @@ import api from '../services/api.js';
 
 const FriendsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
+  const { friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [friendStatuses, setFriendStatuses] = useState({});
   const navigate = useNavigate();

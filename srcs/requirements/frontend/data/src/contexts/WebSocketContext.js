@@ -15,10 +15,9 @@ const getWindowURLinfo = () => {
 };
 
 export const WebSocketProvider = ({ children }) => {
-//  const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { user, isAuthenticated, logout, updateUser, friends, setFriends, checkFriends } = useUser();
+  const { user, isAuthenticated, updateUser, friends, setFriends, checkFriends } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -112,8 +111,6 @@ export const WebSocketProvider = ({ children }) => {
               checkFriends();
             }, 0);
             break;
-
-
 
           case 'notification':
             console.log('notification_type = ', data.notification_type);
