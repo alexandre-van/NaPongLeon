@@ -21,7 +21,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 f"user_{self.user.id}",
                 self.channel_name
             )
-            self.update_user_status(True)
+            await self.update_user_status(True)
             await self.send_status_friends(True)
             notifications = await Notification.get_all_notifications(self.user)
             for notification in notifications:
@@ -39,7 +39,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
         try:
             if self.user and self.user.is_authenticated:
-                self.update_user_status(False)
+                await self.update_user_status(False)
                 await self.send_status_friends(False)
 
             @sync_to_async

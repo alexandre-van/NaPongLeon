@@ -50,7 +50,6 @@ function AppContent() {
 
   return (
       <Routes>
-        <Route path="reset-password/:uid/:token" element={<ResetPasswordPage />}/>
         <Route element={isAuthenticated ? <ConnectedLayout /> : <LoginPage />} >
           <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
           <Route />
@@ -68,7 +67,11 @@ function AppContent() {
           <Route path="reset-password" element={<ForgotPasswordPage />}/>
           <Route path="*" element={<HomePage />} />
         </Route>
-
+        <Route element={isAuthenticated ? <ConnectedLayout /> : <ResetPasswordPage />} >
+          <Route index element={<HomePage isAuthenticated={isAuthenticated} user={user} />} />
+          <Route />
+          <Route path="reset-password/:uid/:token" element={<ResetPasswordPage />}/>
+        </Route>
         <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />} >
           <Route element={<ConnectedLayout />} >
             <Route path="formations" element={<Formations />} />
