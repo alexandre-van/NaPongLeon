@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import api from "../services/api.js"; // Service API
 import { useUser } from '../contexts/UserContext.js';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import FriendsList from '../components/FriendsList.js';
 
 export default function Formations() {
+    const navigate = useNavigate();
     const { user, logout } = useUser();
     const [playerStatus, setPlayerStatus] = useState('Loading...'); // État pour le statut du joueur
     const [gameMode, setGameMode] = useState(null); // État pour le mode de jeu
@@ -151,7 +152,7 @@ export default function Formations() {
 
     {/* Titre Personalize Profile à l'extérieur */}
     <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button className="Profilebutton personalize" onClick={() => window.location.href = '/user-personalization'}>
+        <button className="Profilebutton personalize" onClick={() => navigate('/user-personalization')}>
             Personalize Profile
         </button>
     </div>

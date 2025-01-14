@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext.js';
@@ -8,7 +8,7 @@ export default function Login2FAPage() {
     const [code, setCode] = useState('');
     const [error, setError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const { checkAuth } = useUser();
+    const { checkAuth, isAuthenticated } = useUser();
     const navigate = useNavigate();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -37,6 +37,12 @@ export default function Login2FAPage() {
             console.log('Error:', error);
         }
     };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+          navigate('/');
+        }
+      }, [isAuthenticated, navigate]);
 
     return (
         <div>

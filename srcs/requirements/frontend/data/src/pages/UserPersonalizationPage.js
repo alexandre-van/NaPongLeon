@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AvatarUpload from '../components/AvatarUpload';
 import NicknameForm from '../components/NicknameForm';
 import Setup2FA from '../components/Setup2FA';
+import ResetPasswordPage from './ForgotPasswordPage';
 import useAvatarUpload from '../hooks/useAvatarUpload';
 import useNicknameUpdate from '../hooks/useNicknameUpdate';
 import { useUser } from '../contexts/UserContext';
@@ -13,6 +14,7 @@ function UserPersonalizationPage() {
   const { updateAvatar } = useAvatarUpload();
   const { updateNickname } = useNicknameUpdate();
   const { user, notFrom42 } = useUser();
+  const navigate = useNavigate();
 
   const handleSubmit = async (type, data) => {
     const { error, value } = data;
@@ -26,7 +28,13 @@ function UserPersonalizationPage() {
       if (type === 'avatar') await updateAvatar(value);
       setError(null);
     } catch (updateError) {
-      setError(updateError.response.data.errors[0] || 'An error occurred');
+      const errorMessage = 
+        updateError.response?.data?.errors?.[0] || 
+        updateError.response?.data?.error || 
+        updateError.message || 
+        'An unknown error occurred';
+    
+      setError(errorMessage);
     }
   };
 
@@ -38,6 +46,8 @@ function UserPersonalizationPage() {
         return 'Change Avatar';
       case '2fa':
         return '2FA Settings';
+      case 'password':
+         return 'Reset password';
       default:
         return 'Personalize Profile';
     }
@@ -105,6 +115,21 @@ function UserPersonalizationPage() {
             >
               Change Avatar
             </button>
+            {<button
+              onClick={() => setActiveSection('password')}
+              style={{
+                display: "block",
+                margin: "10px auto",
+                backgroundColor: "#FF6347",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                cursor: "pointer",
+              }}
+            >
+              Reset Password
+            </button>}
             {notFrom42 && <button
               onClick={() => setActiveSection('2fa')}
               style={{
@@ -120,8 +145,8 @@ function UserPersonalizationPage() {
             >
               2FA Settings
             </button>}
-            <Link
-              to="/profile"
+            <button
+              onClick={() => navigate('/profile')}
               style={{
                 display: "block",
                 margin: "10px auto",
@@ -135,7 +160,7 @@ function UserPersonalizationPage() {
               }}
             >
               Return
-            </Link>
+            </button>
           </div>
         </>
       );
@@ -151,6 +176,9 @@ function UserPersonalizationPage() {
         )}
         {activeSection === '2fa' && (
           <Setup2FA onError={setError} />
+        )}
+        {activeSection === 'password' && (
+          <ResetPasswordPage onError={setError} />
         )}
 
         <button
