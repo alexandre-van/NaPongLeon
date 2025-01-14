@@ -126,14 +126,6 @@ export const WebSocketProvider = ({ children }) => {
               return newNotifs;
             });
             break;
-          case 'disconnected_from_server':
-            try {
-              logout();
-              navigate('/forced-logout');
-            } catch (err) {
-              console.log('Failed Required Disconnect from the server from this browser');
-            }
-            break;
           default:
             console.log('Unknown message type: ', data.type);
         }

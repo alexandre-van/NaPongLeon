@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Form, Alert } from 'react-bootstrap'; // Importation de Alert pour les messages
 import { useUser } from '../contexts/UserContext.js';
 
@@ -51,6 +52,10 @@ export default function ForcedPasswordPage() {
           {loading ? 'Submitting...' : 'Reset my password'}
         </Button>
       </Form>
+
+      <Link to="/login">
+        Go back to login page
+      </Link>
 
       {/* Affichage du message de succès */}
       {successMessage && (

@@ -5,12 +5,9 @@ import { useUser, UserProvider } from './contexts/UserContext.js';
 import { WebSocketProvider } from './contexts/WebSocketContext.js';
 
 import ConnectedLayout from './layouts/ConnectedLayout.js';
-import DefaultLayout from './layouts/DefaultLayout.js';
-import SpecialLayout from './layouts/SpecialLayout.js';
 import RedirectOnRefresh from './RedirectOnRefresh';
 
 import HomePage from './pages/HomePage.js';
-import ForcedLogoutPage from './pages/ForcedLogoutPage.js';
 import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
 import GameHistory from './pages/GameHistoryPage.js';
@@ -79,7 +76,6 @@ function AppContent() {
           <Route path="login" element={<LoginPage />} />
           <Route path="login/2FA" element={<Login2FAPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />}/>
-          <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="register-success" element={<RegisterSuccessPage />} />
 
