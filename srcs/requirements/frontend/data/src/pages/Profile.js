@@ -36,7 +36,7 @@ export default function Formations() {
 
         // Nettoyage de l'intervalle à la fin du composant
         return () => clearInterval(intervalId);
-    }, [user.username]);
+    }, []);
 
     // Fonction pour déterminer la couleur du statut
     const getStatusColor = (status) => {

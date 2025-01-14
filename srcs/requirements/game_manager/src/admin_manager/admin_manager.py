@@ -110,8 +110,10 @@ class AdminManager:
 			logger.debug("game instance is None")
 			return
 		with transaction.atomic():
-			game_instance.update_score(win_team, score)
-			game_instance.set_winner(win_team)
+			if score:
+				game_instance.update_score(win_team, score)
+			if win_team:
+				game_instance.set_winner(win_team)
 
 	def upadte_game_status(self, game_id, users, status):
 		self.update_users_status_with_game_status(users, status)

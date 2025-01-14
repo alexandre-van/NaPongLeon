@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import LeaveButton from "../components/LeaveButton.js";
 import { useEffect } from "react";
 
 
@@ -63,6 +64,7 @@ export default function InGame() {
     return (
         <div>
             <h1 className="wait">Wait for the game to load</h1>
+            <LeaveButton />
         </div>
     );
 }

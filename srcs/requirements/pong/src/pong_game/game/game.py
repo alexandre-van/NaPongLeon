@@ -160,3 +160,11 @@ class Game:
 				'team': str(scoring_side),
 			}
 		
+	def give_up(self, win_team):
+		return {
+			'type': 'game_end',
+			'reason': 'The ' + str(win_team) + ' side wins !',
+			'score': str(self.score[win_team]),
+			'team': str(win_team),
+		} 
+		

@@ -157,19 +157,26 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if self.username in self.room['players']:
 			admin = self.room['admin']
 			logger.debug(f"{self.username} as been disconnected")
-			teams = self.room['game_instance'].players_in_side
-			score = self.room['game_instance'].score
-			opponent_team = None
-			for teamname in teams:
-				logger.debug(f'team check : {self.username} is in {teamname}({teams[teamname]}) ?')
-				if self.username not in list(player.username for player in teams[teamname]):
-					opponent_team = teamname
-					logger.debug(f'opponant team : {self.username} in {teamname}.')
-			
-			logger.debug(f"{opponent_team}: {score[opponent_team]}")
-			if self.room['status'] != 'aborted':
-				game_manager.update_status('aborted', self.game_id)
-				await self.send_game_finished(opponent_team, score[opponent_team], 'aborted')
+			if self.room['game_instance']:
+				teams = self.room['game_instance'].players_in_side
+				score = self.room['game_instance'].score
+				opponent_team = None
+				for teamname in teams:
+					logger.debug(f'team check : {self.username} is in {teamname}({teams[teamname]}) ?')
+					if self.username not in list(player.username for player in teams[teamname]):
+						opponent_team = teamname
+						logger.debug(f'opponant team : {self.username} in {teamname}.')
+						break
+				logger.debug(f"{opponent_team}: {score[opponent_team]}")
+				await self.channel_layer.group_send( self.game_id,
+					{
+						'type': 'send_state',
+						'state': self.room['game_instance'].give_up(opponent_team)
+					}
+				)
+				if self.room['status'] != 'aborted':
+					game_manager.update_status('aborted', self.game_id)
+					await self.send_game_finished(opponent_team, score[opponent_team], 'aborted')
 			await self.game_end()
 		else:
 			if self.username in self.room['spectator']:
@@ -336,9 +343,65 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	# STATUS_LOOP
 	async def status_loop(self):
-		while self.room['status'] != 'aborted':
+		while self.room['status'] != 'aborted' and self.room['status'] != 'finished':
+			logger.debug("HELLO")
 			await asyncio.sleep(1)
+
+		if self.room['status'] == 'aborted' and self.room['teamlist']:
+			logger.debug(f"THE JUDGEMENT")
+
+			# Récupérer les équipes et les joueurs
+			teamlist = self.room['teamlist']
+			players = self.room['players']
+
+			# Initialisation des variables pour suivre les résultats
+			team_absents = {"left": 0, "right": 0}
+			team_presents_ready = {"left": 0, "right": 0}
+
+			# Calcul du nombre de joueurs absents et présents prêts pour chaque équipe
+			for idx, team_players in enumerate(teamlist):
+				team_name = "left" if idx == 0 else "right"
+				absents = 0
+				presents_ready = 0
+				logger.debug(f"{team_name} check :")
+				for player in team_players:
+					if player not in players:  # Joueur absent
+						logger.debug(f"{player} is absent")
+						absents += 1
+					else:  # Joueur présent
+						consumer = players[player]
+						if consumer.ready:  # Joueur présent et prêt
+							logger.debug(f"{player} is ready")
+							presents_ready += 1
+						else:
+							logger.debug(f"{player} not ready")
+
+				team_absents[team_name] = absents
+				team_presents_ready[team_name] = presents_ready
+
+			# Déterminer l'équipe gagnante en fonction des absents
+			min_absents = min(team_absents.values())
+			teams_with_min_absents = [team for team, count in team_absents.items() if count == min_absents]
+
+			if len(teams_with_min_absents) == 1:  # Une seule équipe a le moins d'absents
+				winning_team = teams_with_min_absents[0]
+			else:  # Égalité dans les absents, vérifier les joueurs prêts
+				max_ready = max(team_presents_ready.values())
+				teams_with_max_ready = [team for team, count in team_presents_ready.items() if count == max_ready]
+
+				if len(teams_with_max_ready) == 1:  # Une seule équipe a le plus de joueurs prêts
+					winning_team = teams_with_max_ready[0]
+				else:  # Égalité dans les joueurs prêts
+					winning_team = None
+
+			# Annoncer le résultat
+			if winning_team:
+				logger.debug(f"win_team = {winning_team}")
+				await self.send_game_finished(winning_team, None, 'aborted')
+		logger.debug("orf")
 		await self.game_end()
+
+
 
 	# UTILS
 
