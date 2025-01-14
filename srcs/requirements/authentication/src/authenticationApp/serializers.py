@@ -12,6 +12,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('id', 'username', 'password', 'email', 'avatar_url', 'nickname', 'friends', 'pending_friend_requests')
         extra_kwargs = {
+            'username': {
+                'validators': [
+                    UniqueValidator(
+                        queryset=CustomUser.objects.all(),
+                        message='This username is already taken',
+                        lookup='iexact'
+                    )
+                ]
+            },
             'password': {
                 'write_only': True,
                 'error_messages': {
@@ -28,11 +37,19 @@ class UserSerializer(serializers.ModelSerializer):
                 ]
             },
             'nickname': {
-                'max_length': 30,
+                'max_length': 20,
                 'required': False,
                 'error_messages': {
-                    'max_length': 'Nickname must be 30 characters or less'
-                }
+                    'max_length': 'Nickname must be 20 characters or less'
+                },
+                'validators': [
+                    UniqueValidator(
+                        queryset=CustomUser.objects.all(),
+                        message='This nickname is already taken',
+                        lookup='iexact'
+                    )
+                ],
+                'allow_null': True
             }
         }
 
@@ -44,6 +61,22 @@ class UserSerializer(serializers.ModelSerializer):
         special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
         if special_chars.search(value):
             raise serializers.ValidationError("Username cannot contain special characters")
+        
+        if CustomUser.objects.filter(nickname__iexact=value).exists():
+            raise serializers.ValidationError("This value is already used as a nickname")
+
+        return value
+
+    def validate_nickname(self, value):
+        if value is "":
+            raise serializers.ValidationError("Nickname cannot be nothing if you choose it")
+        
+        if CustomUser.objects.filter(nickname__iexact=value).exists():
+            raise serializers.ValidationError("This value is already used as a nickname")
+        
+        if CustomUser.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("This value is already used as a username")
+
         return value
 
     def validate_password(self, value):
@@ -77,7 +110,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_friends(self, obj):
         return obj.friends
-#        return [friend.username for friend in obj.get_friends()] # get_friends from models.py
 
     def get_pending_friend_requests(self, obj):
         return [user.username for user in obj.get_pending_friend_requests()] # get_pending_friend_requests from models.py

@@ -8,8 +8,8 @@ const useNicknameUpdate = () => {
 /*    if (typeof nickname !== 'string') {
       throw new Error('Nickname must be a string');
     }
-    if (nickname.length > 30) {
-      throw new Error('Nickname must be 30 characters or fewer');
+    if (nickname.length > 20) {
+      throw new Error('Nickname must be 20 characters or fewer');
     }*/
     console.log("hey");
     const response = await api.patch('/authentication/users/me/nickname/', { nickname });

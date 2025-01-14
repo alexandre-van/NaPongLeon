@@ -13,7 +13,6 @@ function UserPersonalizationPage() {
   const { updateAvatar } = useAvatarUpload();
   const { updateNickname } = useNicknameUpdate();
   const { user, notFrom42 } = useUser();
-//  const [notFrom42, setNotFrom42] = useState(true);
 
   const handleSubmit = async (type, data) => {
     const { error, value } = data;
@@ -27,7 +26,7 @@ function UserPersonalizationPage() {
       if (type === 'avatar') await updateAvatar(value);
       setError(null);
     } catch (updateError) {
-      setError(updateError.message || 'An error occurred');
+      setError(updateError.response.data.errors[0] || 'An error occurred');
     }
   };
 
