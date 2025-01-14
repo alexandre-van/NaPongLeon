@@ -18,7 +18,6 @@ class Tournament_manager:
 		logger.debug(f"Modifiers: {modifiers}")
 		logger.debug(f"Players list: {players_list}")
 		logger.debug(f"Special ID: {special_id}")
-	
 		if game_mode not in game_modes_data:
 			logger.error(f"Error: Invalid game mode '{game_mode}'. Available modes: {list(game_modes_data.keys())}")
 			return None

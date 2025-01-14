@@ -2,7 +2,6 @@ from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpRe
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .services.FriendRequestService import FriendRequestService
-from django.core.exceptions import ValidationError
 #from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
@@ -116,7 +115,6 @@ async def Setup2FAView(request):
     # Register device
     if request.method == 'POST':
         try:
-            from django.db import transaction
             from django_otp.plugins.otp_totp.models import TOTPDevice
 
             data = json.loads(request.body)
@@ -127,14 +125,13 @@ async def Setup2FAView(request):
 
             @sync_to_async
             def verify_token():
-                with transaction.atomic():
-                    devices = TOTPDevice.objects.filter(user=user, confirmed=False)
-                    if devices:
-                        device = devices[0]
-                        if device.verify_token(token):
-                            device.confirmed = True
-                            device.save()
-                            return True
+                devices = TOTPDevice.objects.filter(user=user, confirmed=False)
+                if devices:
+                    device = devices[0]
+                    if device.verify_token(token):
+                        device.confirmed = True
+                        device.save()
+                        return True
                 return False
 
             if await verify_token():
@@ -228,7 +225,6 @@ async def UserAvatarView(request):
             # Check if file already exists, if true, deletes it and saves the new one
             if user.avatar:
                 await sync_to_async(default_storage.delete)(user.avatar.name)
-
             new_path = await sync_to_async(default_storage.save)(filepath, ContentFile(buffer.getvalue()))
             await user.update_avatar_url(new_path)
 
