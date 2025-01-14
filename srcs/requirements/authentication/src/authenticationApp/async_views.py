@@ -6,6 +6,8 @@ from .services.FriendRequestService import FriendRequestService
 from asgiref.sync import sync_to_async
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import AccessToken
+from .serializers import UserSerializer
+from rest_framework import serializers
 
 # for LoginView and Setup2FAView
 from django_otp import user_has_device
@@ -169,6 +171,9 @@ async def UserNicknameView(request):
         data = json.loads(request.body)
         nickname = data.get('nickname')
 
+        serializer = UserSerializer()
+        await database_sync_to_async(serializer.validate_nickname)(nickname)
+
         user = request.user
         if user.is_authenticated:
             await user.update_nickname(nickname)
@@ -178,6 +183,8 @@ async def UserNicknameView(request):
             return HttpResponseJD('Nickname updated', 200, data)
     except json.JSONDecodeError:
         return HttpResponseBadRequestJD('Invalid JSON')
+    except serializers.ValidationError as e:
+        return HttpResponseJD('Invalid Nickname', 400, {'errors': e.detail})
     except Exception as e:
             return HttpResponseBadRequestJD(f"{e}")
     return HttpResponseBadRequestJD('Anonymous user')
@@ -467,8 +474,6 @@ async def PasswordResetView(request):
 async def PasswordResetConfirmationView(request, uidb64, token):
     from django.contrib.auth.tokens import default_token_generator
     from django.utils.http import urlsafe_base64_decode
-    from .serializers import UserSerializer
-    from rest_framework import serializers
 
     try:
         uid = urlsafe_base64_decode(uidb64).decode()

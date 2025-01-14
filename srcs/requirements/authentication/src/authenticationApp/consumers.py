@@ -3,29 +3,31 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser, Notification
+from django.db import transaction
 import logging
+import asyncio
 logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
+    _status_lock = asyncio.Lock()
     async def connect(self):
         self.user = self.scope.get("user", None)
         if not self.user:
             await self.close()
         else:
 
+            await self.accept()
             await self.channel_layer.group_add(
                 f"user_{self.user.id}",
                 self.channel_name
             )
-            await self.accept()
-            await self.user.update_user_status(True)
+            self.update_user_status(True)
             await self.send_status_friends(True)
-            logger.debug('Connection accepted')
-            # Récupérer toutes les notifications et les envoyer
             notifications = await Notification.get_all_notifications(self.user)
             for notification in notifications:
                 logger.debug(f"notification: {notification}")
                 await self.send(text_data=json.dumps(notification.to_dict()))
+            logger.debug('Connection accepted')
 
 
 
@@ -37,7 +39,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
         try:
             if self.user and self.user.is_authenticated:
-                await self.user.update_user_status(False)
+                self.update_user_status(False)
                 await self.send_status_friends(False)
 
             @sync_to_async
@@ -50,8 +52,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             result = await delete_unconfirmed_2fa_auth(self.user)
         except Exception as e:
             logger.error(f"Error during disconnect: {str(e)}")
-
-
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -170,6 +170,10 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                 'message': str(e),
                 'success': False
             }))
+
+    @database_sync_to_async
+    def update_user_status(self, is_online):
+        self.user.update_user_status(is_online)
 
     @database_sync_to_async
     def _accept_friend_request_and_create_notification(self, from_user_id):

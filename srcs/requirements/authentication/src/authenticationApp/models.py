@@ -7,6 +7,7 @@ from asgiref.sync import sync_to_async
 from django.templatetags.static import static
 from django.db import transaction
 from django.core.cache import cache
+import asyncio
 import os
 
 import logging
@@ -16,6 +17,12 @@ logger = logging.getLogger(__name__)
 def user_avatar_path(instance, filename):
 	return f'users/{instance.id}/avatar/{filename}'
 
+def validate_unique_username_nickname(value):
+	if CustomUser.objects.filter(
+		Q(username__iexact=value) | Q(nickname__iexact=value)
+	).exists():
+		raise ValidationError('This value is already used as a username or as a nickname.')
+
 class FriendshipStatus(models.TextChoices):
 	PENDING = 'PE', 'Pending'
 	ACCEPTED = 'AC', 'Accepted'
@@ -24,12 +31,20 @@ class CustomUser(AbstractUser):
 	username=models.CharField(
 		max_length=20,
 		unique=True,
-#        error_messages={
-#            'unique': 'A user with this username already exists',
-#        }
+		validators=[validate_unique_username_nickname]
 	)
-	avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True)
-	nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
+	nickname = models.CharField(
+		max_length=20,
+		null=True,
+		blank=True,
+		validators=[validate_unique_username_nickname]
+	)
+	avatar = models.ImageField(
+		upload_to=user_avatar_path,
+		null=True,
+		blank=True
+	)
+	AI = models.BooleanField(default=False)
 	friends = models.ManyToManyField(
 		'self',
 		through='Friendship',
@@ -49,7 +64,6 @@ class CustomUser(AbstractUser):
 	def friends(self):
 		cache_key = f'user_friends_{self.id}'
 		friends = cache.get(cache_key)
-		(f"friends 1 ={friends}")
 
 		if friends is None:
 			friends_as_from = self.friendships_sent.filter(status=FriendshipStatus.ACCEPTED).values_list('to_user', flat=True)
@@ -67,7 +81,20 @@ class CustomUser(AbstractUser):
 			cache.set(cache_key, friends, 300)
 		return friends
 
+	def clean(self):
+		super().clean()
+		if self.username and CustomUser.objects.exclude(pk=self.pk).filter(
+			nickname__iexact=self.username
+		).exists():
+			raise ValidationError({'username': 'This username is already used as a nickname.'})
+		
+		if self.nickname and CustomUser.objects.exclude(pk=self.pk).filter(
+			username__iexact=self.nickname
+		).exists():
+			raise ValidationError({'nickname': 'This nickname is already used as a username.'})
+
 	def save(self, *args, **kwargs):
+		self.full_clean()
 		if self.pk:
 			try:
 				old_instance = CustomUser.objects.get(pk=self.pk)
@@ -83,10 +110,10 @@ class CustomUser(AbstractUser):
 	async def asave(self, *args, **kwargs):
 		await sync_to_async(super().save)(*args, **kwargs)
 
-	async def update_user_status(self, is_online):
-		async with transaction.atomic():
-			self.is_online = is_online
-			await self.asave()
+
+	def update_user_status(self, is_online):
+		self.is_online = is_online
+		self.save()
 
 	async def update_nickname(self, nickname):
 		self.nickname = nickname
