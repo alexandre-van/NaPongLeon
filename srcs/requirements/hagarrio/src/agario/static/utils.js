@@ -34,15 +34,22 @@ export function updateGameInfo(data) {
     gameList.innerHTML = '';
 
     const games = Array.isArray(data.games) ? data.games : [];
+    console.log('games:', games);
 
-    if (games.length === 0) {
+    // Check if all games are finished/aborted
+    const hasActiveGames = games.some(game => 
+        game.status !== 'finished' && game.status !== 'aborted'
+    );
+
+    if (!hasActiveGames) {
         const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="3" style="text-align: center;">No games available</td>';
+        row.innerHTML = '<td colspan="2" style="text-align: center;">No games available</td>';
         gameList.appendChild(row);
         return;
     }
 
-    games.forEach((game, index) => {
+    let index = 0;
+    games.forEach((game) => {
         // Ne pas afficher les parties terminées
         if (game.status === 'finished' || game.status === 'aborted') return;
         
@@ -50,24 +57,11 @@ export function updateGameInfo(data) {
         const playerNames = Array.isArray(game.players) ? game.players.map(player => player.name).join(', ') : '';
         
         row.innerHTML = `
-            <td>Game ${index + 1}</td>
+            <td>${index + 1} - Game 1v1 :</td>
             <td>${playerNames}</td>
-            <td>
-                <button class="joinGameBtn" data-gameid="${game.gameId}">
-                    ${game.status === 'custom' ? 'Join' : 'Watch'}
-                </button>
-            </td>
         `;
         gameList.appendChild(row);
-    });
-
-    console.log('Apres Game Info');
-    // Ajouter les écouteurs d'événements pour les boutons
-    document.querySelectorAll('.joinGameBtn').forEach(button => {
-        button.addEventListener('click', () => {
-            const gameId = button.dataset.gameid;
-            joinGame(gameId);
-        });
+        index++;
     });
 }
 

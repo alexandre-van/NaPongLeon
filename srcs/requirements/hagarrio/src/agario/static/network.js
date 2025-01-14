@@ -54,14 +54,14 @@ function connectWebSocket() {
 			const data = JSON.parse(e.data);
 			switch (data.type) {
 				case 'waiting_room':
-					// console.log('Waiting room:', data);
+					console.log('Waiting room:', data);
+					updateGameInfo(data);
 					document.getElementById('waitingRoom').style.display = 'block';
 					document.getElementById('gameContainer').style.display = 'none';
-					updateGameInfo(data);
 					document.getElementById('gameInfoContainer').style.display = 'block';
 					break;
 				case 'update_waiting_room':
-					// console.log('Update waiting room:', data);
+					console.log('Update waiting room:', data);
 					updateGameInfo(data);
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
@@ -96,37 +96,32 @@ function connectWebSocket() {
 					break;
 				case 'power_up_collected':
 					updatePowerUps(data.power_ups);	
-					// console.log('Power-up collected data:', {
-					// 	player_id: data.player_id,
-					// 	myPlayerId: getMyPlayerId(),
-					// 	areEqual: data.player_id === getMyPlayerId()
-					// });
 					if (data.player_id === getMyPlayerId()) {
 						displayPowerUpCollected(data.power_up, true);
 						updateHotbar(data.players[data.player_id].inventory);
 					}
 					break;
 				case 'power_up_used':
-					// console.log('Power-up used:', data);
 					if (data.player_id === getMyPlayerId()) {
 						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
 					}
 					break;
 				case 'player_disconnected':
+					console.log('Player disconnected:', data);
 					if (data.playerId) {
+						console.log('Removing player:', data.playerId);
 						removePlayer(data.playerId);
 					}
 					if (data.games) {
-						// Mise à jour de la liste des jeux dans la waiting room
+						console.log('Updating game info:', data);
 						updateGameInfo(data);
 					}
 					break;
-
 				case 'error':
-					// console.log('Error:', data.message);
+					console.log('Error:', data.message);
 					break;
 				case 'game_over':
-					// console.log('Game over:', data.loser.name);
+					console.log('Game over:', data.loser.name);
 					stopGameLoop();
 					showGameEndScreen({
 						winner: false,
@@ -136,7 +131,7 @@ function connectWebSocket() {
 					resetGameConnection();
 					break;
 				case 'victory':
-					// console.log('Victory:', data.winner.name);
+					console.log('Victory:', data.winner.name);
 					stopGameLoop();
 					showGameEndScreen({
 						winner: true,

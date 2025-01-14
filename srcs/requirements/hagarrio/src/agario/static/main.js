@@ -64,6 +64,7 @@ export function startGameLoop(initialGameState) {
     initFood(initialGameState.food);
     initUI();
     initInput();
+    console.log("yourPlayerId:", initialGameState.yourPlayerId);
     updatePlayers(initialGameState.players, initialGameState.yourPlayerId);
     initPlayers();
     createHotbar();

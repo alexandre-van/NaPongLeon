@@ -111,7 +111,6 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
             outline: none;
             position: absolute;
             top: 50%;
@@ -122,11 +121,13 @@
         #joinMatchmakingBtn {
             background-color: #4CAF50;
             display: block;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
 
         #leaveMatchmakingBtn {
             background-color: #f44336;
             display: none;
+            box-shadow: 0 0 10px rgba(211, 47, 47, 0.5);
         }
 
         #joinMatchmakingBtn:hover {
@@ -186,22 +187,42 @@
             flex-direction: column;
             align-items: center;
             width: 80%;
-            max-width: 600px;
+            max-width: 700px;
         }
 
         .gameList {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            margin-top: 10px;
             background-color: rgba(46, 43, 43, 0.432);
-            border-radius: 10px;
+            border-radius: 15px;
+            overflow: hidden;
         }
 
         .gameList thead {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.3);
+            /* border-bottom: 1px solid rgb(255, 255, 255); */
+        }
+
+        .gameList thead tr:first-child {
+            border-radius: 15px 15px 0 0;
+        }
+
+        .gameList thead th:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        .gameList thead th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        .gameList th {
+            padding: 12px;
+            text-align: center;
+            color: #ffffff;
+            background-color: rgba(7, 53, 1, 0.356);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.212);
         }
 
         .gameList tbody {
@@ -218,18 +239,12 @@
 
         .gameList th, .gameList td {
             padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            width: 33.33%;
-        }
-
-        .gameList th {
-            background-color: rgba(0, 0, 0, 0.3);
-            color: #4CAF50;
+            text-align: center;
+            width: 50%;
         }
 
         .gameList tr:hover {
-            background-color: rgba(76, 175, 80, 0.1);
+            background-color: rgba(76, 212, 81, 0.1);
         }
 
         /* Hotbar */
@@ -438,7 +453,6 @@
                     <tr>
                         <th>Game_id</th>
                         <th>Players</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="gameList">
@@ -463,13 +477,6 @@
             </div>
         </div>
     </div>
-    <!-- <script>
-        window.ENV = {
-            BASE_URL: '{{ BASE_URL|safe }}',
-            WS_URL: '{{ WS_URL|safe }}',
-            DEBUG: {{ DEBUG|yesno:"true,false" }}
-        }
-    </script> -->
     <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>

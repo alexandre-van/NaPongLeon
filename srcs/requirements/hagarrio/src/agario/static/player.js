@@ -102,7 +102,7 @@ export function createPlayerSprite(player) {
         transparent: true,
         depthTest: false,
         depthWrite: false,
-        renderOrder: 0
+        // renderOrder: 0
     });
 
     const playerSprite = new THREE.Sprite(playerMaterial);
@@ -153,7 +153,7 @@ function createTextSprite(player) {
         transparent: true,
         depthTest: false,
         depthWrite: false,
-        renderOrder: 1
+        // renderOrder: 1
     });
     const textSprite = new THREE.Sprite(textMaterial);
     textSprite.name = `text_${player.id}`;

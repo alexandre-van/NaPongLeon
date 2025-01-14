@@ -7,8 +7,8 @@ logger = setup_logger()
 
 FOOD_TYPES = {
 	'common': {'value': 1, 'probability': 0.75, 'color': '#FFFF00'},
-	'rare': {'value': 3, 'probability': 0.20, 'color': '#00FF00'},
-	'epic': {'value': 10, 'probability': 0.05, 'color': '#FF00FF'}
+	'rare': {'value': 3, 'probability': 0.22, 'color': '#00FF00'},
+	'epic': {'value': 8, 'probability': 0.03, 'color': '#FF00FF'}
 }
 
 POWER_UPS = {
@@ -56,10 +56,10 @@ class Game:
 		self.food = []
 		self.map_width = 10000
 		self.map_height = 10000
-		self.max_food = 2500
+		self.max_food = 2000
 		self.player_inputs = {}
 		self.player_movements = {}
-		self.PLAYER_SPEED = 600
+		self.PLAYER_SPEED = 550
 		self.status = "waiting"
 		self.game_loop_task = None
 		self.initialize_food()
@@ -442,9 +442,5 @@ class Game:
 		self.power_ups.clear()
 		self.player_inputs.clear()
 		self.player_movements.clear()
-		self.power_up_spawn_timer = 0
-		
-		# # Réinitialiser la nourriture
-		# self.initialize_food()
-		
+		self.power_up_spawn_timer = 0		
 		logger.info(f"Game {self.game_id} cleaned up successfully")
