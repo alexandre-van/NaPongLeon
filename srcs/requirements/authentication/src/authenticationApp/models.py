@@ -18,11 +18,25 @@ logger = logging.getLogger(__name__)
 def user_avatar_path(instance, filename):
 	return f'users/{instance.id}/avatar/{filename}'
 
-def validate_unique_username_nickname(value):
+def validate_unique_username_nickname(value, instance=None):
+	query = CustomUser.objects.filter(
+		Q(username__iexact=value) | Q(nickname__iexact=value)
+	)
+	logger.debug(f'query:{query}')
+	if instance:
+		logger.debug(f'if query:{query}')
+		query = query.exclude(pk=instance.pk)
+		logger.debug(f'if after query:{query}')
+	
+	logger.debug(f'query.exists:{query.exists()}')
+	if query.exists():
+		raise ValidationError('This value is already used as a username or as a nickname.')
+	'''
 	if CustomUser.objects.filter(
 		Q(username__iexact=value) | Q(nickname__iexact=value)
 	).exists():
 		raise ValidationError('This value is already used as a username or as a nickname.')
+	'''
 
 class FriendshipStatus(models.TextChoices):
 	PENDING = 'PE', 'Pending'
@@ -84,6 +98,14 @@ class CustomUser(AbstractUser):
 
 	def clean(self):
 		super().clean()
+		if self.username:
+			validate_unique_username_nickname(self.username, self)
+		
+		if self.nickname:
+			validate_unique_username_nickname(self.nickname, self)
+		
+
+		'''
 		if self.username and CustomUser.objects.exclude(pk=self.pk).filter(
 			nickname__iexact=self.username
 		).exists():
@@ -93,9 +115,10 @@ class CustomUser(AbstractUser):
 			username__iexact=self.nickname
 		).exists():
 			raise ValidationError({'nickname': 'This nickname is already used as a username.'})
+		'''
 
 	def save(self, *args, **kwargs):
-		self.full_clean()
+#		self.full_clean()
 		if self.pk:
 			try:
 				old_instance = CustomUser.objects.get(pk=self.pk)

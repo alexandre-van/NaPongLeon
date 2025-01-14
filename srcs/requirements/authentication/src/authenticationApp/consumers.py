@@ -25,7 +25,6 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             await self.send_status_friends(True)
             notifications = await Notification.get_all_notifications(self.user)
             for notification in notifications:
-                logger.debug(f"notification: {notification}")
                 await self.send(text_data=json.dumps(notification.to_dict()))
             logger.debug('Connection accepted')
 

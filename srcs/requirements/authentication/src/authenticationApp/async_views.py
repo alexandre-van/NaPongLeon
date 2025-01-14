@@ -493,7 +493,7 @@ async def PasswordResetConfirmationView(request, uidb64, token):
                         return HttpResponseJD('Password validation failed', 400, {'errors': e.detail})
 
                     await database_sync_to_async(user.set_password)(new_password)
-                    await database_sync_to_async(user.save)()
+                    await database_sync_to_async(lambda: user.save(update_fields=['password']))()
                     return HttpResponseJD('Password modified', 200)
                 
                 except json.JSONDecodeError:

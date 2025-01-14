@@ -15,10 +15,9 @@ const getWindowURLinfo = () => {
 };
 
 export const WebSocketProvider = ({ children }) => {
-//  const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { user, isAuthenticated, logout, updateUser, friends, setFriends, checkFriends } = useUser();
+  const { user, isAuthenticated, updateUser, friends, setFriends, checkFriends } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -113,8 +112,6 @@ export const WebSocketProvider = ({ children }) => {
             }, 0);
             break;
 
-
-
           case 'notification':
             console.log('notification_type = ', data.notification_type);
             setNotifications(prevNotifs => {
@@ -125,14 +122,6 @@ export const WebSocketProvider = ({ children }) => {
               }
               return newNotifs;
             });
-            break;
-          case 'disconnected_from_server':
-            try {
-              logout();
-              navigate('/forced-logout');
-            } catch (err) {
-              console.log('Failed Required Disconnect from the server from this browser');
-            }
             break;
           default:
             console.log('Unknown message type: ', data.type);

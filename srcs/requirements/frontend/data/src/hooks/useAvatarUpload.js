@@ -2,7 +2,7 @@ import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
 
 const useAvatarUpload = () => {
-  const { user, updateUser, updateAvatarVersion } = useUser();
+  const { updateUser, updateAvatarVersion } = useUser();
 
   const updateAvatar = async (file) => {
     if (!file) {
@@ -10,7 +10,6 @@ const useAvatarUpload = () => {
     }
     const formData = new FormData();
     formData.append('avatar', file);
-    //const uploadResponse = await api.post('/authentication/upload-avatar/', formData, {
 
     const uploadResponse = await api.post('/authentication/users/me/avatar/', formData, {
       headers: {
@@ -23,8 +22,6 @@ const useAvatarUpload = () => {
       throw new Error(errorMessage);
     }
     
-
-//    const avatarResponse = await api.get('/authentication/get-avatar/');
 
     const avatarResponse = await api.get('/authentication/users/me/avatar/');
     if (avatarResponse.data && avatarResponse.data.avatar_url) {

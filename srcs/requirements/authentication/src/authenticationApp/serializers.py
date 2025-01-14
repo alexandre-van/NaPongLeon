@@ -70,6 +70,9 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_nickname(self, value):
         if value is "":
             raise serializers.ValidationError("Nickname cannot be nothing if you choose it")
+        special_chars = re.compile(r'_ ')
+        if special_chars.search(value):
+            raise serializers.ValidationError("Nickname cannot contain '_' underscore character")
         
         if CustomUser.objects.filter(nickname__iexact=value).exists():
             raise serializers.ValidationError("This value is already used as a nickname")

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext.js';
 import api from '../services/api.js';
@@ -60,6 +60,9 @@ export default function Login2FAPage() {
                     Submit 2FA code
                 </Button>
             </Form>
+            <Link to="/login">
+                Go back to login page
+            </Link>
         </div>
     );
 }

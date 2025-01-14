@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Form, Alert } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext.js';
 import { useNavigate } from 'react-router-dom';
@@ -66,6 +67,10 @@ export default function ForcedPasswordPage() {
           </Button>
         </Form>
       )}
+
+      <Link to="/login">
+        Go back to login page
+      </Link>
 
       {/* Affichage du message de succès */}
       {successMessage && (
