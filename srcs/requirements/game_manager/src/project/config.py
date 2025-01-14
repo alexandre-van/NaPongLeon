@@ -29,7 +29,8 @@ for mode in game_mode_config.sections():
 	number_of_players = game_mode_config[mode].get('number_of_players')
 	if number_of_players and (not number_of_players.isdigit() or int(number_of_players) <= 0):
 		raise Exception(f"{game_mode_file}: number_of_players must be a positive integer for {mode} game mode")
-	number_of_players = int(number_of_players)
+	if number_of_players:
+		number_of_players = int(number_of_players)
 	team_names = game_mode_config[mode].get('team_names')
 	if team_names:
 		team_names = team_names.split(',')

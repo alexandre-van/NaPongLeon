@@ -1,14 +1,8 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser, Notification
-from rest_framework_simplejwt.tokens import UntypedToken
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from jwt import decode as jwt_decode
-from django.conf import settings
-
 import logging
 logger = logging.getLogger(__name__)
 

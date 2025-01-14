@@ -85,7 +85,8 @@ class Matchmaking:
 					modifiers = player_request.get('modifiers')
 					number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
 					if not number_of_players:
-						number_of_players = player_request.get('number_of_players')
+						team_size = self.GAME_MODES.get(game_mode).get('team_size')
+						number_of_players = player_request.get('number_of_players') * team_size
 					if len(queue_selected) == number_of_players:
 						await self.notify(game_mode, modifiers, queue_selected)
 						if not self._queue[queue]:

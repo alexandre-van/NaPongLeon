@@ -175,7 +175,7 @@ class Game_manager:
 					'modifiers': modifiers,
 					'playersList': players,
 					'teamsList': teams_list,
-					'special_id': special_id
+					'special_id': special_id,
 				})
 			if response and response.status_code == 201 :
 				return True
@@ -205,7 +205,8 @@ class Game_manager:
 	# game connection
 
 	async def connect_to_game(self, game_id, admin_id, game_mode, modifiers, players, teams_list=None, special_id=None):
-		is_game_notified = await Game_manager.game_manager_instance.game_notify(game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
+		is_game_notified = await Game_manager.game_manager_instance.game_notify(
+			game_id, admin_id, game_mode, modifiers, players, teams_list, special_id)
 		if is_game_notified:
 			logger.debug(f'Game service {game_id} created with players: {players}')
 			AdminManager.admin_manager_instance.start_connections(game_id, admin_id, game_mode)

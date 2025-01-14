@@ -22,7 +22,7 @@ class AdminManager:
 		try:
 			loop.run_until_complete(self._handle_websocket(game_id, ws_url))
 		finally:
-	   		self.cleanup_thread(game_id)
+			self.cleanup_thread(game_id)
 
 	def cleanup_thread(self, game_id):
 		with self._threads_mutex:
