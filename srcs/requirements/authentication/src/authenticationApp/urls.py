@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import VerifyTokenView, UserView
-from .async_views import LoginView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView, PasswordResetView, PasswordResetConfirmationView, TokenRefreshView
+from .async_views import LoginView, Login2FAView, Setup2FAView, LogoutView, UserNicknameView, UserAvatarView, FriendsView, FriendsRequestView, NotificationsView, WebSocketTokenView, VerifyFriendsView, PasswordResetView, PasswordResetConfirmationView, TokenRefreshView
 from .oauth_42_views import OAuth42CallbackView, OAuth42AuthorizeView
 
 # for development
@@ -20,6 +20,7 @@ urlpatterns = [
 
     # Authentication
     path('auth/login/', LoginView, name='login'),
+    path('auth/login/2fa/', Login2FAView, name='login_2fa'),
     path('auth/logout/', LogoutView, name='logout'),
     path('auth/2fa/setup/', Setup2FAView, name='Setup2FA'),
 

@@ -1,0 +1,59 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Form } from 'react-bootstrap';
+import { useUser } from '../contexts/UserContext.js';
+import api from '../services/api.js';
+
+export default function Login2FAPage() {
+    const [code, setCode] = useState('');
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const { checkAuth } = useUser();
+    const navigate = useNavigate();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tempToken = urlParams.get('token');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        console.log('Try to submit code:', code);
+        try {
+            const response = await api.post('/authentication/auth/login/2fa/', {
+                code: code,
+                temp_token: tempToken
+            });
+            if (response.data.message !== 'Login successful') {
+                setError(true);
+                setErrorMessage('Failed 2FA verification');
+            }
+            else {
+                setError(false);
+                setErrorMessage('');
+                await checkAuth();
+                navigate('/');
+            }
+        } catch (error) {
+            console.log('Error:', error);
+        }
+    };
+
+    return (
+        <div>
+            {error && <div>{errorMessage}</div>}
+            <Form onSubmit={handleSubmit}>
+                <Form.Label>Please submit your 2FA code to login</Form.Label>
+                <Form.Control
+                    type="text"
+                    name="2FACode"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                />
+            
+                <Button type="submit">
+                    Submit 2FA code
+                </Button>
+            </Form>
+        </div>
+    );
+}

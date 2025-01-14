@@ -15,6 +15,7 @@ import Formations from './pages/Formations.js';
 import PongPage from './pages/PongPage.js';
 import GameHistory from './pages/GameHistoryPage.js';
 import LoginPage from './pages/LoginPage.js';
+import Login2FAPage from './pages/Login2FAPage.js';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.js';
 import ResetPasswordPage from './pages/ResetPasswordPage.js';
 import HagarrioPage from './pages/HagarrioPage.js';
@@ -76,6 +77,7 @@ function AppContent() {
 
         <Route>
           <Route path="login" element={<LoginPage />} />
+          <Route path="login/2FA" element={<Login2FAPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />}/>
           <Route path="forced-logout" element={<ForcedLogoutPage />} />
           <Route path="register" element={<RegisterPage />} />

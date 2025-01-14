@@ -6,6 +6,7 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
 	const [user, setUser] = useState(null);
+	const [notFrom42, setNotFrom42] = useState(true);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -22,6 +23,9 @@ export function UserProvider({ children }) {
 			setUser(response.data.user);
 			setIsAuthenticated(true);
 			setError(null);
+			if (response.data.user.username.includes('_42')) {
+				setNotFrom42(false);
+			}
 		} catch (err) {
 			setUser(null);
 			setIsAuthenticated(false);
@@ -44,14 +48,17 @@ export function UserProvider({ children }) {
 	const login = async (userData) => {
 		const response = await api.post('/authentication/auth/login/', userData);
 		console.log('response:', response);
-		if (response.data && response.data.message !== "Login successful") {
+		/*if (response.data && response.data.message !== "Login successful") {
 			console.log('Login failed');
 			throw new Error("Login failed");
-		}
-		if (response.requires_2fa) {
-			return true;
+		}*/
+		console.log('requires_2fa:', response.data.requires_2fa);
+		if (response.data.requires_2fa) {
+			window.location.href = `/login/2fa?token=${encodeURIComponent(response.data.temp_token)}`;
+        	return ;
 		}
 		await checkAuth();
+      	navigate('/');
 		return false;
 	};
 
@@ -67,6 +74,7 @@ export function UserProvider({ children }) {
 		await api.post('/authentication/auth/logout/');
 		setUser(null);
 		setIsAuthenticated(false);
+		setNotFrom42(true);
 		navigate('/login');
 		await checkAuth();
 	};
@@ -172,6 +180,7 @@ export function UserProvider({ children }) {
     login42,
     logout,
     checkAuth,
+	notFrom42,
     register,
     resetPassword,
     sendFriendRequest,
