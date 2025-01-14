@@ -85,9 +85,13 @@ class Matchmaking:
 					modifiers = player_request.get('modifiers')
 					number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
 					if not number_of_players:
-						team_size = self.GAME_MODES.get(game_mode).get('team_size')
-						number_of_players = player_request.get('number_of_players') * team_size
+						team_size = int(self.GAME_MODES.get(game_mode).get('team_size'))
+						number_of_players = int(player_request.get('number_of_players')) * team_size
+						logger.debug(f"{queue}: {len(queue_selected)}/{number_of_players}")
+					else:
+						number_of_players = int(number_of_players)
 					if len(queue_selected) == number_of_players:
+						logger.debug("ff")
 						await self.notify(game_mode, modifiers, queue_selected)
 						if not self._queue[queue]:
 							del self._queue[queue]

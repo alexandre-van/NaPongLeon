@@ -22,10 +22,7 @@ class Tournament_manager:
 			logger.error(f"Error: Invalid game mode '{game_mode}'. Available modes: {list(game_modes_data.keys())}")
 			return None
 	
-		expected_players_count = game_modes_data[game_mode]['players'] * 2
-		if len(players_list) != expected_players_count:
-			logger.error(f"Error: Incorrect number of players for game mode '{game_mode}'. Expected: {expected_players_count}, Received: {len(players_list)}")
-			return None
+		expected_players_count = len(players_list)
 	
 		logger.debug(f"Creating tournament room with {expected_players_count} expected players...")
 	
@@ -82,7 +79,7 @@ class Tournament_manager:
 		game_mode = room['game_mode']
 		modifiers = room['modifiers']
 		if room['status'] == 'waiting'\
-			and len(room['players']) is game_modes_data[game_mode]['players'] * 2:
+			and len(room['players']) is len(room['expected_players']):
 			room['status'] = 'startup'
 			players_test = room['players']#self.generatePlayers(16)
 			new_tournament = Tournament(players_test, game_mode, modifiers)
