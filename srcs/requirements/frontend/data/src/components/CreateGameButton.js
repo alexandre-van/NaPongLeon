@@ -19,7 +19,6 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
                 gameMode: 'PONG_CLASSIC',
                 modifiers: mods,
                 playersList: [user.username],
-                teamsList: [[user.username], []],
                 ia_authorizes: true,
             };
 
