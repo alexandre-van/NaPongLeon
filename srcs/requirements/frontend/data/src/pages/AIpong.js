@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import arrow from '../elements/arrow.png'
-import vid from '../elements/gif-solo.gif'
+import arrow from '../elements/arrow.png';
+import vid from '../elements/gif-solo.gif';
 import { Link } from 'react-router-dom';
 import CreateGameButton from '../components/CreateGameButton.js';
-
 
 export default function AIpong() {
     const [modifiers, setModifiers] = useState([]);
@@ -23,14 +22,14 @@ export default function AIpong() {
         <div>
             <div className="box">
                 <h2 className="title-modes">AI PONG</h2>
-                <img className="vid" src={vid}/>
+                <img className="vid" src={vid} />
                 <ul>
                     {availableModifiers.map((modifier) => (
                         <li key={modifier}>
-                            <div class="form-check form-switch">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">
+                            <div className="form-check form-switch">
+                                <label className="form-check-label" htmlFor="flexSwitchCheckDefault"> {/* Changement ici */}
                                     <input
-                                        class="form-check-input" id="flexSwitchCheckDefault"
+                                        className="form-check-input" id="flexSwitchCheckDefault"
                                         type="checkbox"
                                         value={modifier}
                                         onChange={() => handleModifierChange(modifier)}
@@ -43,10 +42,9 @@ export default function AIpong() {
                 </ul>
             </div>
             <div>
-
                 <Link to="/pong/ingame"><CreateGameButton gameMode="PONG_CLASSIC" modifiers={modifiers} /></Link>
             </div>
-            <footer><Link to="/pong"><img className="arrow" src={arrow}/></Link></footer>
+            <footer><Link to="/pong"><img className="arrow" src={arrow} /></Link></footer>
         </div>
     );
 }

@@ -50,8 +50,8 @@ async function init(data, ws){
 	await createPlateau(data.arena);
 	await map_choice(data.map);
 	renderer.render(scene, camera);
-	console.log("ready");
-	ws.send(JSON.stringify({type: 'ready'}));
+	if (ws.readyState === WebSocket.OPEN)
+		ws.send(JSON.stringify({type: 'ready'}));
 }
 
 export { init }

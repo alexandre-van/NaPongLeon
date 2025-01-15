@@ -43,7 +43,7 @@ function connectWebSocket() {
 
 		socket.onerror = function(error) {
 			console.error('WebSocket error:', error);
-			console.log('WebSocket readyState:', socket.readyState);
+			//console.log('WebSocket readyState:', socket.readyState);
 		};
 
 		socket.onclose = function(event) {
@@ -54,14 +54,14 @@ function connectWebSocket() {
 			const data = JSON.parse(e.data);
 			switch (data.type) {
 				case 'waiting_room':
-					console.log('Waiting room:', data);
+					//console.log('Waiting room:', data);
 					updateGameInfo(data);
 					document.getElementById('waitingRoom').style.display = 'block';
 					document.getElementById('gameContainer').style.display = 'none';
 					document.getElementById('gameInfoContainer').style.display = 'block';
 					break;
 				case 'update_waiting_room':
-					console.log('Update waiting room:', data);
+					//console.log('Update waiting room:', data);
 					updateGameInfo(data);
 					//updatePlayers(data.players, data.yourPlayerId);
 					break;
@@ -107,13 +107,13 @@ function connectWebSocket() {
 					}
 					break;
 				case 'player_disconnected':
-					console.log('Player disconnected:', data);
+					//console.log('Player disconnected:', data);
 					if (data.playerId) {
-						console.log('Removing player:', data.playerId);
+						//console.log('Removing player:', data.playerId);
 						removePlayer(data.playerId);
 					}
 					if (data.games) {
-						console.log('Updating game info:', data);
+						//console.log('Updating game info:', data);
 						updateGameInfo(data);
 					}
 					break;
@@ -178,7 +178,7 @@ function connectGameManagerSocket() {
         
         try {
             gameManagerSocket = new WebSocket(wsUrl);
-            console.log('Game Manager WebSocket instance created');
+            //console.log('Game Manager WebSocket instance created');
 
             gameManagerSocket.onopen = function() {
                 console.log('Game Manager WebSocket connection established successfully');

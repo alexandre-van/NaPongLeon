@@ -24,7 +24,6 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
 
             const response = await api.post('/game_manager/create_game/', gameParams);
             const data = response.data.data;
-            console.log("game_created:", data);
             navigate("/pong/ingame", { state: { gameService: `${location.origin}/api/${data.service_name}`, gameId: data.game_id } });
             
         } catch (error) {
