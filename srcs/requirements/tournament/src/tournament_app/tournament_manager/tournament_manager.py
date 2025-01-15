@@ -41,7 +41,7 @@ class Tournament_manager:
 			'tournament_instance': None
 		}
 	
-		logger.info(f"Tournament room created successfully. Room details: {self.tournaments_room[tournament_id]}")
+		logger.debug(f"Tournament room created successfully. Room details: {self.tournaments_room[tournament_id]}")
 		return self.tournaments_room[tournament_id]
 
 	def special_connection(self, special_id, tournament_id):

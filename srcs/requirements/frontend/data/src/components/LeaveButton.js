@@ -20,7 +20,7 @@ export default function LeaveButton() {
                     setError(null);
 
                     // Si le statut devient "inactive", fermer la fenêtre de statut
-                    if (status === 'inactive') {
+                    if (status === 'inactive' || status === 'spectate') {
                         setIsStatusVisible(false);
                     }
                 })
@@ -42,7 +42,7 @@ export default function LeaveButton() {
 
     const handleButtonClick = (e) => {
         e.stopPropagation(); // Empêche la propagation de l'événement et évite de fermer la fenêtre
-        if (playerStatus === 'inactive') {
+        if (playerStatus === 'inactive' || playerStatus === 'spectate') {
             handleQuitGame(); // Si le statut est "inactive", quitter la partie immédiatement
         } else {
             setIsStatusVisible(!isStatusVisible); // Affiche ou cache le menu de statut
@@ -106,7 +106,7 @@ export default function LeaveButton() {
     return (
         <div>
             <button onClick={handleButtonClick} style={buttonStyle} ref={buttonRef}>
-                {playerStatus === 'inactive' ? '❌' : '🏁'}
+                {(playerStatus === 'inactive' || playerStatus === 'spectate') ? '❌' : '🏁'}
             </button>
             {isStatusVisible && (
                 <div style={statusBoxStyle}>

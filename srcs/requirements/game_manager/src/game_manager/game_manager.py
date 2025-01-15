@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Player, GameInstance, PlayerGameHistory, GamePlayer, GameScore
+from .models import Player, GameInstance, PlayerGameHistory, GamePlayer, GameScore, WinRate, GameMode
 from .utils.logger import logger
 from admin_manager.admin_manager import AdminManager
 from .utils.timer import Timer
@@ -378,6 +378,15 @@ class Game_manager:
 			Player.get_or_create_player(username)
 
 	@sync_to_async
+	def get_win_rate(self, username, game_mode):
+		win_rate = None
+		with transaction.atomic():
+			player_instance = Player.get_or_create_player(username)
+			game_mode_instance = GameMode.get_or_create(game_mode)
+			win_rate = WinRate.get_win_rate(player_instance, game_mode_instance)
+		return win_rate
+
+	@sync_to_async
 	def fetch_player(self, username):
 		return Player.objects.get(username=username)
 
@@ -406,18 +415,18 @@ class Game_manager:
 			game_players = GamePlayer.objects.filter(game=game_instance)
 			teams_distribution = {}
 			for player_entry in game_players:
-				if player_entry.team_name not in teams_distribution:
-					teams_distribution[player_entry.team_name] = []
+				if player_entry.team.name not in teams_distribution:
+					teams_distribution[player_entry.team.name] = []
 				username = player_entry.player.username
 				#nickname = player_entry.player.nickname
-				teams_distribution[player_entry.team_name].append(player_entry.player.username)
+				teams_distribution[player_entry.team.name].append(player_entry.player.username)
 			game_scores = GameScore.objects.filter(game=game_instance)
-			teams_scores = {score.team_name: score.score for score in game_scores}
+			teams_scores = {score.team.name: score.score for score in game_scores}
 			game_data = {
 				"game_id": game_instance.game_id,
 				"status": game_instance.status,
-				"winner": game_instance.winner,
-				"game_mode": game_instance.game_mode,
+				"winner": game_instance.winner.name if game_instance.winner else None,
+				"game_mode": game_instance.game_mode.name,
 				"game_date": game_instance.game_date.isoformat(),
 				"teams": teams_distribution,
 				"scores": teams_scores,
