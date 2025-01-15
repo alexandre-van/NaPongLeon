@@ -2,7 +2,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import CustomUser, Friendship
 import re
-#from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
     friends = serializers.SerializerMethodField()
@@ -24,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {
                 'write_only': True,
                 'error_messages': {
-                    'max_length': 'Password must be 3 characters or less'
+                    'max_length': 'Password must be 10 characters at least'
                 }
             },
             'email': {
@@ -102,15 +101,6 @@ class UserSerializer(serializers.ModelSerializer):
         if not has_upper:
             raise serializers.ValidationError("Password must have at least a uppercase character")
         
-    
-    def validate_avatar_url(self, value):
-        validator = URLValidator()
-        try:
-            validator(value)
-        except ValidationError:
-            raise serializers.ValidationError("Invalid URL for avatar")
-        return value
-
     def get_friends(self, obj):
         return obj.friends
 
