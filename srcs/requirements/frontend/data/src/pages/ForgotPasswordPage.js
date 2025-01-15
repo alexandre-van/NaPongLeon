@@ -65,13 +65,14 @@ export default function ForcedPasswordPage() {
           <Button type="submit" disabled={loading}>
             {loading ? 'Submitting...' : 'Reset my password'}
           </Button>
+  
+          {/* Afficher le lien uniquement si l'utilisateur n'est pas authentifié */}
+          <Link to="/login" className="d-block mt-3">
+            Go back to login page
+          </Link>
         </Form>
       )}
-
-      <Link to="/login">
-        Go back to login page
-      </Link>
-
+  
       {/* Affichage du message de succès */}
       {successMessage && (
         <Alert variant="success" className="mt-3">
@@ -80,4 +81,4 @@ export default function ForcedPasswordPage() {
       )}
     </div>
   );
-}
+}  
