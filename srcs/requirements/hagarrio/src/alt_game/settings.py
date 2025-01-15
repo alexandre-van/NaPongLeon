@@ -190,7 +190,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # Changer ici de DEBUG à INFO pour ne pas afficher les logs DEBUG
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'debug.log'),
             'formatter': 'verbose',
@@ -200,12 +200,13 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'level': 'INFO',  # Le niveau INFO est conservé pour Django
         },
         'agario': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'INFO',  # Changer ici de DEBUG à INFO pour ignorer les logs DEBUG
             'propagate': True,
         },
     },
 }
+
