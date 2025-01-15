@@ -5,12 +5,14 @@ from .logger import setup_logger
 
 logger = setup_logger()
 
+# Types de nourriture (proprietes)
 FOOD_TYPES = {
 	'common': {'value': 1, 'probability': 0.75, 'color': '#FFFF00'},
 	'rare': {'value': 3, 'probability': 0.22, 'color': '#00FF00'},
 	'epic': {'value': 8, 'probability': 0.03, 'color': '#FF00FF'}
 }
 
+# Types de power-ups (modifications possibles)
 POWER_UPS = {
 	'speed_boost': {
 		'duration': 10,
@@ -46,7 +48,9 @@ POWER_UPS = {
 	}
 }
 
+# Classe qui represente une game
 class Game:
+	# Constructeur de la classe
 	def __init__(self, game_id, admin_id, expected_players):
 		self.game_id = game_id
 		self.admin_id = admin_id
@@ -73,7 +77,7 @@ class Game:
 			self.add_food()
 
 	def get_random_food_type(self):
-		"""Détermine aléatoirement le type de nourriture"""
+		"""Randomisation du type de nourriture"""
 		rand = random.random()
 		cumulative_prob = 0
 		for food_type, props in FOOD_TYPES.items():

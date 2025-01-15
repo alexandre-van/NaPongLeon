@@ -34,7 +34,7 @@ export function updateGameInfo(data) {
     gameList.innerHTML = '';
 
     const games = Array.isArray(data.games) ? data.games : [];
-    console.log('games:', games);
+    // console.log('games:', games);
 
     // Check if all games are finished/aborted
     const hasActiveGames = games.some(game => 

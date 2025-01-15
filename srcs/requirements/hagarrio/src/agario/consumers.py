@@ -96,10 +96,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 						del GameConsumer.active_games[self.current_game_id]
 			
 			self.current_game_id = data['game_id']
-			# Recuperer la partie demander
+			# Recuperer la game demandee
 			game = GameConsumer.active_games.get(self.current_game_id)
 			if game:
-				# Se connecter a la partie
+				# Se connecter a la game
 				authorized = game.add_player(self.player_id, self.player_name)
 				if authorized:
 					await self.notify_admin_player_connection(self.current_game_id, self.player_id)
@@ -135,8 +135,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 					await self.broadcast_game_state(self.current_game_id, power_up_state)
 
 	async def send_games_info(self):
-		"""Envoie la liste des parties disponibles à tous les joueurs"""
+		"""Envoie la liste des games disponibles a tous les joueurs dans la waiting room"""
 		games_info = []
+		# Creation de la liste des games disponibles avec toutes les informations necessaires
 		for game_id, game in GameConsumer.active_games.items():
 			games_info.append({
 				'gameId': game_id,
@@ -152,7 +153,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		}))
 
 	async def broadcast_games_info_waitingroom(self):
-		"""Diffuse les informations sur les parties à tous les joueurs"""
+		"""Meme fonction que send_games_info mais pour update waiting room avec un message different pour le frontend"""
 		games_info = []
 		for game_id, game in GameConsumer.active_games.items():
 			games_info.append({
@@ -161,6 +162,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				'status': game.status
 			})
 
+		# On a besoin car cette update se fait pendant les games et ne redirige pas vers la waiting room
 		for player in GameConsumer.players.values():
 			await player.send(text_data=json.dumps({
 				'type': 'update_waiting_room',
@@ -170,7 +172,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			}))
 
 	async def broadcast_game_state(self, game_id, state_update):
-		"""Diffuse les mises à jour du jeu aux joueurs"""
+		"""FONCTION PRINCIPALE : Envoie les MAJ du jeu aux players"""
 		if game_id not in GameConsumer.active_games:
 			logger.error(f"Game {game_id} not found in active games.")
 			return
@@ -189,12 +191,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 						score = player['score']
 			await self.notify_admin_game_status(game_id, game.status, win_team, score)
 		self.last_status = game.status
+		# Creation du message a envoyer a tous les players
 		message = {
 			'type': state_update.get('type'),
 			'game_id': state_update.get('game_id'),
 			'players': state_update.get('players', {}),
 		}
-		# Ajout des mises à jour spécifiques
+		# Ajout des informations specifiques a chaque message
 		if state_update.get('type') == 'players_update':
 			message.update({'yourPlayerId': self.player_id})
 		elif state_update['type'] == 'food_update':
@@ -255,7 +258,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 				logger.warning(f"Eaten player {loser_id} not found in active players.")
 			return
 
-		# Envoie la mise à jour à tous les joueurs
+		# Boucle qui envoie le message a tous les players de la game en question
 		for player_id in game.players:
 			if player_id in GameConsumer.players:
 				await GameConsumer.players[player_id].send(text_data=json.dumps(message))
@@ -263,21 +266,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 				logger.warning(f"Player {player_id} not found in GameConsumer.players.")
 
 
+	# Le décorateur permet d'appeler cette méthode sur la classe elle-même plutôt que sur une instance
 	@classmethod
 	def create_new_game(cls, game_id, admin_id, expected_players):
+		"""Cree une nouvelle game"""
 		if game_id in cls.active_games:
 			raise ValueError(f"A game with ID {game_id} already exists.")
 
-		# Créer une nouvelle partie
+		# Creation de la game
 		new_game = Game(game_id, admin_id, expected_players)
 		cls.active_games[game_id] = new_game
-
-		# Log de création de la partie
 		logger.info(f"New game created with ID: {game_id}")
 		return game_id
+
 	
+	# Le décorateur permet d'appeler cette méthode sur la classe elle-même plutôt que sur une instance
 	@classmethod
 	def abortgame(cls, game_id):
+		"""Abort une game en cas d'erreur (ne devrait pas arriver)"""
 		if game_id in cls.active_games:
 			game = cls.active_games.get(game_id)
 			if game:
@@ -285,6 +291,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			del cls.active_games[game_id]
 
 	async def notify_admin_player_connection(self, game_id, username, connection_type='player'):
+		"""Notifie l'admin de la game que un player se connecte"""
 		game = GameConsumer.active_games.get(game_id)
 		if not game:
 			logger.warning(f"Game {game_id} not found.")
@@ -302,6 +309,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.warning(f"Admin for game {game_id} is not connected.")
 
 	async def notify_admin_player_disconnection(self, game_id, username, disconnection_type='player'):
+		"""Notifie l'admin de la game quand un player se deconnecte"""
 		game = GameConsumer.active_games.get(game_id)
 		if not game:
 			logger.warning(f"Game {game_id} not found.")
@@ -319,6 +327,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.warning(f"Admin for game {game_id} is not connected.")
 
 	async def notify_admin_game_status(self, game_id, status, win_team=None, score=None):
+		"""Notifie l'admin de la game quand la game change de status"""
 		game = GameConsumer.active_games.get(game_id)
 		if not game:
 			logger.warning(f"Game {game_id} not found.")
@@ -343,6 +352,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.warning(f"Admin for game {game_id} is not connected.")
 
 	async def notify_admin_score_update(self, game_id, team, score):
+		"""Notifie l'admin de la game quand le score change"""
 		game = GameConsumer.active_games.get(game_id)
 		if not game:
 			logger.warning(f"Game {game_id} not found.")
@@ -360,6 +370,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			logger.warning(f"Admin for game {game_id} is not connected.")
 
 	def generate_teams(self, players):
+		"""Creation des equipes pour l'admin et la database"""
 		teams = {}
 		if not players or len(players) < 1:
 			return teams
@@ -368,6 +379,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		return teams
 
 	async def notify_admin_teams(self, game_id, teams):
+		"""Notifie l'admin de la game pour exporter les equipes"""
 		game = GameConsumer.active_games.get(game_id)
 		if not game:
 			logger.warning(f"Game {game_id} not found.")
