@@ -71,8 +71,6 @@ export function updatePowerUps(newPowerUps) {
 }
 
 export function displayPowerUpCollected(powerUp, isCollected = false) {
-    console.log('Displaying power-up effect:', powerUp, 'isCollected:', isCollected);
-    
     // Supprimer les anciens effets s'il y en avait
     const oldEffects = document.querySelectorAll('.power-up-effect');
     oldEffects.forEach(effect => effect.remove());
@@ -112,20 +110,29 @@ export function displayPowerUpCollected(powerUp, isCollected = false) {
     }
     
     document.body.appendChild(effectDiv);
-    
-    // Ajouter une animation de fondu
-    effectDiv.style.animation = 'fadeInOut 2s ease-in-out';
+
+    // Animation de fondu entrant
     effectDiv.style.opacity = '0';
+    effectDiv.style.transform = 'translateY(20px)';
+    effectDiv.style.transition = 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out';
+    
+    // Déclencher le fondu entrant
     requestAnimationFrame(() => {
         effectDiv.style.opacity = '1';
+        effectDiv.style.transform = 'translateY(0)';
     });
-    
-    // Supprimer l'élément après l'animation
+
+    // Animation de fondu sortant après 2 secondes
     setTimeout(() => {
-        if (effectDiv && effectDiv.parentNode) {
-            effectDiv.style.opacity = '0';
-            setTimeout(() => effectDiv.remove(), 300);
-        }
+        effectDiv.style.opacity = '0';
+        effectDiv.style.transform = 'translateY(-20px)';
+        
+        // Supprimer l'élément après l'animation
+        setTimeout(() => {
+            if (effectDiv && effectDiv.parentNode) {
+                effectDiv.remove();
+            }
+        }, 500); // Attendre la fin de l'animation (0.5s)
     }, 2000);
 }
 

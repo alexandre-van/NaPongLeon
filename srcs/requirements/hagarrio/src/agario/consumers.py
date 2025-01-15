@@ -7,17 +7,20 @@ from .logger import setup_logger
 logger = setup_logger()
 
 class GameConsumer(AsyncWebsocketConsumer):
-	players = {}  # {player_id: websocket}
-	active_games = {}  # {game_id: Game()}
+	players = {}  # {player_id: dictionnaire du player}
+	active_games = {}  # {game_id: Game()*} *instance de la classe Game
 
+	# Constructeur de la classe
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.player_id = None
 		self.current_game_id = None
 		self.last_status = None
 
+	# Decorateur qui verifie si l'utilisateur est authentifie
 	@auth_required
 	async def connect(self, username=None, nickname=None):
+		"""Fonction qui se lance lorsqu'un utilisateur se connecte a l'iframe"""
 		path = self.scope['path']
 		segments = path.split('/')
 		game_id = None
@@ -36,11 +39,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.player_id = username
 		self.player_name = nickname if nickname else username
 		GameConsumer.players[self.player_id] = self
-
 		# Envoyer la liste des parties disponibles
 		await self.send_games_info()
 
 	async def special_connection(self, game_id, special_id):
+		"""Fonction qui se lance pour que l'admin se connecte a une game"""
 		game = GameConsumer.active_games.get(game_id)
 		if game:
 			if game.admin_id == special_id:
@@ -49,49 +52,38 @@ class GameConsumer(AsyncWebsocketConsumer):
 				await game.start_game_loop(self.broadcast_game_state)
 
 	async def disconnect(self, close_code):
+		"""Fonction qui se lance lorsqu'un joueur se deconnecte"""
 		logger.info(f"Player {self.player_id} disconnected with code {close_code}")
+		# Supprimer le joueur de la liste 'players'
 		if self.player_id in GameConsumer.players:
 			del GameConsumer.players[self.player_id]
 			logger.debug(f"Removed player {self.player_id} from players list")
 
+		#Check si la game existe
 		if self.current_game_id in GameConsumer.active_games:
 			game = GameConsumer.active_games[self.current_game_id]
-			# Informer les autres joueurs de la déconnexion immédiatement
+			# Informer les autres joueurs de la déconnexion (pour que le frontend mette a jour la liste des joueurs)
 			for player_id in game.players:
 				if player_id != self.player_id and player_id in GameConsumer.players:
 					await GameConsumer.players[player_id].send(text_data=json.dumps({
 						'type': 'player_disconnected',
 						'playerId': self.player_id
 					}))
+			# Supprimer le joueur dans la game (fonction qui renvoie un message de type 'game_finish')
 			dc = game.remove_player(self.player_id)
 			if dc:
+				#Vu qu'on recoit le message de type 'game_finish', on l'envoie a la fonction broadcast_game_state
 				await self.broadcast_game_state(self.current_game_id, dc)
-			logger.debug(f"Removed player {self.player_id} from game {self.current_game_id}")
-
-			# Si la partie est vide, on la nettoie et la supprime
-			if len(game.players) == 0:
-				logger.info(f"Game {self.current_game_id} is empty, cleaning up")
-				await game.cleanup()
-				del GameConsumer.active_games[self.current_game_id]
-				for player_id in GameConsumer.players:
-					games_info = []
-					for game_id, game in GameConsumer.active_games.items():
-						games_info.append({
-							'gameId': game_id,
-							'players': [{'name': p['name'], 'id': p['id']} for p in game.players.values()] ,
-							'status': game.status
-					})
-					await GameConsumer.players[player_id].send(text_data=json.dumps({
-						'type': 'player_disconnected',
-						'games': games_info,
-						'playerId': self.player_id
-					}))
-			else:
-				# Informer les autres joueurs de la déconnexion
-				logger.debug(f"Broadcasting updated game info after player disconnect")
+				logger.debug(f"Removed player {self.player_id} from game {self.current_game_id}")
+				#Puis on envoie la liste des parties disponibles a tous les joueurs
 				await self.broadcast_games_info_waitingroom()
+				logger.debug(f"Broadcasting updated game info after player disconnect")
+				#Enfin on supprime la game ("finished") de la liste des games actives
+				del GameConsumer.active_games[self.current_game_id]
+
 
 	async def receive(self, text_data):
+		"""Fonction qui se lance lorsqu'un joueur envoie un message au serveur"""
 		data = json.loads(text_data)
 
 		if data['type'] == 'start_game':
@@ -228,15 +220,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 			loser_score = state_update.get('loser_score')
 			if not loser:
 				logger.error("Missing 'loser' in state update.")
-				return
-			logger.info(f"state_update dans game_finish: {state_update}")
-			
+				return			
 			# Récupérer les IDs des joueurs
 			winner = state_update.get('winner')
 			winner_id = winner.get('id')
 			loser_id = loser.get('id')
 			await self.notify_admin_score_update(game_id, loser_id, loser_score)
-			
+
 			# Notifier le gagnant
 			if winner_id in GameConsumer.players:
 				await GameConsumer.players[winner_id].send(text_data=json.dumps({
