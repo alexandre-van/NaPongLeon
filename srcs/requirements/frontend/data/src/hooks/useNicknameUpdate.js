@@ -11,7 +11,6 @@ const useNicknameUpdate = () => {
     if (nickname.length > 20) {
       throw new Error('Nickname must be 20 characters or fewer');
     }*/
-    console.log("hey");
     const response = await api.patch('/authentication/users/me/nickname/', { nickname });
     if (response.status !== 200) {
       throw new Error("Could not update nickname");

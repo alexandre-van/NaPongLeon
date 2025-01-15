@@ -270,16 +270,17 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'INFO',  # Niveau INFO pour le logger global
             'propagate': False,
         },
         'authenticationApp': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',  # Modifier le niveau à INFO pour ne plus afficher les logs DEBUG
             'propagate': False,
         },
     },
 }
+
 
 
 TEMPLATES = [

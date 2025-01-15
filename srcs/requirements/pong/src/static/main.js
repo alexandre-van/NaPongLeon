@@ -42,7 +42,6 @@ socket.onmessage = function(event) {
 			startGame();
 			break;
 		case "gu":
-			console.log("Game state updated:", data);
 			updateGame(data);
 			break;
 		case "scored":
@@ -56,13 +55,10 @@ socket.onmessage = function(event) {
 			break;
 		case "game_end":
 			printWinner(data.team);
-			console.log("FINITO : ", data);
 			console.log("Game ended. Reason:", data.reason);
 			if (socket.readyState === WebSocket.OPEN)
 				socket.close();
 			break;
-		default:
-			console.log("Unknown message type:", data.type);
 	}
 };
 
@@ -84,10 +80,11 @@ function stopGame() {
 
 
 function sendMove(input) {
-	socket.send(JSON.stringify({
-		type: 'move',
-		input: input
-	}));
+	if (socket.readyState === WebSocket.OPEN)
+		socket.send(JSON.stringify({
+			type: 'move',
+			input: input
+		}));
 }
 
 window.addEventListener('message', (event) => {

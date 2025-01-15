@@ -43,7 +43,7 @@ function connectWebSocket() {
 
 		socket.onerror = function(error) {
 			console.error('WebSocket error:', error);
-			console.log('WebSocket readyState:', socket.readyState);
+			//console.log('WebSocket readyState:', socket.readyState);
 		};
 
 		socket.onclose = function(event) {
@@ -54,19 +54,19 @@ function connectWebSocket() {
 			const data = JSON.parse(e.data);
 			switch (data.type) {
 				case 'waiting_room':
-					console.log('Waiting room:', data);
+					//console.log('Waiting room:', data);
+					updateGameInfo(data);
 					document.getElementById('waitingRoom').style.display = 'block';
 					document.getElementById('gameContainer').style.display = 'none';
-					updateGameInfo(data);
 					document.getElementById('gameInfoContainer').style.display = 'block';
 					break;
 				case 'update_waiting_room':
-					console.log('Update waiting room:', data);
+					//console.log('Update waiting room:', data);
 					updateGameInfo(data);
-					updatePlayers(data.players, data.yourPlayerId);
+					//updatePlayers(data.players, data.yourPlayerId);
 					break;
 				case 'game_started':
-					console.log('Game started:', data);
+					// console.log('Game started:', data);
 					updateGameInfo(data);
 					document.getElementById('waitingRoom').style.display = 'none';
 					document.getElementById('gameInfoContainer').style.display = 'none';
@@ -74,7 +74,7 @@ function connectWebSocket() {
 					startGameLoop(data);
 					break;
 				case 'game_joined':
-					console.log('Joined existing game:', data);
+					// console.log('Joined existing game:', data);
 					document.getElementById('waitingRoom').style.display = 'none';
 					document.getElementById('gameInfoContainer').style.display = 'none';
 					document.getElementById('gameContainer').style.display = 'block';
@@ -90,38 +90,33 @@ function connectWebSocket() {
 					updatePlayers(data.players, data.yourPlayerId);
 					break;
 				case 'power_up_spawned':
-					console.log('Power-up spawned:', data);
+					// console.log('Power-up spawned:', data);
 					createNewPowerUp(data.power_up);
 					updatePowerUps(data.power_ups);
 					break;
 				case 'power_up_collected':
 					updatePowerUps(data.power_ups);	
-					// console.log('Power-up collected data:', {
-					// 	player_id: data.player_id,
-					// 	myPlayerId: getMyPlayerId(),
-					// 	areEqual: data.player_id === getMyPlayerId()
-					// });
 					if (data.player_id === getMyPlayerId()) {
 						displayPowerUpCollected(data.power_up, true);
 						updateHotbar(data.players[data.player_id].inventory);
 					}
 					break;
 				case 'power_up_used':
-					console.log('Power-up used:', data);
 					if (data.player_id === getMyPlayerId()) {
 						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
 					}
 					break;
 				case 'player_disconnected':
+					//console.log('Player disconnected:', data);
 					if (data.playerId) {
+						//console.log('Removing player:', data.playerId);
 						removePlayer(data.playerId);
 					}
 					if (data.games) {
-						// Mise à jour de la liste des jeux dans la waiting room
+						//console.log('Updating game info:', data);
 						updateGameInfo(data);
 					}
 					break;
-
 				case 'error':
 					console.log('Error:', data.message);
 					break;
@@ -183,7 +178,7 @@ function connectGameManagerSocket() {
         
         try {
             gameManagerSocket = new WebSocket(wsUrl);
-            console.log('Game Manager WebSocket instance created');
+            //console.log('Game Manager WebSocket instance created');
 
             gameManagerSocket.onopen = function() {
                 console.log('Game Manager WebSocket connection established successfully');

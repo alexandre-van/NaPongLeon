@@ -111,7 +111,6 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
             outline: none;
             position: absolute;
             top: 50%;
@@ -122,11 +121,13 @@
         #joinMatchmakingBtn {
             background-color: #4CAF50;
             display: block;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
 
         #leaveMatchmakingBtn {
             background-color: #f44336;
             display: none;
+            box-shadow: 0 0 10px rgba(211, 47, 47, 0.5);
         }
 
         #joinMatchmakingBtn:hover {
@@ -186,22 +187,46 @@
             flex-direction: column;
             align-items: center;
             width: 80%;
-            max-width: 600px;
+            max-width: 700px;
+        }
+
+        #gameInfoContainer::before {
+            display: none;
         }
 
         .gameList {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            margin-top: 10px;
             background-color: rgba(46, 43, 43, 0.432);
-            border-radius: 10px;
+            border-radius: 15px;
+            overflow: hidden;
         }
 
         .gameList thead {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.3);
+            /* border-bottom: 1px solid rgb(255, 255, 255); */
+        }
+
+        .gameList thead tr:first-child {
+            border-radius: 15px 15px 0 0;
+        }
+
+        .gameList thead th:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        .gameList thead th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        .gameList th {
+            padding: 12px;
+            text-align: center;
+            color: #ffffff;
+            background-color: rgba(7, 53, 1, 0.356);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.212);
         }
 
         .gameList tbody {
@@ -218,18 +243,27 @@
 
         .gameList th, .gameList td {
             padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            width: 33.33%;
-        }
-
-        .gameList th {
-            background-color: rgba(0, 0, 0, 0.3);
-            color: #4CAF50;
+            text-align: center;
+            width: 50%;
         }
 
         .gameList tr:hover {
-            background-color: rgba(76, 175, 80, 0.1);
+            background-color: rgba(76, 212, 81, 0.1);
+        }
+
+        /* Modification de la barre verticale */
+        .gameList td {
+            position: relative;
+        }
+
+        .gameList td:first-child::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.219);
         }
 
         /* Hotbar */
@@ -299,8 +333,7 @@
         }
 
         /* Game Over/Win Overlays */
-        .game-over-overlay,
-        .game-win-overlay {
+        .overlay-base {
             position: fixed;
             top: 0;
             left: 0;
@@ -313,11 +346,35 @@
         }
 
         .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
             background: rgba(100, 0, 0, 0.9);
         }
 
         .game-win-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
             background: rgba(0, 100, 0, 0.9);
+        }
+
+        .content-base {
+            text-align: center;
+            padding: 2em;
+            border-radius: 10px;
         }
 
         .game-over-content,
@@ -327,62 +384,70 @@
             border-radius: 10px;
         }
 
-        .game-over-title,
-        .game-win-title {
+        .title-base {
             font-size: 4em;
             margin-bottom: 20px;
         }
 
         .game-over-title {
-            color: #FF4444;
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #ff2020;
             text-shadow: 0 0 10px #FF0000;
         }
 
         .game-win-title {
-            color: #FFD700;
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #ffde25;
             text-shadow: 0 0 10px #FFD700;
         }
 
-        .game-over-score,
-        .game-win-score {
+        .score-base {
             font-size: 2em;
         }
 
         .game-over-score {
+            font-size: 2em;
             color: #FFA07A;
         }
 
         .game-win-score {
+            font-size: 2em;
             color: #90EE90;
         }
 
-        .game-win-message,
-        .game-over-message {
+        .message-base {
             font-size: 1.5em;
             margin-top: 15px;
             opacity: 0.8;
         }
 
         .game-win-message {
+            font-size: 1.5em;
+            margin-top: 15px;
+            opacity: 0.8;
             color: #98FB98;
         }
 
         .game-over-message {
+            font-size: 1.5em;
+            margin-top: 15px;
+            opacity: 0.8;
             color: #FFB6C1;
         }
 
-        /* Ajouter ces styles pour l'écran de fin de partie */
         .game-end-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            background: rgba(0, 0, 0, 0.85);
         }
 
         .game-end-content {
@@ -438,7 +503,6 @@
                     <tr>
                         <th>Game_id</th>
                         <th>Players</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="gameList">
@@ -463,13 +527,6 @@
             </div>
         </div>
     </div>
-    <!-- <script>
-        window.ENV = {
-            BASE_URL: '{{ BASE_URL|safe }}',
-            WS_URL: '{{ WS_URL|safe }}',
-            DEBUG: {{ DEBUG|yesno:"true,false" }}
-        }
-    </script> -->
     <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>

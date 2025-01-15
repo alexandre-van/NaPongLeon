@@ -172,52 +172,52 @@ CACHES = {
 # Log
 
 LOGGING = {
-	'version': 1,
-	'disable_existing_loggers': False,
-	'formatters': {
-		'verbose': {
-			'format': '{levelname} {module} {message}',
-			'style': '{',
-		},
-		'simple': {
-			'format': '{levelname} {message}',
-			'style': '{',
-		},
-	},
-	'handlers': {
-		'console': {
-			'level': 'DEBUG',
-			'class': 'logging.StreamHandler',
-			'formatter': 'simple',
-		},
-		'file': {
-			'level': 'DEBUG',
-			'class': 'logging.FileHandler',
-			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
-			'formatter': 'verbose',
-			'mode': 'w',
-		},
-	},
-	'loggers': {
-		'__name__': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {module} {message}',
+            'style': '{',
         },
-		'game_manager': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
         },
-		'matchmaking': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',  # Modifier ici pour ne pas afficher les logs DEBUG
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
-		'admin_manager': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+        'file': {
+            'level': 'INFO',  # Modifier ici pour ne pas afficher les logs DEBUG
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+            'formatter': 'verbose',
+            'mode': 'w',
         },
-		'django': {
+    },
+    'loggers': {
+        '__name__': {
             'handlers': ['file', 'console'],
-            'level': 'ERROR',
+            'level': 'INFO',  # Modifier ici pour ignorer DEBUG
         },
-	},
+        'game_manager': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',  # Modifier ici pour ignorer DEBUG
+        },
+        'matchmaking': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',  # Modifier ici pour ignorer DEBUG
+        },
+        'admin_manager': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',  # Modifier ici pour ignorer DEBUG
+        },
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',  # Pas de changement, garder 'ERROR' pour Django
+        },
+    },
 }

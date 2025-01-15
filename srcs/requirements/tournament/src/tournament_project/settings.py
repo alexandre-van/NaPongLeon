@@ -167,40 +167,40 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Log
 
 LOGGING = {
-	'version': 1,
-	'disable_existing_loggers': False,
-	'formatters': {
-		'verbose': {
-			'format': '{levelname} {module} {message}',
-			'style': '{',
-		},
-		'simple': {
-			'format': '{levelname} {message}',
-			'style': '{',
-		},
-	},
-	'handlers': {
-		'console': {
-			'level': 'DEBUG',
-			'class': 'logging.StreamHandler',
-			'formatter': 'simple',
-		},
-		'file': {
-			'level': 'DEBUG',
-			'class': 'logging.FileHandler',
-			'filename': os.path.join(BASE_DIR, 'django_debug.log'),
-			'formatter': 'verbose',
-			'mode': 'w',
-		},
-	},
-	'loggers': {
-		'__name__': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {module} {message}',
+            'style': '{',
         },
-		'tournament_app': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
         },
-	},
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',  # Désactiver DEBUG et afficher uniquement INFO ou plus élevé
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',  # Désactiver DEBUG et afficher uniquement INFO ou plus élevé
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+            'formatter': 'verbose',
+            'mode': 'w',
+        },
+    },
+    'loggers': {
+        '__name__': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',  # Désactiver DEBUG et afficher uniquement INFO ou plus élevé
+        },
+        'tournament_app': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',  # Désactiver DEBUG et afficher uniquement INFO ou plus élevé
+        },
+    },
 }

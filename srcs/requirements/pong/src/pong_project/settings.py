@@ -183,12 +183,12 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # Modifier ici pour ne plus afficher les logs DEBUG
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # Modifier ici pour ne plus enregistrer les logs DEBUG
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'django_debug.log'),
             'formatter': 'verbose',
@@ -197,22 +197,22 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'file'],
-        'level': 'DEBUG',
+        'level': 'INFO',  # Changer le niveau ici pour ne plus afficher les logs DEBUG
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',  # Change this to 'INFO' to reduce verbosity
+            'level': 'INFO',  # Changer le niveau à INFO pour éviter les logs DEBUG
             'propagate': True,
         },
         'daphne': {
             'handlers': ['console'],
-            'level': 'WARNING',  # Change to 'ERROR' or 'CRITICAL' if needed
+            'level': 'WARNING',  # Ne pas afficher les logs DEBUG
             'propagate': False,
         },
         'http_protocol': {
             'handlers': ['console'],
-            'level': 'WARNING',  # Suppress detailed HTTP request logs
+            'level': 'WARNING',  # Ne pas afficher les logs DEBUG
             'propagate': False,
         },
     },

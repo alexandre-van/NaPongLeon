@@ -24,7 +24,7 @@ export function createHotbar() {
 }
 
 export function updateHotbar(inventory = [], slot_index = null) {
-    console.log('Updating hotbar with inventory:', inventory);
+    //console.log('Updating hotbar with inventory:', inventory);
     const slots = document.querySelectorAll('.hotbar-slot');
     
     if (!slots.length) {

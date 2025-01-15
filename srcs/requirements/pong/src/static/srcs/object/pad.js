@@ -31,7 +31,6 @@ async function padels_init(data, game_mode) {
 		// Déterminer le nombre de padels et leur configuration selon le mode de jeu
 		const numPadels = game_mode == 'PONG_DUO' ? 4 : 2;
 		console.log("game_mode=", game_mode);
-		console.log("numPadels=", numPadels);
 		for (let i = 0; i < numPadels; i++) {
 			const material = i % 2 === 0 ? materials[0] : materials[1];
 			const geometry = i % 2 === 0 ? geometry1 : geometry2;

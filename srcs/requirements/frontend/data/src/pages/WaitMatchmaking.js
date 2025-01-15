@@ -48,7 +48,6 @@ export default function WaitMatchmaking() {
         };
 
         return () => {
-            console.log("Cleaning up WebSocket...");
             ws.close();
         };
     }, []);

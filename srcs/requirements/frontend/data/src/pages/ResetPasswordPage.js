@@ -34,8 +34,6 @@ export default function ResetPasswordPage() {
                 `/authentication/users/password-reset-confirmation/${uid}/${token}/`, 
                 { new_password: password }
             );
-
-            console.log("Server response:", response.data);
             setSuccess(true);
 
         } catch (error) {

@@ -41,11 +41,9 @@ export const WebSocketProvider = ({ children }) => {
 
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log('data: ', data);
 
         switch (data.type) {
           case 'friend_list_user_update':
-            console.log('friend_list_user_update', data.user);
             if (user && user.friends) {
               const updatedFriends = user.friends.map(friend => 
                 friend.id === data.id ? {
@@ -59,7 +57,6 @@ export const WebSocketProvider = ({ children }) => {
             break;
 
           case 'friend_status':
-              console.log('Friend status update:', data); // Affiche l'ami et son statut
       
               if (user?.friends) {
                 // Met à jour le statut de l'ami en fonction de son username
@@ -72,8 +69,6 @@ export const WebSocketProvider = ({ children }) => {
                       }
                     : friend
                 );
-      
-                console.log('Updated friends list:', updatedFriends);  // Vérifie la liste mise à jour
                 updateUser({ friends: updatedFriends });  // Met à jour l'état de l'utilisateur
               }
               checkFriends();  // Actualise la liste des amis
@@ -101,7 +96,6 @@ export const WebSocketProvider = ({ children }) => {
                   friends: updatedFriends
                 }));
 
-                console.log('Updated friends list:', updatedFriends);
             } else {
                 console.warn("User does not have a friends list or user object is null.");
             }
@@ -113,7 +107,6 @@ export const WebSocketProvider = ({ children }) => {
             break;
 
           case 'notification':
-            console.log('notification_type = ', data.notification_type);
             setNotifications(prevNotifs => {
               const newNotifs = [...prevNotifs];
               // Vérifier si la notification n'existe pas déjà

@@ -6,8 +6,6 @@ export default function GameModeSelector() {
     const location = useLocation();
     const { gameMode, title, hasCompetitors } = location.state || {}; // S'assure que l'état existe
 
-    console.log(gameMode, title, hasCompetitors); // Vérification de l'état
-
     const [modifiers, setModifiers] = useState([]);
     const [checkedBox, setCheckedBox] = useState(`${hasCompetitors ? "4" : ""}`);
     const navigate = useNavigate();
