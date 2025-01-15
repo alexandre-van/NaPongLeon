@@ -172,8 +172,8 @@ class Game:
 					'loser': loser,
 					'loser_score': loser_score,
 					'winner': winner,
-					'message_winner': f"Score final : {winner['score']:.0f}",
-					'message_loser': f"Score final : {loser_score:.0f}",
+					'message_winner': f"Score final : {winner['score']:.0f} ! GG !",
+					'message_loser': f"Score final : {loser_score:.0f} ! NT !",
 				}
 		return None
 
