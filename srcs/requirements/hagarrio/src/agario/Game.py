@@ -71,6 +71,7 @@ class Game:
 		self.power_up_spawn_timer = 0
 		self.power_up_spawn_interval = 5  # secondes
 
+	""" FUNCTIONS FOOD """
 	def initialize_food(self):
 		"""Initialise la nourriture sur la carte"""
 		for _ in range(self.max_food):
@@ -137,6 +138,9 @@ class Game:
 
 		return changed_foods if collision_occurred else None # Si une collision a eu lieu, on retourne les nouvelles nourritures, sinon on retourne None
 
+	"""		"""
+
+	""" FUNCTIONS PLAYERS """
 	def add_player(self, player_id, player_name):
 		"""Ajoute un joueur à la partie"""
 		if player_id not in self.expected_players:
@@ -185,30 +189,27 @@ class Game:
 				}
 		return None
 
-	def get_food_state(self):
-		"""Retourne l'état complet de la partie"""
-		return {
-			'type': 'food_update',
-			'game_id': self.game_id,
-			'players': self.players,
-			'food': self.food,
-		}
+	def player_eat_other_player(self, player_id, other_player_id):
+		"""Quand un joueur mange un autre joueur"""
+		player = self.players.get(player_id)
+		other_player = self.players.get(other_player_id)
+		if not player or not other_player:
+			return False
 
-	def get_players_state(self):
-		"""Retourne l'état des joueurs"""
-		return {
-			'type': 'players_update',
-			'game_id': self.game_id,
-			'players': self.players,
-		}
-
-	def update_state(self, food_changes=None):
-		"""Retourne l'état mis à jour soit des joueurs soit de la nourriture"""
-		game_state = self.get_food_state() if food_changes == True else self.get_players_state()
-		return game_state
+		if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
+			if player['size'] > other_player['size'] * 1.2:
+				# Mettre à jour le joueur qui mange ( si jamais le jeu pouvait continuer )
+				player['size'] += other_player['size'] * 0.25
+				player['score'] += other_player['score'] * 0.25
+				
+				# Supprimer le joueur mangé et retourner le résultat (dictionnaire)
+				eaten = self.remove_player(other_player_id)
+				if eaten:
+					return eaten
+		return False
 
 	def handle_player_input(self, player_id, key, is_key_down):
-		"""Gère les entrées des joueurs"""
+		"""Gère les entrées des joueurs dans la game pour le consumer"""
 		if player_id not in self.player_inputs:
 			self.player_inputs[player_id] = {
 				'w': False, 'a': False, 's': False, 'd': False,
@@ -216,8 +217,12 @@ class Game:
 			}
 		self.player_inputs[player_id][key.lower()] = is_key_down
 
+	"""		"""
+
+	""" FUNCTIONS GAME LOOP """
 	async def start_game_loop(self, broadcast_callback):
 		"""Démarre la boucle de jeu"""
+		# On cree la tache de la boucle de jeu
 		self.game_loop_task = asyncio.create_task(self._game_loop(broadcast_callback))
 		
 	async def _game_loop(self, broadcast_callback):
@@ -281,6 +286,35 @@ class Game:
 		except Exception as e:
 			logger.error(f"Error in game loop for game {self.game_id}: {e}")
 
+	"""		"""
+
+	""" FUNCTIONS STATES """
+	def update_state(self, food_changes=None):
+		"""Retourne l'état mis à jour soit des joueurs soit de la nourriture"""
+		game_state = self.get_food_state() if food_changes == True else self.get_players_state()
+		return game_state
+
+	def get_food_state(self):
+		"""Retourne l'état complet de la partie"""
+		return {
+			'type': 'food_update',
+			'game_id': self.game_id,
+			'players': self.players,
+			'food': self.food,
+		}
+
+	def get_players_state(self):
+		"""Retourne l'état des joueurs"""
+		return {
+			'type': 'players_update',
+			'game_id': self.game_id,
+			'players': self.players,
+		}
+
+	"""		"""
+
+	""" FUNCTIONS MOVEMENTS """
+
 	def update_positions(self, delta_time):
 		"""Met à jour les positions des joueurs"""
 		positions_updated = False
@@ -324,6 +358,9 @@ class Game:
 				player['current_speed'] = round(speed)
 		return positions_updated
 
+	"""		"""
+
+	""" FUNCTIONS POWER-UPS """
 	def spawn_power_up(self):
 		if len(self.power_ups) >= 9:
 			return None
@@ -359,6 +396,29 @@ class Game:
 					}
 		return False
 
+	def use_power_up(self, player_id, slot_index):
+		player = self.players.get(player_id)
+		if not player:
+			return False
+		try:
+			# Vérifier que l'index est valide et que le slot n'est pas vide
+			if 0 <= slot_index < len(player['inventory']) and player['inventory'][slot_index] is not None:
+				power_up = player['inventory'][slot_index]
+				# Vider le slot spécifique
+				player['inventory'][slot_index] = None
+				
+				# Appliquer l'effet du power-up
+				self.apply_power_up(player_id, power_up)
+				return {
+					'type': 'power_up_used',
+					'player_id': player_id,
+					'power_up': power_up,
+					'players': self.players,
+				}
+		except Exception as e:
+			logger.error(f"Error using power-up: {e}")
+		return False
+
 	def apply_power_up(self, player_id, power_up):
 		player = self.players[player_id]
 		effect = power_up['properties']['effect']
@@ -385,53 +445,15 @@ class Game:
 				player['invulnerable'] = False
 			elif effect == 'score_multiplier':
 				player['score_multiplier'] = 1
+	
+	"""		"""
 
-	def use_power_up(self, player_id, slot_index):
-		player = self.players.get(player_id)
-		if not player:
-			return False
-		try:
-			# Vérifier que l'index est valide et que le slot n'est pas vide
-			if 0 <= slot_index < len(player['inventory']) and player['inventory'][slot_index] is not None:
-				power_up = player['inventory'][slot_index]
-				# Vider le slot spécifique
-				player['inventory'][slot_index] = None
-				
-				# Appliquer l'effet du power-up
-				self.apply_power_up(player_id, power_up)
-				return {
-					'type': 'power_up_used',
-					'player_id': player_id,
-					'power_up': power_up,
-					'players': self.players,
-				}
-		except Exception as e:
-			logger.error(f"Error using power-up: {e}")
-		return False
-
-	def player_eat_other_player(self, player_id, other_player_id):
-		player = self.players.get(player_id)
-		other_player = self.players.get(other_player_id)
-		if not player or not other_player:
-			return False
-
-		if self.distance(player, other_player) < (player['size'] + other_player['size']) / 2:
-			if player['size'] > other_player['size'] * 1.2:
-				# Mettre à jour le joueur qui mange
-				player['size'] += other_player['size'] * 0.25
-				player['score'] += other_player['score'] * 0.25
-				
-				# Supprimer le joueur mangé et retourner le résultat
-				eaten = self.remove_player(other_player_id)
-				if eaten:
-					return eaten
-		return False
-
+	""" FUNCTIONS CLEANUP """
 	async def cleanup(self):
-		"""Nettoie les ressources de la partie"""
+		"""Nettoie les donnees de la partie"""
 		logger.info(f"Cleaning up game {self.game_id}")
 		
-		# Arrêter la boucle de jeu
+		# Arrêter la boucle de jeu si elle est en cours
 		if self.game_loop_task:
 			self.game_loop_task.cancel()
 			try:
@@ -441,7 +463,7 @@ class Game:
 			except Exception as e:
 				logger.error(f"Error while cancelling game loop for game {self.game_id}: {e}")
 		
-		# Réinitialiser tous les états
+		# Si jamais la game n'est pas finished, on la passe en aborted pour comprendre que la game a ete annulee
 		if self.status != "finished":
 			self.status = "aborted"
 		
@@ -450,5 +472,6 @@ class Game:
 		self.power_ups.clear()
 		self.player_inputs.clear()
 		self.player_movements.clear()
-		self.power_up_spawn_timer = 0		
+		self.power_up_spawn_timer = 0
 		logger.info(f"Game {self.game_id} cleaned up successfully")
+	"""		"""
