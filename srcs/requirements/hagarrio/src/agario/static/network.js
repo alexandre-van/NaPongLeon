@@ -103,7 +103,7 @@ function connectWebSocket() {
 					break;
 				case 'power_up_used':
 					if (data.player_id === getMyPlayerId()) {
-						updateHotbar(data.players[data.player_id].inventory, data.slot_index);
+						updateHotbar(data.players[data.player_id].inventory);
 					}
 					break;
 				case 'player_disconnected':
@@ -125,7 +125,7 @@ function connectWebSocket() {
 					stopGameLoop();
 					showGameEndScreen({
 						winner: false,
-						message: data.message_loser || `Score final : ${data.loser?.score || 0}`,
+						message: data.message_loser || `Score final : ${data.loser_score || 0}`,
 						killer: data.winner?.name
 					});
 					resetGameConnection();
@@ -135,7 +135,7 @@ function connectWebSocket() {
 					stopGameLoop();
 					showGameEndScreen({
 						winner: true,
-						message: data.message_winner || `Score final : ${data.winner?.score || 0}`,
+						message: data.message_winner || `Score final : ${data.winner_score || 0}`,
 						victim: data.loser?.name
 					});
 					resetGameConnection();

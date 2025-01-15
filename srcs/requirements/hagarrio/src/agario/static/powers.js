@@ -1,6 +1,5 @@
 import * as THREE from './three/three.module.js';
 import { scene } from './scene.js';
-import { updateHotbar } from './hotbar.js';
 
 const powerUps = new Map();
 

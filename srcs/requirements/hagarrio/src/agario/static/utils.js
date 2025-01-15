@@ -1,7 +1,6 @@
-import { joinGame } from './network.js';
 import { getScene } from './scene.js';
 import { stopGameLoop, isGameRunning } from './main.js';
-import { cleanup as cleanupPlayers, getMyPlayerId } from './player.js';
+import { cleanup as cleanupPlayers } from './player.js';
 
 export function throttle(func, limit) {
     let lastFunc;
@@ -90,7 +89,7 @@ export function showGameEndScreen(data) {
     const title = document.createElement('h2');
     title.className = 'game-end-title';
     const isWinner = data.winner === true;
-    title.textContent = isWinner ? '🏆 Victoire !' : '💀 Défaite';
+    title.textContent = isWinner ? '🏆 Victory !' : '💀 Defeat';
     title.style.color = isWinner ? '#FFD700' : '#FF6B6B';
     
     const messageText = document.createElement('p');
@@ -99,7 +98,7 @@ export function showGameEndScreen(data) {
     
     const menuButton = document.createElement('button');
     menuButton.className = 'menu-button';
-    menuButton.textContent = 'Menu Principal';
+    menuButton.textContent = 'Main Menu';
     menuButton.onclick = () => {
         window.parent.postMessage('refresh', '*');
         // Vérifier si le jeu est encore en cours

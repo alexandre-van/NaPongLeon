@@ -79,10 +79,10 @@ class Game:
 	def get_random_food_type(self):
 		"""Randomisation du type de nourriture"""
 		rand = random.random()
-		cumulative_prob = 0
-		for food_type, props in FOOD_TYPES.items():
-			cumulative_prob += props['probability']
-			if rand <= cumulative_prob:
+		cumulative_proba = 0
+		for food_type, proba in FOOD_TYPES.items():
+			cumulative_proba += proba['probability']
+			if rand <= cumulative_proba:
 				return food_type
 		return 'common'
 
@@ -93,15 +93,28 @@ class Game:
 		
 		food_type = self.get_random_food_type()
 		new_food = {
-			'id': str(uuid.uuid4()) if not food_id else food_id,
-			'x': random.randint(0, self.map_width),
-			'y': random.randint(0, self.map_height),
-			'type': food_type,
-			'value': FOOD_TYPES[food_type]['value'],
-			'color': FOOD_TYPES[food_type]['color']
+			'id': str(uuid.uuid4()) if not food_id else food_id, # Si l'id n'est pas fourni, on le genere
+			'x': random.randint(0, self.map_width), 			# Position x de la nourriture
+			'y': random.randint(0, self.map_height), 			# Position y de la nourriture
+			'type': food_type, 									# Type de nourriture
+			'value': FOOD_TYPES[food_type]['value'], 			# Valeur de la nourriture
+			'color': FOOD_TYPES[food_type]['color'] 			# Couleur de la nourriture
 		}
 		self.food.append(new_food)
 		return new_food
+
+	def distance(self, obj1, obj2):
+		"""Calcule la distance entre deux objets avec la formule : d = √((x₂-x₁)² + (y₂-y₁)²)"""
+		return ((obj1['x'] - obj2['x']) ** 2 + (obj1['y'] - obj2['y']) ** 2) ** 0.5
+
+	def check_all_food_collisions(self):
+		"""Envoie la fonction check_food_collision pour tous les joueurs"""
+		food_changes = []
+		for player_id in self.players:
+			changes = self.check_food_collision(player_id)
+			if changes:
+				food_changes.extend(changes)
+		return len(food_changes) > 0
 
 	def check_food_collision(self, player_id):
 		"""Vérifie les collisions entre un joueur et la nourriture"""
@@ -122,62 +135,53 @@ class Game:
 					changed_foods.append(new_food)
 				collision_occurred = True
 
-		return changed_foods if collision_occurred else None
-
-	def distance(self, obj1, obj2):
-		"""Calcule la distance entre deux objets"""
-		return ((obj1['x'] - obj2['x']) ** 2 + (obj1['y'] - obj2['y']) ** 2) ** 0.5
-
-	def check_all_food_collisions(self):
-		"""Vérifie les collisions pour tous les joueurs"""
-		food_changes = []
-		for player_id in self.players:
-			changes = self.check_food_collision(player_id)
-			if changes:
-				food_changes.extend(changes)
-		return len(food_changes) > 0
+		return changed_foods if collision_occurred else None # Si une collision a eu lieu, on retourne les nouvelles nourritures, sinon on retourne None
 
 	def add_player(self, player_id, player_name):
+		"""Ajoute un joueur à la partie"""
 		if player_id not in self.expected_players:
 			return False
 		# logger.debug(f"ADDING A PLAYER :{player_id} : {player_name}")
 		self.players[player_id] = {
-			'id': player_id,
-			'name': player_name,
-			'x': random.randint(0, self.map_width),
-			'y': random.randint(0, self.map_height),
-			'size': 30,
-			'score': 0,
-			'color': f'#{random.randint(0, 0xFFFFFF):06x}',
-			'speed_multiplier': 1,
-			'invulnerable': False,
-			'score_multiplier': 1,
-			'inventory': [None, None, None]
+			'id': player_id, # Id du joueur
+			'name': player_name, # Nom du joueur
+			'x': random.randint(0, self.map_width), # Position x du joueur
+			'y': random.randint(0, self.map_height), # Position y du joueur
+			'size': 30, # Taille du joueur
+			'score': 0, # Score du joueur
+			'color': f'#{random.randint(0, 0xFFFFFF):06x}', # Couleur du joueur
+			'speed_multiplier': 1, # Multiplicateur de vitesse du joueur
+			'invulnerable': False, # Invulnerabilité du joueur
+			'score_multiplier': 1, # Multiplicateur de score du joueur
+			'inventory': [None, None, None] # Inventaire du joueur
 		}
+		# Check si avec cet ajout la len de players est égale à la len de expected_players
 		if len(self.players) == len(self.expected_players):
-			self.status = 'in_progress'
+			self.status = 'in_progress' # Si oui, on passe le status de leur game à in_progress
 		return True
 
 	def remove_player(self, player_id):
 		"""Retire un joueur de la partie"""
+		# Le player (player_id) est forcemment le loser
 		if player_id in self.players:
-			loser = self.players[player_id]
+			loser = self.players[player_id] # On recupere le loser
 			loser_score = self.players[player_id]['score']
-			del self.players[player_id]
+			del self.players[player_id] # Et on le supprime de la liste des players
 			if player_id in self.player_inputs:
-				del self.player_inputs[player_id]
+				del self.player_inputs[player_id] # Et on le supprime de la liste des inputs de players
 			if player_id in self.player_movements:
-				del self.player_movements[player_id]
+				del self.player_movements[player_id] # Pareil pour les movements
 			if len(self.players) <= 1:
-				self.status = "finished"
+				self.status = "finished" # Quand la len de players est 1, on passe le status de leur game à finished (forcemment le cas)
 				winner = list(self.players.values())[0]
 				return {
 					'type': 'game_finish',
 					'loser': loser,
 					'loser_score': loser_score,
 					'winner': winner,
-					'message_winner': f"Score final : {winner['score']:.0f} ! GG !",
-					'message_loser': f"Score final : {loser_score:.0f} ! NT !",
+					'winner_score': winner['score'],
+					'message_winner': f"Final score : {winner['score']:.0f} ! GG !",
+					'message_loser': f"Final score : {loser_score:.0f} ! NT !",
 				}
 		return None
 

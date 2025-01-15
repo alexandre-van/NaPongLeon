@@ -23,7 +23,7 @@ export function createHotbar() {
     document.body.appendChild(hotbarDiv);
 }
 
-export function updateHotbar(inventory = [], slot_index = null) {
+export function updateHotbar(inventory = []) {
     // console.log('Updating hotbar with inventory:', inventory);
     const slots = document.querySelectorAll('.hotbar-slot');
     
@@ -43,7 +43,7 @@ export function updateHotbar(inventory = [], slot_index = null) {
             }
         });
         
-        // Ajouter l'icône uniquement si le powerUp existe (n'est pas null)
+        // Ajouter l'icône uniquement si le powerUp existe
         if (powerUp !== null) {
             const icon = document.createElement('div');
             icon.className = 'power-up-icon';

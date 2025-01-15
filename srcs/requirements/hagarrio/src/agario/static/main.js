@@ -1,4 +1,4 @@
-import * as THREE from './three/three.module.js';
+// import * as THREE from './three/three.module.js';
 import { initScene, render, updateCameraPosition } from './scene.js';
 import { initPlayers, updatePlayers, getMyPlayerId, getPlayers } from './player.js';
 import { initFood } from './food.js';
