@@ -82,32 +82,31 @@ export function displayPowerUpCollected(powerUp, isCollected = false) {
     switch (powerUp.type) {
         case 'speed_boost':
             emoji = '🚀';
-            effectText = isCollected ? 'Speed boost collected!' : 'Speed boost activated!';
+            effectText = isCollected ? 'Speed boost collected!' : 'Speed boost activated 10s!';
             break;
         case 'slow_zone':
             emoji = '🐢';
-            effectText = isCollected ? 'Slow zone collected!' : 'Speed slowed!';
+            effectText = isCollected ? 'Slow collected!' : 'Speed slowed 10s!';
             break;
         case 'shield':
             emoji = '🛡️';
-            effectText = isCollected ? 'Shield collected!' : 'Shield activated!';
+            effectText = isCollected ? 'Shield collected!' : 'Shield activated NOTHING HAPPENS!';
             break;
         case 'point_multiplier':
             emoji = '✨';
-            effectText = isCollected ? 'Point multiplier collected!' : 'Point multiplier activated!';
+            effectText = isCollected ? 'Point multiplier collected!' : 'Point multiplier activated x2 : 10s!';
             break;
         default:
             emoji = '🎮';
             effectText = isCollected ? `${powerUp.type} collected!` : `${powerUp.type} activated!`;
     }
-    
     effectDiv.innerHTML = `${emoji} ${effectText}`;
     
     // Appliquer la couleur du texte si disponible
     if (powerUp.properties && powerUp.properties.text_color) {
         effectDiv.style.color = powerUp.properties.text_color;
     }
-    
+
     document.body.appendChild(effectDiv);
 
     // Animation de fondu entrant

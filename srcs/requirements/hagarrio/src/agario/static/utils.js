@@ -166,7 +166,6 @@ function resetGameState() {
     // Réinitialiser toutes les variables globales du jeu
     window.players = {};
     window.myPlayerId = null;
-    // ... autres réinitialisations nécessaires
 }
 
 function cleanupScene() {

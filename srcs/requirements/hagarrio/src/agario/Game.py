@@ -180,6 +180,7 @@ class Game:
 				winner = list(self.players.values())[0]
 				return {
 					'type': 'game_finish',
+					'status': self.status,
 					'loser': loser,
 					'loser_score': loser_score,
 					'winner': winner,

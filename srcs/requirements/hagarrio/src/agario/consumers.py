@@ -216,7 +216,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 		elif state_update['type'] == 'power_up_used':
 			message.update({
 				'slot_index': state_update.get('slot_index', -1),
-				'power_up': state_update.get('power_up')
+				'power_up': state_update.get('power_up'),
+				'players': state_update.get('players'),
+				'player_id': state_update.get('player_id')
 			})
 		elif state_update['type'] == 'game_finish':
 			loser = state_update.get('loser')
@@ -234,6 +236,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if winner_id in GameConsumer.players:
 				await GameConsumer.players[winner_id].send(text_data=json.dumps({
 					'type': 'victory',
+					'status': state_update.get('status'),
 					'game_id': game_id,
 					'players': state_update.get('players'),
 					'winner': winner,
@@ -241,11 +244,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 					'message_winner': state_update.get('message_winner'),
 					'message_loser': state_update.get('message_loser')
 				}))
-				
+				logger.info(f"Notified player {winner_id} about victory")
+				await GameConsumer.players[winner_id].broadcast_games_info_waitingroom()
+
 			# Gérer le joueur mangé (loser)
 			if loser_id in GameConsumer.players:
 				await GameConsumer.players[loser_id].send(text_data=json.dumps({
 					'type': 'game_over',
+					'status': state_update.get('status'),
 					'game_id': game_id,
 					'players': state_update.get('players'),
 					'winner': winner,
@@ -253,7 +259,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 					'message_winner': state_update.get('message_winner'),
 					'message_loser': state_update.get('message_loser')
 				}))
-				await GameConsumer.players[loser_id].send_games_info()
+				logger.info(f"Notified player {loser_id} about game over")
+				await GameConsumer.players[loser_id].broadcast_games_info_waitingroom()
 			else:
 				logger.warning(f"Eaten player {loser_id} not found in active players.")
 			return
