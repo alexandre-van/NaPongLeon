@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from .models import CustomUser, Notification
 import logging
 logger = logging.getLogger(__name__)
@@ -23,6 +24,12 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             notifications = await Notification.get_all_notifications(self.user)
             for notification in notifications:
                 await self.send(text_data=json.dumps(notification.to_dict()))
+            #friends = await self.user.aget_friends()
+            #logger.debug(f'Consumer, friends: ${friends}')
+#            logger.debug(f'self.user: ${self.user}')
+            #for friend in friends:
+                #await self.send_user_info(self.user.id, friend)
+            #    pass
 
 
 
@@ -62,6 +69,20 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                     "status": status
                 }
             )
+
+    async def send_user_info(self, receiver_id, user_info):
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send(
+            f"user_{receiver_id}",
+            {
+                'type': "friend_list_user_update",
+                "user": {
+                    "id": user_info.id,
+                    "username": user_info.username,
+                    "is_online": True,
+                }
+            }
+        )
 
     @database_sync_to_async
     def update_user_status(self, is_online):

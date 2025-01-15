@@ -17,7 +17,8 @@ const getWindowURLinfo = () => {
 export const WebSocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const { user, isAuthenticated, updateUser, friends, setFriends, checkFriends } = useUser();
+  const [friends, setFriends] = useState([]);
+  const { user, isAuthenticated, updateUser/*, friends, setFriends*/, checkFriends } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -44,16 +45,29 @@ export const WebSocketProvider = ({ children }) => {
 
         switch (data.type) {
           case 'friend_list_user_update':
-            if (user && user.friends) {
+            console.log('friend_list_user_update');
+/*            if (user && user.friends) {
+              console.log('inside if(user && user.friends)', data);
               const updatedFriends = user.friends.map(friend => 
-                friend.id === data.id ? {
+                friend.id === data.user.id ? {
                   ...friend, username: data.username, status: data.status
                 } : friend
               );
 
               updateUser({ friends: updatedFriends });
-            }
-            checkFriends();
+            }*/
+
+            console.log('data', data);
+            setFriends(prevFriends => {
+              const newFriends = [...prevFriends];
+              console.log('data.user.id', data.user.id);
+              if (!newFriends.some(n => n.id === data.user.id)) {
+                newFriends.push(data.user);
+              }
+              console.log('newFriends', newFriends);
+              return newFriends;
+            });
+            //checkFriends();
             break;
 
           case 'friend_status':
@@ -74,12 +88,8 @@ export const WebSocketProvider = ({ children }) => {
               checkFriends();  // Actualise la liste des amis
               break;
       
-            
-            
-
-            
-
           case 'friend_deleted': 
+            console.log('friend_deleted', data);
             if (!data.friend_id) {
                 console.error("Invalid friend ID received:", data.friend_id);
                 break;
@@ -148,6 +158,7 @@ export const WebSocketProvider = ({ children }) => {
   const value = React.useMemo(() => ({
     socket,
     friends,
+    setFriends,
     notifications,
     setNotifications
   }), [socket, friends, notifications]);

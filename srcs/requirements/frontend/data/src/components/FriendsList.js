@@ -7,9 +7,10 @@ import api from '../services/api.js';
 
 const FriendsList = () => {
   const navigate = useNavigate();
-  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser();
-  const { notifications, setNotifications } = useWebSocket();
+  const { user/*, friends, setFriends*/, checkFriends, isAuthenticated } = useUser();
+  const { notifications, setNotifications, friends, setFriends } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
+  const [localFriends, setLocalFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [friendStatuses, setFriendStatuses] = useState({});
 
@@ -18,6 +19,13 @@ const FriendsList = () => {
       setLocalNotifications(notifications);
     }
   }, [notifications]);
+
+  useEffect(() => {
+    console.log('useEffect Friends', friends);
+    if (Array.isArray(friends)) {
+      setLocalFriends(friends);
+    }
+  }, [friends])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -196,11 +204,13 @@ const FriendsList = () => {
               <AddFriendButton />
             </div>
 
+
+
             {friends.length === 0 ? (
               <p style={{ textAlign: "center" }}>No friends yet.</p>
             ) : (
               <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {friends.map((friend) => (
+                {localFriends.map((friend) => (
                   <li
                     key={friend.id}
                     onClick={() => setSelectedFriend(friend)}

@@ -18,7 +18,7 @@ async def send_user_info(receiver_id, user_info):
             "user": {
                 "id": user_info.id,
                 "username": user_info.username,
-                "status": True,
+                "is_online": True,
             }
         }
     )

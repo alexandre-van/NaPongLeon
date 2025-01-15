@@ -7,9 +7,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import logging
-
-logger = logging.getLogger(__name__)
 
 class CustomJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
@@ -28,18 +25,24 @@ class CustomJWTAuthentication(JWTAuthentication):
         
 
 
-
 class AsyncCustomJWTAuthentication(JWTAuthentication):
     async def authenticate(self, request):
+        logger.debug('1')
         header = self.get_header(request)
 
+        logger.debug('2')
         if header is None:
+            logger.debug('3')
             raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE']) or None
         else:
+            logger.debug('4')
             raw_token = self.get_raw_token(header)
 
         if raw_token is None:
+            logger.debug('5')
             return None
         
+        logger.debug('bonjour')
         validated_token = await sync_to_async(self.get_validated_token)(raw_token)
+        logger.debug('avant return')
         return await sync_to_async(self.get_user)(validated_token), validated_token

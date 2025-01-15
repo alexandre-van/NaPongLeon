@@ -63,7 +63,8 @@ class AsyncJWTAuthMiddleware:
                 'COOKIES': cookies,
                 'META': normalize_headers(scope['headers']),
                 'method': scope.get('method', ''),
-                'path': scope.get('path', '')
+                'path': scope.get('path', ''),
+                'disconnect': lambda: None
             })
 
             access_token = request.COOKIES.get('access_token')
@@ -71,6 +72,7 @@ class AsyncJWTAuthMiddleware:
 
             if access_token or refresh_token:
                 try:
+                    logger.debug('try debut')
                     user, validated_token = await self.auth.authenticate(request)
                     scope['user'] = user
                     return await self.inner(scope, receive, send)
