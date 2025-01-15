@@ -77,8 +77,6 @@ CACHES = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-#    'authenticationApp.middlewares.asgi_middleware.CsrfExemptMiddleware',
-#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -224,15 +222,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-# Middleware to deactivate CSRF check of Django
-class CsrfExemptMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if getattr(request, 'csrf_exempt', False):
-            setattr(request, '_dont_enforce_csrf_checks', True)
-        return self.get_response(request)
 
 LANGUAGE_CODE = 'en-us'
 

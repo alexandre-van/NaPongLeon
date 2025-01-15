@@ -1,23 +1,14 @@
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
-from channels.middleware import BaseMiddleware
 
-from django.middleware.csrf import get_token, rotate_token
+from django.middleware.csrf import get_token
 from django.contrib.auth.models import AnonymousUser
 from authenticationApp.models import CustomUser
-from django.conf import settings
-from django.http import HttpRequest, JsonResponse
+from django.http import JsonResponse
 from django.utils.decorators import sync_and_async_middleware
 
-from rest_framework_simplejwt.tokens import UntypedToken
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
-from asgiref.sync import sync_to_async
-
 from .utils import parse_cookies, normalize_headers
-from jwt import decode as jwt_decode
 import hmac
-import json
 
 import logging
 
@@ -137,6 +128,8 @@ class AsyncJWTAuthMiddleware:
 def AsyncJWTAuthMiddlewareStack(inner):
     return AsyncJWTAuthMiddleware(AuthMiddlewareStack(inner))
 
+
+
 @sync_and_async_middleware
 class CsrfAsgiMiddleware:
     def __init__(self, get_response):
@@ -187,31 +180,20 @@ class CsrfAsgiMiddleware:
         ]
         logger.debug(f'request.path = {request.path}')
 
-        # Vérifie si le chemin correspond à l'un des patterns exemptés
         for pattern in exempt_patterns:
             if self.path_matches_pattern(request.path, pattern):
-                logger.debug(f'Path matches exempt pattern: {pattern}')
                 return await self.get_response(scope, receive, send)
 
         # Check CSRF for state-changing methods
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
             csrf_cookie = request.COOKIES.get('csrftoken')
             csrf_header = self.get_csrf_header(normalized_headers)
-
-            logger.debug(f"--------------------------- CSRF_cookie = {csrf_cookie}\n")
-            logger.debug(f"--------------------------- CSRF_header = {csrf_header}\n")
             if not csrf_cookie or not csrf_header:
                 return await self.send_error_response(send, 'CSRF token missing', 403)
 
             if csrf_cookie != csrf_header:
                 return await self.send_error_response(send, 'CRSF token invalid', 403)
 
-        #async def server_send(response):
-        #    await send(response)
-
-        
-        
-        #return await self.get_response(scope, receive, server_send)
         return await self.get_response(scope, receive, self.get_send_wrapper(send, request))
     
     def get_send_wrapper(self, send, request):
@@ -250,13 +232,3 @@ class CsrfAsgiMiddleware:
             'type': 'http.response.body',
             'body': JsonResponse({'error': message}).content,
         })
-
-# Middleware to deactivate CSRF check of Django
-class CsrfExemptMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if getattr(request, 'csrf_exempt', False):
-            setattr(request, '_dont_enforce_csrf_checks', True)
-        return self.get_response(request)

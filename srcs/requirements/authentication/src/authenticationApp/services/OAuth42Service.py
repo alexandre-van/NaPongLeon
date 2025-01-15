@@ -15,7 +15,6 @@ class AsyncOAuth42Service:
         self.redirect_uri = f"{settings.SITE_URL}/api/authentication/oauth/42/callback"
         self._session: Optional[aiohttp.ClientSession] = None
         # To avoid data race on simultaneous requests
-        #self._lock = asyncio.Lock()
         self._lock = None
         self._session = None
         # Recurring requests to 42 API limited to 2
@@ -51,7 +50,6 @@ class AsyncOAuth42Service:
 
     async def _ensure_session(self):
         if not self._session:
-            ("Creating session in _ensure_session")
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=30)
             )
@@ -70,7 +68,6 @@ class AsyncOAuth42Service:
         for attempt in range(max_retries):
             try:
                 async with self._semaphore:
-                    (f"Making {method} request to {url} (attempt {attempt + 1})")
                     async with self._session.request(method, url, **kwargs) as response:
                         if response.status == 429:  # Rate limit
                             retry_after = int(response.headers.get('Retry_After', 5))
@@ -84,7 +81,6 @@ class AsyncOAuth42Service:
                             
                         response.raise_for_status()
                         data = await response.json()
-                        (f"Request successful")
                         return data
             
             except aiohttp.ClientError as e:
@@ -184,13 +180,11 @@ class AsyncOAuth42Service:
                     password=make_password(uuid.uuid4().hex),
                     email=user_data['email']
                 )
-                ('CustomUser created')
 
                 if avatar_url := user_data.get('image', {}).get('link'):
                     avatar_content = await self.download_avatar(avatar_url)
                     filename = f"avatar_{user.id}.jpg"
                     filepath = f"users/{user.id}/avatar/{filename}"
-                    ('after avatar_url')
                     new_path = await sync_to_async(default_storage.save)(filepath, avatar_content)
                     await user.update_avatar_url(new_path)
 
