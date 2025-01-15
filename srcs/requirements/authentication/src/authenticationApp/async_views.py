@@ -2,7 +2,6 @@ from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpRe
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from .services.FriendRequestService import FriendRequestService
-#from rest_framework import status
 from asgiref.sync import sync_to_async
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import AccessToken
