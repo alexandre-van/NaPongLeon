@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUser } from '../contexts/UserContext.js';
 
 const NicknameForm = ({ onSubmit, onError }) => {
   const [nickname, setNickname] = useState('');
+  const { user } = useUser();
+  const [currentNickname, setCurrentNickname] = useState('');
 
   const handleNicknameChange = (e) => setNickname(e.target.value);
 
@@ -10,11 +13,15 @@ const NicknameForm = ({ onSubmit, onError }) => {
     onSubmit({ value: nickname, error: null });
   };
 
+  useEffect(() => {
+    setCurrentNickname(user.nickname);
+  }, [handleSubmit]);
+
   return (
     <div className="nickname-form">
       <form onSubmit={handleSubmit}>
         <label htmlFor="current-nickname">Current nickname:</label>
-        <p>{nickname || 'No nickname yet'}</p>
+        <p>{currentNickname || 'No nickname yet'}</p>
 
         <label htmlFor="nickname">New Nickname</label>
         <input

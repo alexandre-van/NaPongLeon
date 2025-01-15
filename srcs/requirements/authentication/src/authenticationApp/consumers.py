@@ -9,9 +9,9 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 class FriendRequestConsumer(AsyncWebsocketConsumer):
-    _status_lock = asyncio.Lock()
     async def connect(self):
-        self.user = self.scope.get("user", None)
+        self.user_id = self.scope.get("user", None).id
+        self.user = await self.get_user()
         if not self.user:
             await self.close()
         else:
@@ -35,6 +35,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         from django_otp import devices_for_user
         from django_otp.plugins.otp_totp.models import TOTPDevice
         from asgiref.sync import sync_to_async
+        self.user = await self.get_user()
 
         try:
             if self.user and self.user.is_authenticated:
@@ -53,6 +54,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error during disconnect: {str(e)}")
 
     async def receive(self, text_data):
+        self.user = await self.get_user()
         data = json.loads(text_data)
         action = data.get('action')
 
@@ -79,6 +81,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
         
     async def send_status_friends(self, status):
+        self.user = await self.get_user()
         friends = await self.user.aget_friends()
         for friend in friends:
 
@@ -92,6 +95,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
             )
 
     async def send_friend_request(self, target_user_id):
+        self.user = await self.get_user()
         try:
             target_user, notification = await self._send_friend_request_and_create_notification(target_user_id)
 
@@ -141,6 +145,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
 
 
     async def accept_friend_request(self, from_user_id):
+        self.user = await self.get_user()
         try:
             from_user, notification = await self._accept_friend_request_and_create_notification(self, from_user_id)
 
@@ -173,6 +178,10 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def update_user_status(self, is_online):
         self.user.update_user_status(is_online)
+
+    @database_sync_to_async
+    def get_user(self):
+        return CustomUser.objects.get(id=self.user_id)
 
     @database_sync_to_async
     def _accept_friend_request_and_create_notification(self, from_user_id):
@@ -221,6 +230,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
         }))
 
     async def friend_request_received(self, event):
+        self.user = await self.get_user()
         await self.send(text_data=json.dumps({
             'type': 'friend_request_received',
             'user': event['user']

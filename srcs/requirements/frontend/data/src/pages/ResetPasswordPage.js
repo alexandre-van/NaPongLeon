@@ -3,8 +3,10 @@ import { Form, Button, Container, Alert } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api.js';
+import { useUser } from '../contexts/UserContext.js';
 
 export default function ResetPasswordPage() {
+    const { user, isAuthenticated } = useUser();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [success, setSuccess] = useState(false);
@@ -65,7 +67,7 @@ export default function ResetPasswordPage() {
                     Password has been modified
                 </Alert>
                 <Button onClick={() => navigate('/login')}>
-                    Go to Login page
+                    Go to {isAuthenticated ? "home": "login"} page
                 </Button>
             </Container>
         );
@@ -109,7 +111,7 @@ export default function ResetPasswordPage() {
 
             </Form>
             <Link to="/login">
-                Go back to login page
+                Go back to {isAuthenticated ? "home": "login"} page
             </Link>
         </Container>
     );
