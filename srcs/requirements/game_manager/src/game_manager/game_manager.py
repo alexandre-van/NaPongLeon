@@ -239,12 +239,12 @@ class Game_manager:
 						current_game['status'] = game_instance.status
 						current_game['latest_update_status'].reset()
 						return None, None
-					elif self.game_instance.status != 'aborting':
-						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s aborting game... : {self._current_games[game_id]['status']}")
-						game_instance.aborting_game()
-						current_game['status'] = game_instance.status
-						current_game['latest_update_status'].reset()
-						return None, None
+					#elif self.game_instance.status != 'aborting':
+					#	logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s aborting game... : {self._current_games[game_id]['status']}")
+					#	game_instance.aborting_game()
+					#	current_game['status'] = game_instance.status
+					#	current_game['latest_update_status'].reset()
+					#	return None, None
 					else:
 						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s abort game : {self._current_games[game_id]['status']}")
 						for player in current_game['players']:

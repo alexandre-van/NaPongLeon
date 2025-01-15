@@ -14,12 +14,6 @@ class Team:
 	def update_name(self):
 		self.name = ", ".join(player.nickname for player in self.players)
 
-	def set_level(self, level):
-		self.level = level
-
-	def set_level(self, level):
-		self.level = level
-
 	def set_current_branch(self, new_current_branch):
 		self.current_branch = new_current_branch
 		self.level = self.current_branch.level

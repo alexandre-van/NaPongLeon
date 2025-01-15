@@ -21,6 +21,7 @@ export default function HagarrioPage() {
     iframe.sandbox = "allow-scripts allow-same-origin"; // Sécuriser l'iframe
     iframe.id = "gameFrame";
 
+
     // Sauvegarder la référence de l'iframe
     iframeRef.current = iframe;
 

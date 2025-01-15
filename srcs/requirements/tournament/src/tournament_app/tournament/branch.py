@@ -66,6 +66,7 @@ class Branch:
 	def ascend_team(self, team):
 		if self.prev_branch.is_free():
 			self.prev_branch.bench = team
+			team.set_current_branch(self.prev_branch)
 			if self.prev_branch.level > 0:
 				for branch in self.prev_branch.next_branches:
 					if branch.is_free():
