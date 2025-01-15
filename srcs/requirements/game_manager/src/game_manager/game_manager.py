@@ -26,7 +26,8 @@ class Game_manager:
 		self.status_timer = {
 			'waiting': 15,
 			'loading' : 15,
-			'in_progress': 3600
+			'in_progress': 3600,
+			'aborting': 15
 		}
 
 	def update_databases(self):
@@ -235,6 +236,12 @@ class Game_manager:
 				>= self.status_timer[current_game['status']]:
 					if game_instance.status != self._current_games[game_id]['status']:
 						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s elapsed with status : {self._current_games[game_id]['status']}")
+						current_game['status'] = game_instance.status
+						current_game['latest_update_status'].reset()
+						return None, None
+					elif self.game_instance.status != 'aborting':
+						logger.debug(f"{current_game['latest_update_status'].get_elapsed_time()}s aborting game... : {self._current_games[game_id]['status']}")
+						game_instance.aborting_game()
 						current_game['status'] = game_instance.status
 						current_game['latest_update_status'].reset()
 						return None, None

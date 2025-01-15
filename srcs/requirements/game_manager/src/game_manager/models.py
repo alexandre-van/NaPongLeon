@@ -82,6 +82,7 @@ class GameInstance(models.Model):
 		('waiting', 'Waiting for players to join'),
 		('loading', 'Players are loading game assets and configurations'),
 		('in_progress', 'Game currently in progress'),
+		('aborting', 'Game has been aborted'),
 		('aborted', 'Game has been aborted'),
 		('finished', 'Game has finished'),
 	]
@@ -112,6 +113,11 @@ class GameInstance(models.Model):
 	def abort_game(self):
 		self.status = 'aborted'
 		self.save()
+
+	def aborting_game(self):
+		if self.status != 'aborted':
+			self.status = 'aborting'
+			self.save()
 
 	def update_score(self, team, score):
 		game_score, created = GameScore.objects.get_or_create(game=self, team_name=team)
