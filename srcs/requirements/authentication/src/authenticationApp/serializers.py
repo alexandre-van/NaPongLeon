@@ -3,6 +3,9 @@ from rest_framework.validators import UniqueValidator
 from .models import CustomUser, Friendship
 import re
 
+import logging
+logger = logging.getLogger(__name__)
+
 class UserSerializer(serializers.ModelSerializer):
     friends = serializers.SerializerMethodField()
     pending_friend_requests = serializers.SerializerMethodField()
@@ -57,8 +60,9 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
     def validate_username(self, value):
-        special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>_-]')
+        special_chars = re.compile(r'[!@#$%^&*(),.?":{}|<>\[\]_-]')
         if special_chars.search(value):
+            logger.info('validate username special characters found')
             raise serializers.ValidationError("Username cannot contain special characters")
         
         if CustomUser.objects.filter(nickname__iexact=value).exists():
@@ -69,9 +73,10 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_nickname(self, value):
         if value is "":
             raise serializers.ValidationError("Nickname cannot be nothing if you choose it")
-        special_chars = re.compile(r'_ ')
+        special_chars = re.compile(r'[_ ]')
         if special_chars.search(value):
-            raise serializers.ValidationError("Nickname cannot contain '_' underscore character")
+            logger.info('validate nickname _ or space characters found')
+            raise serializers.ValidationError("Nickname cannot contain underscore or space character")
         
         if CustomUser.objects.filter(nickname__iexact=value).exists():
             raise serializers.ValidationError("This value is already used as a nickname")
