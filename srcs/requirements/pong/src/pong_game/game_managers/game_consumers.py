@@ -157,7 +157,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		if self.username in self.room['players']:
 			admin = self.room['admin']
 			logger.debug(f"{self.username} as been disconnected")
-			if self.room['game_instance']:
+			if self.room['game_instance'] and self.room['status'] == 'running':
 				teams = self.room['game_instance'].players_in_side
 				score = self.room['game_instance'].score
 				opponent_team = None

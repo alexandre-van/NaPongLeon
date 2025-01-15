@@ -256,10 +256,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					}
 				)
 				for team in tournament_state['teams']:
-					await self.send_update_score(team['name'], team['level'])
+					await self.send_update_score(team['name'], team['level'] * - 1)
 				if tournament_state['type'] == 'tournament_end':
 					tournament_manager.update_status('finished', self.tournament_id)
-					await self.send_tournament_finished(tournament_state['team']['name'], tournament_state['score'])
+					await self.send_tournament_finished(tournament_state['team']['name'], tournament_state['score'] * -1)
 					#await self.tournament_end()
 					return
 				await asyncio.sleep(3)
