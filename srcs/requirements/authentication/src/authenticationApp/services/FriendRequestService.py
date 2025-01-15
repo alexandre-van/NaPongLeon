@@ -1,14 +1,9 @@
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 from authenticationApp.models import Notification
-
-import logging
-logger = logging.getLogger(__name__)
 
 async def send_notification(receiver_id, notification):
     channel_layer = get_channel_layer()
-    logger.debug(f"Sending notification to group user_{receiver_id}:\n\n\n\n\n\n\n")
     await channel_layer.group_send(
         f"user_{receiver_id}",
         notification.to_group_send_format()
@@ -16,7 +11,6 @@ async def send_notification(receiver_id, notification):
 
 async def send_user_info(receiver_id, user_info):
     channel_layer = get_channel_layer()
-    logger.debug(f"Sending user_info to group user_{receiver_id}:\n\n\n\n\n\n\n")
     await channel_layer.group_send(
         f"user_{receiver_id}",
         {
@@ -31,7 +25,6 @@ async def send_user_info(receiver_id, user_info):
 
 async def send_deleted_friend_from_list(user, friend_id):
     channel_layer = get_channel_layer()
-    logger.debug(f"Send Deleted friend from list to group user_{friend_id}:\n\n\n\n\n")
     await channel_layer.group_send(
         f"user_{friend_id}",
         {
@@ -74,7 +67,7 @@ class FriendRequestService:
     async def reject_friend_request(user, notification_id):
         notification, from_user = await get_notification_and_sender(notification_id)
         if from_user:
-            result = await user.reject_friend_request(from_user, notification)
+            await user.reject_friend_request(from_user, notification)
             if notification:
                 return True
         return False

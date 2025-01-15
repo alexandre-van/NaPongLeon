@@ -6,33 +6,10 @@ const AddFriendButton = () => {
   const [targetUsername, setTargetUsername] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const { sendFriendRequest } = useUser();
-//  const { socket } = useWebSocket();
-
-  const showInputAddButton = () => {
-    return (
-      <button onClick={handleAddFriend}>
-        Add friend Final
-      </button>
-    );
-  };
 
   const handleAddFriend = async () => {
-/*    if (socket && socket.readyState === WebSocket.OPEN) {
-      const message = {
-        action: 'send_request',
-        target_user_id: friendId
-      };
-      socket.send(JSON.stringify(message));
-      setFriendId('');
-      setIsAdding(false);
-    } else {
-      console.error("WebSocket is not open. Unable to send friend request");
-    }*/
-
     try {
- //     if (socket) {
-        await sendFriendRequest(targetUsername);
-  //    }
+      await sendFriendRequest(targetUsername);
     } catch (error) {
       console.error(error.message);
     }
