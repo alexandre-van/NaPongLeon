@@ -62,7 +62,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		#Check si la game existe
 		if self.current_game_id in GameConsumer.active_games:
 			game = GameConsumer.active_games[self.current_game_id]
-			# Informer les autres joueurs de la déconnexion immédiatement
+			# Informer les autres joueurs de la déconnexion (pour que le frontend mette a jour la liste des joueurs)
 			for player_id in game.players:
 				if player_id != self.player_id and player_id in GameConsumer.players:
 					await GameConsumer.players[player_id].send(text_data=json.dumps({
@@ -83,6 +83,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
 	async def receive(self, text_data):
+		"""Fonction qui se lance lorsqu'un joueur envoie un message au serveur"""
 		data = json.loads(text_data)
 
 		if data['type'] == 'start_game':

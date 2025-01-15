@@ -43,7 +43,10 @@ export function updateGameInfo(data) {
 
     if (!hasActiveGames) {
         const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="2" style="text-align: center;">No games available</td>';
+        row.innerHTML = `
+            <td style="width: 50%; text-align: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;">No games available</td>
+            <td style="width: 50%; text-align: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;">No players</td>
+        `;
         gameList.appendChild(row);
         return;
     }

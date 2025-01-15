@@ -14,6 +14,7 @@ export function updatePlayers(newPlayers, newMyPlayerId) {
     if (newPlayers && Object.keys(newPlayers).length > 0) {
         players = newPlayers;
         if (newMyPlayerId && !myPlayerId) myPlayerId = newMyPlayerId;
+        // On met à jour les sprites des joueurs (positions etc)
         Object.values(players).forEach(player => updatePlayerSprite(player, currentScene));
     }
 }
@@ -133,7 +134,7 @@ function createTextSprite(player) {
     let text = player.name;
     const maxWidth = textCanvas.width * 0.8;
     if (textContext.measureText(text).width > maxWidth) {
-        text = text.substring(0, 15) + '...';
+        text = text.substring(0, 11) + '...';
     }
 
     // Effet d'ombre portée
