@@ -3,12 +3,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import UniqueConstraint, Q
 from django.db import models
 from asgiref.sync import sync_to_async
-#from django.contrib.staticfiles.storage import staticfiles_storage
 from django.templatetags.static import static
 from django.db import transaction
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-import asyncio
 import os
 
 import logging
@@ -22,13 +20,9 @@ def validate_unique_username_nickname(value, instance=None):
 	query = CustomUser.objects.filter(
 		Q(username__iexact=value) | Q(nickname__iexact=value)
 	)
-	logger.debug(f'query:{query}')
 	if instance:
-		logger.debug(f'if query:{query}')
 		query = query.exclude(pk=instance.pk)
-		logger.debug(f'if after query:{query}')
 	
-	logger.debug(f'query.exists:{query.exists()}')
 	if query.exists():
 		raise ValidationError('This value is already used as a username or as a nickname.')
 

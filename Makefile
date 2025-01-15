@@ -1,6 +1,9 @@
 DC_FILE	= ./srcs/docker-compose.yml
 
 start:
+	@echo "Setting up host IP for OAuth..."
+	chmod +x ./srcs/scripts/get_host_ip.sh
+	./srcs/scripts/get_host_ip.sh
 	@echo "Generating ssl certificates"
 	chmod +x ./srcs/scripts/generate-certs.sh
 	./srcs/scripts/generate-certs.sh

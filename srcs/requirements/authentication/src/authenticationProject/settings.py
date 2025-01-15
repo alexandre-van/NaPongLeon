@@ -225,7 +225,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-SITE_URL = 'https://localhost:8443'
+SITE_URL = os.environ.get('SITE_URL', 'https://localhost:8443')
 
 TIME_ZONE = 'CET'
 

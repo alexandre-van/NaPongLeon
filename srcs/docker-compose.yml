@@ -24,7 +24,6 @@ services:
       - backend
       - frontend
     ports:
-    #  - "8080:8080"
       - "8443:443"
 
   frontend:
@@ -49,6 +48,7 @@ services:
       - ./requirements/authentication/src:/app
       - media_vol:/app/media
       - static_vol:/app/static_files
+      - ./.env:/app/.env
     restart: on-failure
     secrets:
       - db_user
@@ -210,4 +210,5 @@ secrets:
     file: ./.secrets/gmail_app_password
   gmail_host_user:
     file: ./.secrets/gmail_host_user
+
   

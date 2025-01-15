@@ -2,13 +2,9 @@ from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
 
-from .utils.httpResponse import HttpResponseJD, HttpResponseBadRequestJD, HttpResponseNotFoundJD, HttpResponseJDexception
-from .serializers import UserSerializer, FriendshipSerializer
+from .serializers import UserSerializer
 from authenticationApp.auth_middleware import CustomJWTAuthentication
-#from .async_views import AsyncLoginConsumer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,9 +46,7 @@ class VerifyTokenView(APIView):
 
 
     def post(self, request):
-        #logger.debug(f"request.data: {request.data}")
         user = request.user
-        logger.debug('\n\n\n\n\nVerifyTokenView\n\n\n\n\n')
         logger.debug(f"user={user}")
         logger.debug(f"username={user.username}")
         logger.debug(f"nickname: {user.nickname}")

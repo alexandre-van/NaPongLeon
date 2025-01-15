@@ -17,7 +17,7 @@ async def OAuth42AuthorizeView(request):
     # Create a JWT which contains all necessary informations
     state_token = AccessToken()
     state_token['state'] = raw_state
-    state_token['nonce'] = secrets.token_urlsafe(16)  # More safety
+    state_token['nonce'] = secrets.token_urlsafe(16)
     state_token['initiated_at'] = datetime.now().timestamp()
     state_token.set_exp(lifetime=timedelta(minutes=10))
     
@@ -77,7 +77,6 @@ async def OAuth42CallbackView(request):
             refresh = await database_sync_to_async(RefreshToken.for_user)(user)
 
             cet = pytz.timezone('CET')
-            current_time_cet = timezone.now().astimezone(cet)
 
             refresh.access_token.set_exp(from_time=timezone.now(), lifetime=timedelta(minutes=5))
             
