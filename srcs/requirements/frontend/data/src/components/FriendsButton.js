@@ -7,8 +7,7 @@ import { useWebSocket } from '../contexts/WebSocketContext.js';
 
 const FriendsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const {/*friends, setFriends, checkFriends,*/ isAuthenticated } = useUser(); 
-  // TODO retirer dans friendlist checkFriends
+  const { isAuthenticated } = useUser(); 
   const { friends, setFriends } = useWebSocket();
   const [localFriends, setLocalFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -17,12 +16,6 @@ const FriendsButton = () => {
 
   // Référence pour le bouton et le menu
   const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-//      checkFriends();
-    }
-  }, [isAuthenticated/*, checkFriends*/]);
 
   useEffect(() => {
     if (isAuthenticated && Array.isArray(friends)) {

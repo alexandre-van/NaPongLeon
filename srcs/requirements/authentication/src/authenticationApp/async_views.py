@@ -313,11 +313,8 @@ async def FriendsView(request):
     user = await sync_to_async(lambda: request.user)()
     if not user or not user.is_authenticated:
         return HttpResponseJD('Authentication required', 401)
-    if request.method == 'GET':
-        # Get all friends
-        friends = await user.aget_friends()
-        return HttpResponseJD('Friends', 200, friends)
-    elif request.method == 'DELETE':
+
+    if request.method == 'DELETE':
         # Delete a friend from the list
         from .models import CustomUser
 

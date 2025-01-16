@@ -18,7 +18,7 @@ export const WebSocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
   const [friends, setFriends] = useState([]);
-  const { user, isAuthenticated, updateUser/*, friends, setFriends, checkFriends*/ } = useUser();
+  const { user, isAuthenticated, updateUser } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -68,7 +68,6 @@ export const WebSocketProvider = ({ children }) => {
               console.log('newFriends', newFriends);
               return newFriends;
             });
-            //checkFriends();
             break;
 
           case 'friend_status':
@@ -98,7 +97,6 @@ export const WebSocketProvider = ({ children }) => {
                   : friend
                 ));
               }
-              //checkFriends();  // Actualise la liste des amis
               break;
       
           case 'friend_deleted': 
@@ -122,11 +120,6 @@ export const WebSocketProvider = ({ children }) => {
             } else {
                 console.warn("User does not have a friends list or user object is null.");
             }
-        
-            // Actualisation de la liste d'amis côté utilisateur
-/*            setTimeout(() => {
-              checkFriends();
-            }, 0);*/
             break;
 
           case 'notification':
