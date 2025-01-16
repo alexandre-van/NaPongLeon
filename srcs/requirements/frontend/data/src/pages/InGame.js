@@ -11,31 +11,28 @@ export default function InGame() {
 
       useEffect(() => {
         try {
-            if (!gameService || !gameId) {
-                console.error("Missing or invalid gameService or gameId");
-                navigate("/pong");
-                return;
-            }
+            if (gameService && gameId) {
           
-            const existingIframe = document.querySelector('#gameFrame');
-            if (existingIframe) {
-                existingIframe.remove(); // Nettoyer toute iframe existante
+                const existingIframe = document.querySelector('#gameFrame');
+                if (existingIframe) {
+                    existingIframe.remove(); // Nettoyer toute iframe existante
+                }
+            
+                const iframe = document.createElement('iframe');
+                iframe.id = "gameFrame";
+                iframe.src = `${gameService}/?gameId=${gameId}`;
+                iframe.style.position = "fixed";
+                iframe.style.top = "56px";
+                iframe.style.left = "-1%";
+                iframe.style.width = "102%";
+                iframe.style.height = "95%";
+                iframe.style.border = "none";
+                iframe.style.zIndex = "999";
+                iframe.scrolling = "no";
+                iframe.sandbox = "allow-scripts allow-same-origin";
+                // Ajouter l'iframe au DOM
+                document.body.appendChild(iframe)
             }
-          
-            const iframe = document.createElement('iframe');
-            iframe.id = "gameFrame";
-            iframe.src = `${gameService}/?gameId=${gameId}`;
-            iframe.style.position = "fixed";
-            iframe.style.top = "56px";
-            iframe.style.left = "-1%";
-            iframe.style.width = "102%";
-            iframe.style.height = "95%";
-            iframe.style.border = "none";
-            iframe.style.zIndex = "999";
-            iframe.scrolling = "no";
-            iframe.sandbox = "allow-scripts allow-same-origin";
-            // Ajouter l'iframe au DOM
-            document.body.appendChild(iframe)
 
         } catch (error) {
             console.error("Error during iframe setup:", error);
@@ -48,7 +45,7 @@ export default function InGame() {
                 iframe.remove();
             }
         };
-    }, []);
+    }, [gameId]);
   
 
     const Cancel = async () => {
