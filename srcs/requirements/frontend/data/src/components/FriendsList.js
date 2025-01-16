@@ -67,7 +67,7 @@ const FriendsList = () => {
       case "in_queue":
       case "loading_game":
       case "in_game": return "blue";
-      case "waiting": 
+      case "waiting_for_players": 
       case "pending": return "orange";
       default: return "black";
     }
@@ -81,7 +81,7 @@ const FriendsList = () => {
         case "in_queue": return "In queue";
         case "in_game":
         case "loading_game": return "In game";
-        case "waiting": return "Waiting";
+        case "waiting_for_players": return "Waiting";
         default: return "";
     }
   };

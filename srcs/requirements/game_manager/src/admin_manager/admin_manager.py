@@ -26,19 +26,26 @@ class AdminManager:
 
 	def cleanup_thread(self, game_id):
 		with self._threads_mutex:
-			if self.threads.get(game_id):
-				users = self.threads[game_id]['users']
-				logger.debug(f"Cleanup after game {game_id}. Closing resources...")
-				logger.debug(f"users change status : {users}")
-				self.upadte_game_status(game_id, users, 'aborted')
-				del self.threads[game_id]
+			thread_data = self.threads.get(game_id)
+			if not thread_data:
+				logger.error(f"Thread data for game {game_id} not found. Skipping cleanup.")
+				return
+	
+			users = thread_data.get('users', {})
+			logger.debug(f"Cleanup after game {game_id}. Closing resources...")
+			logger.debug(f"Users change status: {users}")
+			self.update_game_status(game_id, users, 'aborted')
+			del self.threads[game_id]
+	
 		logger.debug(f"Thread for game {game_id} cleaned up.")
+
 	
 	async def _handle_websocket(self, game_id, ws_url):
 		users = None
 		with self._threads_mutex:
 			if self.threads.get(game_id):
 				users = self.threads[game_id]['users']
+				logger.info(f"users : {users}")
 		logger.debug(f'thread in game : {game_id} is running...')
 		try :
 			async with websockets.connect(ws_url) as websocket:
@@ -47,8 +54,10 @@ class AdminManager:
 					async for message in websocket:
 						if await self.game_is_aborted(game_id):
 							await websocket.close()
-						message_dict = json.loads(message)
-						await self.handle_message(game_id, message_dict, users)
+						if message:
+							message_dict = json.loads(message)
+							if message_dict:
+								await self.handle_message(game_id, message_dict, users)
 				except websockets.exceptions.ConnectionClosedOK:
 					logger.debug("WebSocket connection closed normally (1000 OK).")
 				except websockets.exceptions.ConnectionClosedError as e:
@@ -79,7 +88,7 @@ class AdminManager:
 				win_team = message.get("team")
 				score = message.get("score")
 				self.set_winner(game_id, win_team, score)
-			self.upadte_game_status(game_id, users, status)
+			self.update_game_status(game_id, users, status)
 		elif type == "export_teams":
 			teams = message.get("teams")
 			self.export_teams(game_id, teams)
@@ -89,20 +98,28 @@ class AdminManager:
 			self.update_score(game_id, team, score)
 		elif type == "player_connection":
 			username = message.get("username")
-			users['players'].append(username)
-			self.update_user_status(username, 'waiting_for_players')
+			if users:
+				players = users.get('players')
+				players.append(username)
+				self.update_user_status(username, 'waiting_for_players')
 		elif type == "spectator_connection":
 			username = message.get("username")
-			users['spectators'].append(username)
+			if users:
+				spectators = users.get('spectators')
+				spectators.append(username)
 			self.update_user_status(username, 'spectate')
 		elif type == "player_disconnection":
 			username = message.get("username")
 			self.update_user_status(username, 'inactive')
-			users['players'].remove(username)
+			if users:
+				players = users.get('players')
+				players.remove(username)
 		elif type == "spectator_disconnection":
 			username = message.get("username")
 			self.update_user_status(username, 'inactive')
-			users['spectators'].remove(username)
+			if users:
+				spectators = users.get('spectators')
+				spectators.remove(username)
 
 	def set_winner(self, game_id, win_team, score):
 		game_instance = GameInstance.get_game(game_id)
@@ -115,7 +132,7 @@ class AdminManager:
 			if win_team:
 				game_instance.set_winner(win_team)
 
-	def upadte_game_status(self, game_id, users, status):
+	def update_game_status(self, game_id, users, status):
 		self.update_users_status_with_game_status(users, status)
 		game_instance = GameInstance.get_game(game_id)
 		if not game_instance:
@@ -129,10 +146,13 @@ class AdminManager:
 
 	def update_users_status_with_game_status(self, users, game_status):
 		if game_status == 'loading':
+			logger.info("change to loading")
 			self.change_all_players_status(users, 'loading_game')
 		if game_status == 'in_progress':
+			logger.info("change to in_progress")
 			self.change_all_players_status(users, 'in_game')
 		if game_status == 'aborted' or game_status == 'finished':
+			logger.info("change to finished")
 			self.change_all_players_status(users, 'inactive')
 			self.change_all_spectators_status(users, 'inactive')
 
@@ -155,7 +175,9 @@ class AdminManager:
 			game_instance.update_score(team, score)
 
 	def change_all_players_status(self, users, status):
+		logger.info(f"players : {users['players']}")
 		for username in users['players']:
+			logger.info(f"{username} status : {status}")
 			self.update_user_status(username, status)
 		if status == 'inactive':
 			for username in users['players']:

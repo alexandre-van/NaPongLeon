@@ -1,4 +1,4 @@
-import * as THREE from '../js/three.module.js';
+import * as THREE from '../.js/three.module.js';
 import { updateBallPosition } from './object/ball.js'
 import { updatePadsPosition } from './object/pad.js'
 import { renderer, camera, scene } from './renderer.js';

@@ -48,7 +48,7 @@ export default function Formations() {
             case "in_queue":
             case "in_game":
                 return "blue";
-            case "waiting":
+            case "waiting_for_players":
             case "loading_game":
                 return "yellow";
             default:
@@ -66,7 +66,7 @@ export default function Formations() {
                 return "In queue";
             case "in_game":
                 return "In game";
-            case "waiting":
+            case "waiting_for_players":
                 return "Waiting";
             case "loading_game":
                 return "In game";

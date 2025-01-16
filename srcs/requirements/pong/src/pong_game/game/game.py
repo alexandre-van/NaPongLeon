@@ -83,7 +83,7 @@ class Game:
 		}
 
 	def export_padels_position(self):
-		if self.game_mode == 'PONG_CLASSIC':
+		if self.game_mode == 'PONG_CLASSIC' or self.game_mode == 'PONG_CLASSIC_AI':
 		# Mode 1v1
 			return {
 				'p1': self.players_in_side['left'][0].padel.position['y'],

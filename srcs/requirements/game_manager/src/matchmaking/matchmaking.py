@@ -49,6 +49,8 @@ class Matchmaking:
 				'modifiers': modifiers,
 				'number_of_players': number_of_players,
 				'consumer': consumer,
+				'win_rate': await Game_manager.get_or_create_win_rate(username, game_mode),
+				'tolerance': 0.05,
 				'time': Timer(),
 			})
 		
@@ -75,27 +77,92 @@ class Matchmaking:
 	async def matchmaking_logic(self):
 		with self._queue_mutex:
 			for queue in list(self._queue.keys()):
+				logger.info(f"# Traitement de la file d'attente : {queue}")
+
 				if queue not in self._queue:
+					logger.info(f"# La file d'attente {queue} n'existe plus. Continuation...")
 					continue
+
+				# Supprimer les clients déconnectés
 				await self.remove_disconnected_client(self._queue[queue], False)
-				queue_selected = []
+				logger.info(f"# Clients déconnectés retirés pour la file {queue}.")
+
+				# Contiendra les différentes queues sélectionnées
+				selected_queues = []
+
+				# Parcourir la file principale
 				for player_request in self._queue[queue][:]:
-					queue_selected.append(player_request)
-					game_mode = player_request.get('game_mode')
-					modifiers = player_request.get('modifiers')
-					number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
-					if not number_of_players:
-						team_size = int(self.GAME_MODES.get(game_mode).get('team_size'))
-						number_of_players = int(player_request.get('number_of_players')) * team_size
-						logger.debug(f"{queue}: {len(queue_selected)}/{number_of_players}")
+					logger.info(f"# Traitement de la requête du joueur : {player_request['username']}, win_rate : {player_request['win_rate']}, tolerance : {player_request.get('tolerance', 0.1)}")
+
+					# Trouver ou créer une file sélectionnée adaptée
+					added_to_queue = False
+					for selected_queue in selected_queues:
+						logger.info(f"# Vérification d'une file sélectionnée : {selected_queue['game_mode']} avec {len(selected_queue['queue'])}/{selected_queue['required_players']} joueurs.")
+
+						# Vérifier si le joueur peut être ajouté à cette file sélectionnée
+						if (
+							abs(player_request['win_rate'] - selected_queue['average_win_rate']) <= 
+							(player_request['tolerance'] + selected_queue['average_tolerance'])
+							and len(selected_queue['queue']) < selected_queue['required_players']
+						):
+							logger.info(f"# Le joueur {player_request['username']} correspond à cette file sélectionnée.")
+							selected_queue['queue'].append(player_request)
+							# Réactualiser les métriques de la file sélectionnée
+							selected_queue['average_win_rate'] = (
+								sum(p['win_rate'] for p in selected_queue['queue']) / len(selected_queue['queue'])
+							)
+							selected_queue['average_tolerance'] = (
+								sum(p['tolerance'] for p in selected_queue['queue']) / len(selected_queue['queue'])
+							)
+							added_to_queue = True
+							break
+
+					# Si aucune file sélectionnée ne convient, en créer une nouvelle
+					if not added_to_queue:
+						game_mode = player_request.get('game_mode')
+						modifiers = player_request.get('modifiers')
+						number_of_players = self.GAME_MODES.get(game_mode).get('number_of_players')
+						if not number_of_players:
+							team_size = int(self.GAME_MODES.get(game_mode).get('team_size'))
+							number_of_players = int(player_request.get('number_of_players')) * team_size
+
+						logger.info(f"# Création d'une nouvelle file sélectionnée pour le mode {game_mode}.")
+						selected_queues.append({
+							'queue': [player_request],
+							'average_win_rate': player_request['win_rate'],
+							'average_tolerance': player_request['tolerance'],
+							'required_players': number_of_players,
+							'game_mode': game_mode,
+							'modifiers': modifiers,
+						})
+
+				# Parcourir les files sélectionnées pour compléter les matchs
+				for selected_queue in selected_queues[:]:
+					logger.info(f"# Vérification de la file sélectionnée : {selected_queue['game_mode']} avec {len(selected_queue['queue'])}/{selected_queue['required_players']} joueurs.")
+
+					if len(selected_queue['queue']) == selected_queue['required_players']:
+						logger.info(f"# Match trouvé pour le mode {selected_queue['game_mode']} avec {len(selected_queue['queue'])} joueurs.")
+						await self.notify(
+							selected_queue['game_mode'],
+							selected_queue['modifiers'],
+							selected_queue['queue']
+						)
+						selected_queues.remove(selected_queue)
 					else:
-						number_of_players = int(number_of_players)
-					if len(queue_selected) == number_of_players:
-						logger.debug("ff")
-						await self.notify(game_mode, modifiers, queue_selected)
-						if not self._queue[queue]:
-							del self._queue[queue]
-						break
+						# Augmenter la tolérance pour les requêtes dans cette file sélectionnée
+						for player_request in selected_queue['queue']:
+							player_request['tolerance'] = min(player_request['tolerance'] + 0.005, 1)  # Limiter à 1 maximum
+							logger.info(f"# Augmentation de la tolérance du joueur {player_request['username']} à {player_request['tolerance']:.2f}.")
+
+						# Réactualiser la tolérance moyenne
+						selected_queue['average_tolerance'] = (
+							sum(p['tolerance'] for p in selected_queue['queue']) / len(selected_queue['queue'])
+						)
+						logger.info(f"# Nouvelle tolérance moyenne pour la file {selected_queue['game_mode']} : {selected_queue['average_tolerance']:.2f}.")
+
+
+
+
 
 	async def notify(self, game_mode, modifiers, queue_selected):
 		logger.debug(f'New group for game_mode {game_mode}!')

@@ -16,7 +16,7 @@ const CreateGameButton = ({ gameMode, modifiers }) => {
 
             const mods = modifiers.join(",");
             const gameParams = {
-                gameMode: 'PONG_CLASSIC',
+                gameMode: 'PONG_CLASSIC_AI',
                 modifiers: mods,
                 playersList: [user.username],
                 ia_authorizes: true,

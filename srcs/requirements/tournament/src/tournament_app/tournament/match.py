@@ -39,7 +39,7 @@ class Match:
 				self.status = "Aborted"
 		else:
 			game_data = await self.game.get_game_data()
-			logger.info(f"Match {self.team1.name} vs {self.team2.name} | game_data = {game_data}")
+			logger.debug(f"Match {self.team1.name} vs {self.team2.name} | game_data = {game_data}")
 			if game_data:
 				self.set_status(game_data['status'])
 				score = game_data['scores']
@@ -59,7 +59,7 @@ class Match:
 			self.game = None
 
 	def set_winner(self, win_team, lose_team):
-		logger.info(f"win team: {win_team.name}, lose team: {lose_team.name}")
+		logger.debug(f"win team: {win_team.name}, lose team: {lose_team.name}")
 		self.winner = win_team
 		lose_team.set_status("defeated")
 

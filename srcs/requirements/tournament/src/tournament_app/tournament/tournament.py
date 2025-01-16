@@ -5,8 +5,6 @@ from .team import Team
 from .tree import Tree
 from .player import Player
 import random
-#todoremove
-#from data import game_modes_data
 
 class Tournament:
 	def __init__(self, players_dict, game_mode, modifiers_list):

@@ -1,4 +1,4 @@
-import * as THREE from '../../js/three.module.js';
+import * as THREE from '../../.js/three.module.js';
 
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
 //camera.position.z = 45;

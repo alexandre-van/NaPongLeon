@@ -29,7 +29,7 @@ export default function InGame() {
             iframe.style.top = "56px";
             iframe.style.left = "-1%";
             iframe.style.width = "102%";
-            iframe.style.height = "93%";
+            iframe.style.height = "95%";
             iframe.style.border = "none";
             iframe.style.zIndex = "999";
             iframe.scrolling = "no";
