@@ -148,6 +148,7 @@ class FriendRequestConsumer(AsyncWebsocketConsumer):
                     "id": user_info['id'],  # Utilise l'accès dictionnaire
                     "username": user_info['username'],  # Utilise l'accès dictionnaire
                     "is_online": user_info['is_online'],  # Ajoute le vrai statut
+                    "avatar": user_info['avatar']
                 }
             }
         )

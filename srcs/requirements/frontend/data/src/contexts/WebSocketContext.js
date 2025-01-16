@@ -92,7 +92,8 @@ export const WebSocketProvider = ({ children }) => {
                   ? {
                       ...friend,
                       status: data.status ? 'online' : 'offline',
-                      is_online: data.status
+                      is_online: data.status,
+                      avatar: data.avatar
                   }
                   : friend
                 ));
