@@ -75,7 +75,6 @@ class AsyncJWTAuthMiddleware:
                     scope['user'] = user
                     return await self.inner(scope, receive, send)
                 except Exception as e:
-                    logger.warning(f"Access token validation failed: {str(e)}")
                     # Si l'access_token est invalide/expiré, on essaie le refresh
                     if refresh_token:
                         try:

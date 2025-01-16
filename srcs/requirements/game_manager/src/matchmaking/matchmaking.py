@@ -49,7 +49,7 @@ class Matchmaking:
 				'modifiers': modifiers,
 				'number_of_players': number_of_players,
 				'consumer': consumer,
-				'win_rate': await Game_manager.get_win_rate(username, game_mode),
+				'win_rate': await Game_manager.get_or_create_win_rate(username, game_mode),
 				'tolerance': 0.05,
 				'time': Timer(),
 			})
@@ -71,13 +71,11 @@ class Matchmaking:
 						if m in modifiers_list:
 							queue_name += chr(y + ord('0'))
 					break
-		logger.info(f"queuename : {queue_name}")
 		return queue_name
 
 
 	async def matchmaking_logic(self):
 		with self._queue_mutex:
-			logger.info("# Début de la logique de matchmaking.")
 			for queue in list(self._queue.keys()):
 				logger.info(f"# Traitement de la file d'attente : {queue}")
 
@@ -161,8 +159,6 @@ class Matchmaking:
 							sum(p['tolerance'] for p in selected_queue['queue']) / len(selected_queue['queue'])
 						)
 						logger.info(f"# Nouvelle tolérance moyenne pour la file {selected_queue['game_mode']} : {selected_queue['average_tolerance']:.2f}.")
-
-				logger.info("# Fin de la logique de matchmaking.")
 
 
 

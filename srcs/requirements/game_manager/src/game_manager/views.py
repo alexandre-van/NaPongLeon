@@ -44,6 +44,22 @@ async def get_status(request, username=None):
 	
 @async_csrf_exempt
 @auth_required
+async def get_win_rate(request, username=None, game_mode=None):
+	if request.method != "GET":
+		return JsonResponse({"error": "Method not allowed"}, status=405)
+	game_manager_instance = Game_manager.game_manager_instance
+	if game_manager_instance is None:
+		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	try :
+		await game_manager_instance.create_new_player_instance(username)
+		data = await game_manager_instance.get_user_win_rate(username, game_mode)
+		return JsonResponse({'status': 'success', 'data': data}, status=status.HTTP_200_OK)
+	except Exception as e:
+		logger.error(f"Error in get_game_history for user {username}: {str(e)}")
+		return JsonResponse({"message": "GameManager error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	
+@async_csrf_exempt
+@auth_required
 async def get_in_matchmaking(request, game_mode, username=None):
 	if request.method != "GET":
 		return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -53,7 +69,7 @@ async def get_in_matchmaking(request, game_mode, username=None):
 		return JsonResponse({"message": "Game Manager is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	if matchmaking_instance is None:
 		return JsonResponse({"message": "Matchmaking is not initialised"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-	if game_mode is "":
+	if game_mode == "":
 		return await get_out_matchmaking(username, game_manager_instance, matchmaking_instance)
 	if settings.GAME_MODES.get(game_mode) is None:
 		return JsonResponse({"message": "Wrong game mode"}, status=status.HTTP_406_NOT_ACCEPTABLE)

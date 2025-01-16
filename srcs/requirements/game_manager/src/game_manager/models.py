@@ -162,7 +162,7 @@ class GameInstance(models.Model):
 		game_mode = self.game_mode
 
 		# Récupérer ou créer l'instance de WinRate pour le joueur et le mode de jeu
-		win_rate_instance, created = WinRate.objects.get_or_create(player=player, game_mode=game_mode)
+		win_rate_instance = WinRate.objects.get_or_create(player=player, game_mode=game_mode)
 
 		# Mettre à jour le nombre de victoires ou de défaites
 		if win:
@@ -280,7 +280,7 @@ class Modifiers(models.Model):
 		try:
 			return cls.objects.get(name=name)
 		except cls.DoesNotExist:
-			logger.warning(f"Modifier '{name}' introuvable.")
+			logger.warning(f"Modifier '{name}' not found.")
 			return None
 
 
@@ -307,7 +307,7 @@ class WinRate(models.Model):
 		return self.wins / total_games
 	
 	@classmethod
-	def get_win_rate(cls, player, game_mode):
+	def get_or_create_win_rate(cls, player, game_mode):
 		try:
 			instance, created = cls.objects.get_or_create(player=player, game_mode=game_mode)
 			if instance:
@@ -319,3 +319,25 @@ class WinRate(models.Model):
 			logger.error(f"Database error while creating win_rate '{player} - {game_mode}': {e}")
 			return None
 		return None
+	
+	@classmethod
+	def get_win_rate_data(cls, player, game_mode):
+		try:
+			instance = cls.objects.get(player=player, game_mode=game_mode)
+			if instance:
+				return {
+					'win_rate': instance.win_rate,
+					'wins': instance.wins,
+					'losses': instance.losses
+				}
+		except cls.DoesNotExist:
+			return {
+				'win_rate': None,
+				'wins': None,
+				'losses': None
+			}
+		return {
+			'win_rate': None,
+			'wins': None,
+			'losses': None
+		}

@@ -47,8 +47,10 @@ class AdminManager:
 					async for message in websocket:
 						if await self.game_is_aborted(game_id):
 							await websocket.close()
-						message_dict = json.loads(message)
-						await self.handle_message(game_id, message_dict, users)
+						if message:
+							message_dict = json.loads(message)
+							if message_dict:
+								await self.handle_message(game_id, message_dict, users)
 				except websockets.exceptions.ConnectionClosedOK:
 					logger.debug("WebSocket connection closed normally (1000 OK).")
 				except websockets.exceptions.ConnectionClosedError as e:
@@ -89,20 +91,32 @@ class AdminManager:
 			self.update_score(game_id, team, score)
 		elif type == "player_connection":
 			username = message.get("username")
-			users['players'].append(username)
-			self.update_user_status(username, 'waiting_for_players')
+			if users:
+				players = users.get('players')
+				if players:
+					players.append(username)
+				self.update_user_status(username, 'waiting_for_players')
 		elif type == "spectator_connection":
 			username = message.get("username")
-			users['spectators'].append(username)
+			if users:
+				spectators = users.get('spectators')
+				if spectators:
+					spectators.append(username)
 			self.update_user_status(username, 'spectate')
 		elif type == "player_disconnection":
 			username = message.get("username")
 			self.update_user_status(username, 'inactive')
-			users['players'].remove(username)
+			if users:
+				players = users.get('players')
+				if players:
+					players.remove(username)
 		elif type == "spectator_disconnection":
 			username = message.get("username")
 			self.update_user_status(username, 'inactive')
-			users['spectators'].remove(username)
+			if users:
+				spectators = users.get('spectators')
+				if spectators:
+					spectators.remove(username)
 
 	def set_winner(self, game_id, win_team, score):
 		game_instance = GameInstance.get_game(game_id)

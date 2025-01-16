@@ -317,7 +317,11 @@ class Game_manager:
 			return ret
 		else:
 			return None
-	
+		
+	async def get_user_win_rate(self, username, game_mode):
+		data = await self.get_win_rate(username, game_mode)
+		if data:
+			return data
 
 	# db
 
@@ -384,6 +388,15 @@ class Game_manager:
 			player_instance = Player.get_or_create_player(username)
 			game_mode_instance = GameMode.get_or_create(game_mode)
 			win_rate = WinRate.get_win_rate(player_instance, game_mode_instance)
+		return win_rate
+	
+	@sync_to_async
+	def get_or_create_win_rate(self, username, game_mode):
+		win_rate = None
+		with transaction.atomic():
+			player_instance = Player.get_or_create_player(username)
+			game_mode_instance = GameMode.get_or_create(game_mode)
+			win_rate = WinRate.get_or_create_win_rate(player_instance, game_mode_instance)
 		return win_rate
 
 	@sync_to_async
