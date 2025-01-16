@@ -17,7 +17,6 @@ export default function Login2FAPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log('Try to submit code:', code);
         try {
             const response = await api.post('/authentication/auth/login/2fa/', {
                 code: code,

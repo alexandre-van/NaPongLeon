@@ -21,7 +21,6 @@ const FriendsList = () => {
   }, [notifications]);
 
   useEffect(() => {
-    console.log('useEffect Friends', friends);
     if (Array.isArray(friends)) {
       setLocalFriends(friends);
     }

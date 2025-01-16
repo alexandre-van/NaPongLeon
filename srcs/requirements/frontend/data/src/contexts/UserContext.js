@@ -46,10 +46,6 @@ export function UserProvider({ children }) {
 
 	const login = async (userData) => {
 		const response = await api.post('/authentication/auth/login/', userData);
-		/*if (response.data && response.data.message !== "Login successful") {
-			console.log('Login failed');
-			throw new Error("Login failed");
-		}*/
 		if (response.data.requires_2fa) {
 			window.location.href = `/login/2fa?token=${encodeURIComponent(response.data.temp_token)}`;
         	return ;
@@ -110,7 +106,6 @@ export function UserProvider({ children }) {
 	}, [isAuthenticated, refreshAccessToken]);
 
 	const sendFriendRequest = async (target_username) => {
-		console.log('sendFriendRequest, target_user:', target_username);
 		const response = await api.post('/authentication/friends/requests/', {
 			'target_user': target_username,
 		});

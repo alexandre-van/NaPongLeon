@@ -43,29 +43,15 @@ export const WebSocketProvider = ({ children }) => {
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        console.log('data.type:');
         switch (data.type) {
           case 'friend_list_user_update':
-            console.log('friend_list_user_update');
-/*            if (user && user.friends) {
-              console.log('inside if(user && user.friends)', data);
-              const updatedFriends = user.friends.map(friend => 
-                friend.id === data.user.id ? {
-                  ...friend, username: data.username, status: data.status
-                } : friend
-              );
 
-              updateUser({ friends: updatedFriends });
-            }*/
-
-            console.log('data', data);
             setFriends(prevFriends => {
               const newFriends = [...prevFriends];
-              console.log('data.user.id', data.user.id);
+
               if (!newFriends.some(n => n.id === data.user.id)) {
                 newFriends.push(data.user);
               }
-              console.log('newFriends', newFriends);
               return newFriends;
             });
             break;
@@ -73,7 +59,7 @@ export const WebSocketProvider = ({ children }) => {
           case 'friend_status':
       
               if (user?.friends) {
-                console.log('data', data);
+
                 // Met à jour le statut de l'ami en fonction de son username
                 const updatedFriends = user.friends.map((friend) =>
                   friend.username === data.friend  // Compare en fonction du nom de l'ami
@@ -101,7 +87,7 @@ export const WebSocketProvider = ({ children }) => {
               break;
       
           case 'friend_deleted': 
-            console.log('friend_deleted', data);
+
             if (!data.friend_id) {
                 console.error("Invalid friend ID received:", data.friend_id);
                 break;

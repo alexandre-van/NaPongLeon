@@ -8,7 +8,6 @@ const AvatarUpload = ({ onSubmit, onError }) => {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    console.log('User in AvatarUpload:', user);
   }, [user]);
 
   const handleFileSelect = (e) => {

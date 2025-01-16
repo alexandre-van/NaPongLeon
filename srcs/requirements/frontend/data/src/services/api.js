@@ -64,13 +64,11 @@ api.interceptors.request.use(
       ?.split('=')[1];
       
     if (csrfToken) {
-      // console.log('CSRF Token found:', csrfToken);
       config.headers['X-CSRFToken'] = csrfToken;
     } else {
       console.log('No CSRF token found in cookies');
     }
     
-    // console.log('Request headers:', config.headers);
     return config;
   },
   (error) => {
