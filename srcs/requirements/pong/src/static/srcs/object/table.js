@@ -1,4 +1,3 @@
-import * as THREE from '../../js/three.module.js';
 import { loadModelGLT, loadTexture } from '../load.js';
 import { scene } from '../scene.js';
 

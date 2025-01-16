@@ -142,35 +142,38 @@ class GameInstance(models.Model):
 
 	def set_winner(self, team):
 		# Récupère ou crée l'équipe gagnante
-		self.winner = Team.get_or_create_team(team)
-		self.save()
-
-		# Récupère tous les joueurs des équipes
-		teams = GamePlayer.objects.filter(game=self)
+		if self.winner is None:
+			self.winner = Team.get_or_create_team(team)
+			self.save()
 	
-		# Séparer les joueurs en fonction de leur équipe
-		winning_players = teams.filter(team=self.winner)
-		losing_players = teams.exclude(team=self.winner)
-	
-		# Met à jour les win_rate des joueurs gagnants et perdants
-		for player_game in winning_players:
-			self.update_win_rate(player_game.player, True)  # Gagnant
-		for player_game in losing_players:
-			self.update_win_rate(player_game.player, False)  # Perdant
+			# Récupère tous les joueurs des équipes
+			teams = GamePlayer.objects.filter(game=self)
+		
+			# Séparer les joueurs en fonction de leur équipe
+			winning_players = teams.filter(team=self.winner)
+			losing_players = teams.exclude(team=self.winner)
+			logger.info(f"winning_players : {winning_players}")
+			logger.info(f"losing_players : {losing_players}")
+		
+			# Met à jour les win_rate des joueurs gagnants et perdants
+			for player_game in winning_players:
+				self.update_win_rate(player_game.player, True)  # Gagnant
+			for player_game in losing_players:
+				self.update_win_rate(player_game.player, False)  # Perdant
 
 	def update_win_rate(self, player, win):
 		game_mode = self.game_mode
 
 		# Récupérer ou créer l'instance de WinRate pour le joueur et le mode de jeu
-		win_rate_instance = WinRate.objects.get_or_create(player=player, game_mode=game_mode)
+		win_rate_instance, created = WinRate.objects.get_or_create(player=player, game_mode=game_mode)
 
 		# Mettre à jour le nombre de victoires ou de défaites
-		if win:
-			win_rate_instance.wins += 1
-		else:
-			win_rate_instance.losses += 1
-
-		win_rate_instance.save()
+		if win_rate_instance:
+			if win:
+				win_rate_instance.wins += 1
+			else:
+				win_rate_instance.losses += 1
+			win_rate_instance.save()
 
 	def abort_game(self):
 		self.status = 'aborted'

@@ -1,6 +1,6 @@
-import * as THREE from '../js/three.module.js';
-import { GLTFLoader } from '../js/GLTFLoader.js';
-import { STLLoader } from '../js/STLLoader.js';
+import * as THREE from '../.js/three.module.js';
+import { GLTFLoader } from '../.js/GLTFLoader.js';
+import { STLLoader } from '../.js/STLLoader.js';
 
 const protocol = location.protocol;
 const host = window.location.hostname;
