@@ -1,4 +1,4 @@
-import * as THREE from './three/three.module.js';
+// import * as THREE from './three/three.module.js';
 import { initScene, render, updateCameraPosition } from './scene.js';
 import { initPlayers, updatePlayers, getMyPlayerId, getPlayers } from './player.js';
 import { initFood } from './food.js';
@@ -64,7 +64,7 @@ export function startGameLoop(initialGameState) {
     initFood(initialGameState.food);
     initUI();
     initInput();
-    console.log("yourPlayerId:", initialGameState.yourPlayerId);
+    // console.log("yourPlayerId:", initialGameState.yourPlayerId);
     updatePlayers(initialGameState.players, initialGameState.yourPlayerId);
     initPlayers();
     createHotbar();
