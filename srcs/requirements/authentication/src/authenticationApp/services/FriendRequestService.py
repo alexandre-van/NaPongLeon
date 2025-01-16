@@ -56,7 +56,8 @@ class FriendRequestService:
     async def accept_friend_request(user, notification_id):
         notification, from_user = await get_notification_and_sender(notification_id)
         if from_user:
-            await send_user_info(from_user.id, user)
+            await send_user_info(from_user.id, user) # To friend
+            await send_user_info(user.id, from_user) # To sender
             notification = await user.accept_friend_request(from_user, notification)
             if notification:
                 await send_notification(from_user.id, notification)

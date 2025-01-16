@@ -6,7 +6,7 @@ import api from '../services/api.js';
 const NotifButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null); // Ref pour le conteneur du menu
-  const { user, friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
+  const { isAuthenticated } = useUser(); 
   const { notifications, setNotifications } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
 

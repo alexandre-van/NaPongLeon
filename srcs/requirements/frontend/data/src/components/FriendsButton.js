@@ -3,10 +3,14 @@ import { useUser } from '../contexts/UserContext.js';
 import { useNavigate } from 'react-router-dom';
 import AddFriendButton from './AddFriendButton.js';
 import api from '../services/api.js';
+import { useWebSocket } from '../contexts/WebSocketContext.js';
 
 const FriendsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { friends, setFriends, checkFriends, isAuthenticated } = useUser(); 
+  const {/*friends, setFriends, checkFriends,*/ isAuthenticated } = useUser(); 
+  // TODO retirer dans friendlist checkFriends
+  const { friends, setFriends } = useWebSocket();
+  const [localFriends, setLocalFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [friendStatuses, setFriendStatuses] = useState({});
   const navigate = useNavigate();
@@ -16,9 +20,15 @@ const FriendsButton = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      checkFriends();
+//      checkFriends();
     }
-  }, [isAuthenticated, checkFriends]);
+  }, [isAuthenticated/*, checkFriends*/]);
+
+  useEffect(() => {
+    if (isAuthenticated && Array.isArray(friends)) {
+      setLocalFriends(friends);
+    }
+  }, [friends]);
 
   const fetchFriendStatuses = async () => {
     const onlineFriends = friends.filter(friend => friend.is_online);
@@ -65,7 +75,7 @@ const FriendsButton = () => {
     return null;
   }
 
-  const onlineFriendsCount = friends.filter(friend => friend.is_online).length;
+  const onlineFriendsCount = localFriends.filter(friend => friend.is_online).length;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -131,7 +141,7 @@ const FriendsButton = () => {
     }
   }
 
-  const sortedFriends = friends.sort((a, b) => b.is_online - a.is_online);
+  const sortedFriends = localFriends.sort((a, b) => b.is_online - a.is_online);
 
   return (
     <div ref={containerRef}>

@@ -18,7 +18,7 @@ export const WebSocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
   const [friends, setFriends] = useState([]);
-  const { user, isAuthenticated, updateUser/*, friends, setFriends*/, checkFriends } = useUser();
+  const { user, isAuthenticated, updateUser/*, friends, setFriends, checkFriends*/ } = useUser();
   const socketRef = useRef(null);
   const navigate = useNavigate();
 
@@ -98,7 +98,7 @@ export const WebSocketProvider = ({ children }) => {
                   : friend
                 ));
               }
-              checkFriends();  // Actualise la liste des amis
+              //checkFriends();  // Actualise la liste des amis
               break;
       
           case 'friend_deleted': 
@@ -124,9 +124,9 @@ export const WebSocketProvider = ({ children }) => {
             }
         
             // Actualisation de la liste d'amis côté utilisateur
-            setTimeout(() => {
+/*            setTimeout(() => {
               checkFriends();
-            }, 0);
+            }, 0);*/
             break;
 
           case 'notification':

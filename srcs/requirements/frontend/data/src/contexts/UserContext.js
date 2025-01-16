@@ -111,6 +111,7 @@ export function UserProvider({ children }) {
 
 
 	// Update user's Friends
+	/*
 	const checkFriends = useCallback(async () => {
 		try {
 			const response = await api.get('/authentication/friends/');
@@ -123,6 +124,7 @@ export function UserProvider({ children }) {
 			console.error(err);
 		}
 	}, []);
+	*/
 
 	const sendFriendRequest = async (target_username) => {
 		console.log('sendFriendRequest, target_user:', target_username);
@@ -132,7 +134,7 @@ export function UserProvider({ children }) {
 		if (response.data && response.data.message !== "Friend request sent") {
 			throw new Error('Could not send friend request');
 		}
-		await checkFriends();
+//		await checkFriends();
 	};
 
 	// For any user update
@@ -165,7 +167,7 @@ export function UserProvider({ children }) {
     isAuthenticated,
     friends,
 	setFriends,
-    checkFriends,
+    //checkFriends,
     loading,
     error,
     login,

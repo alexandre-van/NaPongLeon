@@ -7,7 +7,7 @@ import api from '../services/api.js';
 
 const FriendsList = () => {
   const navigate = useNavigate();
-  const { user/*, friends, setFriends*/, checkFriends, isAuthenticated } = useUser();
+  const { user/*, friends, setFriends, checkFriends*/, isAuthenticated } = useUser();
   const { notifications, setNotifications, friends, setFriends } = useWebSocket();
   const [localNotifications, setLocalNotifications] = useState([]);
   const [localFriends, setLocalFriends] = useState([]);
@@ -25,13 +25,13 @@ const FriendsList = () => {
     if (Array.isArray(friends)) {
       setLocalFriends(friends);
     }
-  }, [friends])
+  }, [friends]);
 
   useEffect(() => {
     if (isAuthenticated) {
-      checkFriends();
+//      checkFriends();
     }
-  }, [isAuthenticated, checkFriends]);
+  }, [isAuthenticated/*, checkFriends*/]);
 
   // Requête pour récupérer le statut des amis en ligne
   const fetchFriendStatuses = async () => {
@@ -101,7 +101,7 @@ const FriendsList = () => {
     try {
       await api.patch('/authentication/friends/requests/', { notificationId });
       setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-      checkFriends();
+      //checkFriends();
     } catch (err) {
       console.error(err);
     }
