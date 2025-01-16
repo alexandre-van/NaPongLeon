@@ -387,7 +387,7 @@ class Game_manager:
 		with transaction.atomic():
 			player_instance = Player.get_or_create_player(username)
 			game_mode_instance = GameMode.get_or_create(game_mode)
-			win_rate = WinRate.get_win_rate(player_instance, game_mode_instance)
+			win_rate = WinRate.get_win_rate_data(player_instance, game_mode_instance)
 		return win_rate
 	
 	@sync_to_async

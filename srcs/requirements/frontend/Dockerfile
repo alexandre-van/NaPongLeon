@@ -20,6 +20,7 @@ CMD [ "npm", "start" ]
 
 RUN npm install react-bootstrap bootstrap
 RUN npm install react-router-dom
+RUN npm install chart.js react-chartjs-2
 RUN npm install axios
 RUN npm install reconnecting-websocket
 

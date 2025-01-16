@@ -26,13 +26,19 @@ class AdminManager:
 
 	def cleanup_thread(self, game_id):
 		with self._threads_mutex:
-			if self.threads.get(game_id):
-				users = self.threads[game_id]['users']
-				logger.debug(f"Cleanup after game {game_id}. Closing resources...")
-				logger.debug(f"users change status : {users}")
-				self.upadte_game_status(game_id, users, 'aborted')
-				del self.threads[game_id]
+			thread_data = self.threads.get(game_id)
+			if not thread_data:
+				logger.error(f"Thread data for game {game_id} not found. Skipping cleanup.")
+				return
+	
+			users = thread_data.get('users', {})
+			logger.debug(f"Cleanup after game {game_id}. Closing resources...")
+			logger.debug(f"Users change status: {users}")
+			self.update_game_status(game_id, users, 'aborted')
+			del self.threads[game_id]
+	
 		logger.debug(f"Thread for game {game_id} cleaned up.")
+
 	
 	async def _handle_websocket(self, game_id, ws_url):
 		users = None
@@ -81,7 +87,7 @@ class AdminManager:
 				win_team = message.get("team")
 				score = message.get("score")
 				self.set_winner(game_id, win_team, score)
-			self.upadte_game_status(game_id, users, status)
+			self.update_game_status(game_id, users, status)
 		elif type == "export_teams":
 			teams = message.get("teams")
 			self.export_teams(game_id, teams)
@@ -129,7 +135,7 @@ class AdminManager:
 			if win_team:
 				game_instance.set_winner(win_team)
 
-	def upadte_game_status(self, game_id, users, status):
+	def update_game_status(self, game_id, users, status):
 		self.update_users_status_with_game_status(users, status)
 		game_instance = GameInstance.get_game(game_id)
 		if not game_instance:
