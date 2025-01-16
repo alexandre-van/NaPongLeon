@@ -275,7 +275,7 @@ LOGGING = {
         },
         'authenticationApp': {
             'handlers': ['console'],
-            'level': 'INFO',  # Modifier le niveau à INFO pour ne plus afficher les logs DEBUG
+            'level': 'DEBUG',  # Modifier le niveau à INFO pour ne plus afficher les logs DEBUG
             'propagate': False,
         },
     },

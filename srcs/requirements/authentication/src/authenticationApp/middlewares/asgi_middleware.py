@@ -64,7 +64,7 @@ class AsyncJWTAuthMiddleware:
                 'META': normalize_headers(scope['headers']),
                 'method': scope.get('method', ''),
                 'path': scope.get('path', ''),
-                'disconnect': lambda: None
+#                'disconnect': lambda: None
             })
 
             access_token = request.COOKIES.get('access_token')
@@ -72,12 +72,10 @@ class AsyncJWTAuthMiddleware:
 
             if access_token or refresh_token:
                 try:
-                    logger.debug('try debut')
                     user, validated_token = await self.auth.authenticate(request)
                     scope['user'] = user
                     return await self.inner(scope, receive, send)
                 except Exception as e:
-                    logger.warning(f"Access token validation failed: {str(e)}")
                     # Si l'access_token est invalide/expiré, on essaie le refresh
                     if refresh_token:
                         try:
@@ -93,7 +91,6 @@ class AsyncJWTAuthMiddleware:
                             user, validated_token = await self.auth.authenticate(request)
                             scope['user'] = user
                         except Exception as refresh_error:
-                            logger.warning(f"Refresh token validation failed: {str(refresh_error)}")
                             scope['user'] = AnonymousUser()
                             scope['clear_tokens'] = True
                     else:
@@ -102,7 +99,6 @@ class AsyncJWTAuthMiddleware:
                 scope['user'] = AnonymousUser()
 
         except Exception as e:
-            logger.warning(f"Error processing request: {str(e)}")
             scope['user'] = AnonymousUser()
 
         return await self.inner(scope, receive, self.get_send_wrapper(send, scope))

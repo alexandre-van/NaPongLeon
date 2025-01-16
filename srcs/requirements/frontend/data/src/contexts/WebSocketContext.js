@@ -43,6 +43,7 @@ export const WebSocketProvider = ({ children }) => {
       newSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
+        console.log('data.type:');
         switch (data.type) {
           case 'friend_list_user_update':
             console.log('friend_list_user_update');
@@ -73,6 +74,7 @@ export const WebSocketProvider = ({ children }) => {
           case 'friend_status':
       
               if (user?.friends) {
+                console.log('data', data);
                 // Met à jour le statut de l'ami en fonction de son username
                 const updatedFriends = user.friends.map((friend) =>
                   friend.username === data.friend  // Compare en fonction du nom de l'ami
@@ -84,6 +86,17 @@ export const WebSocketProvider = ({ children }) => {
                     : friend
                 );
                 updateUser({ friends: updatedFriends });  // Met à jour l'état de l'utilisateur
+
+                // Etat local websocket
+                setFriends(prevFriends => prevFriends.map(friend =>
+                  friend.username === data.friend
+                  ? {
+                      ...friend,
+                      status: data.status ? 'online' : 'offline',
+                      is_online: data.status
+                  }
+                  : friend
+                ));
               }
               checkFriends();  // Actualise la liste des amis
               break;
