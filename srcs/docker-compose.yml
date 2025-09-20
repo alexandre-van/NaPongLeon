@@ -95,6 +95,17 @@ services:
       - "log_statement=all"
       - "-c"
       - "log_connections=on"
+  
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: on-failure
+    networks:
+      - backend
+    depends_on:
+      - postgres
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
     
 networks:
   backend:
