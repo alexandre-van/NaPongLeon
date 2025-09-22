@@ -1,4 +1,4 @@
-# webserv - Team project
+# NaPongLeon - Team project
 
 A browser-based implementation of classic Pong with a Napoleonic Wars theme, featuring real-time multiplayer functionality. Built as a single-page application with WebSocket for live game synchronization and smooth player interactions.
 Developed with React.js, Three.js, Django and Docker.
