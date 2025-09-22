@@ -1,38 +1,227 @@
-.App {
+body {
+  background-color: rgb(0, 0, 0);
   text-align: center;
+  color: rgb(255, 255, 255);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.title{
+  padding-top: 60px;
+  text-shadow: #FC0 1px 0 3px;
+  letter-spacing: 1px;
+  font-size: 70px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.wait{
+  margin-top: 20%;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+Form {
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-top: 50px
+}
+
+.BorderBox {
+  border-style: solid;
+  box-shadow: 0 0 2em rgb(119, 119, 119);
+  border-radius: 50px;
+  margin-top: 50px;
+  margin-left: 30%;
+  margin-right: 30%;
+  padding-bottom: 30px;
+}
+
+.login-page {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("./elements/background.jpg");
+  background-size: cover;
+  height: 100vh;  /* Assurer que le body prend toute la hauteur de la fenêtre */
+  background-position: center;
+  background-attachment: fixed;  /* Optionnel, si tu veux que l'image reste fixe lors du défilement */
+  margin: 0;  /* Éviter les marges par défaut */
+}
+
+.avatar-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.3s ease; /* Ajoute une transition fluide */
+}
+
+.avatar-image:hover {
+  transform: scale(1.05); /* Agrandit légèrement l'image */
+}
+
+.background{
+  position: fixed; /* Fixe le fond par rapport à la fenêtre */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* Couvre toute la hauteur de la fenêtre */
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+    url("./elements/background.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover; /* L'image couvre toute la fenêtre */
+  z-index: -1; /* L'image de fond doit être derrière tout le contenu */
+}
+
+.play-button {
+  font-size: 3.5rem; /* Agrandit le texte */
+  margin-top: 125px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 10px; /* Optionnel : rend les coins arrondis */
+  font-weight: bold;
   color: white;
+  border-color: #FC0;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.App-link {
-  color: #61dafb;
+.play-button:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.title-home{
+  padding-top: 60px;
+  text-shadow: #FC0 1px 0 3px;
+  letter-spacing: 1px;
+  font-size: 70px;
+  font-weight: bold;
+  
+}
+
+.exit-button {
+  margin-left: -70px;
+  text-align: center;
+  color: white;
+  margin-top: 10px;
+  border-radius: 10px; /* Optionnel : rend les coins arrondis */
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.exit-button:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
+}
+
+.play-button-mode {
+  font-size: 3.5rem; /* Agrandit le texte */
+  color: white;
+  margin-top: 100px;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-bottom: 50px;
+  border-radius: 10px; /* Optionnel : rend les coins arrondis */
+  font-weight: bold;
+  margin-top: 200px;
+  margin-left: 50px;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.play-button-mode:hover {
+  background-color: #FC0;
+  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 0 20px #FC0;
+  border-color: #FC0;
+}
+
+.arrow {
+  width: 150px;
+  transform: rotate(180deg);
+  margin-bottom: 1px;
+  position: relative;
+  margin: 0px;
+  padding: 0px;
+  position: fixed; /* Garde l'image à la même position même quand on scrolle */
+  bottom: 0;       /* Positionne l'image à 0 pixels du bas */
+  left: 0;         /* Positionne l'image à 0 pixels de la gauche */
+  margin-left: 80px;
+  margin-bottom: 5px;
+  height: auto;
+}
+
+.vid {
+  width:400px;
+  padding-top: 20px;
+}
+
+li{
+  display: inline-block;
+  padding-left: 30px;
+  font-size: 25px;
+  padding-top: 50px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.play-button{
+  font-size: 60px;
+  
+}
+
+.title-modes{
+  text-shadow: #FC0 1px 0 3px;
+  letter-spacing: 1px;
+  font-size: 70px;
+  font-weight: bold;
+}
+
+.options{
+  margin-top: 10px;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.alert {
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+
+/* styles.css */
+
+/* Styles généraux pour les boutons */
+.Profilebutton {
+  padding: 10px 20px;
+  background-color: #444;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s; /* Transition douce pour l'effet de survol */
+  margin-bottom: 10px;
+}
+
+/* Effet de survol sur tous les boutons */
+.Profilebutton:hover {
+  background-color: #555; /* Gris clair au survol */
+}
+
+/* Style spécifique pour le bouton de déconnexion */
+.Profilebutton.logout {
+  color: red; /* Texte en rouge */
+}
+
+@layer demo {
+  .highlighted-text-shadow {
+    text-shadow:
+      0 .15ch 15px var(--shadow),
+      0 -2px 0 var(--highlight);
   }
 }

@@ -1,46 +1,50 @@
-import { useState } from 'react';
-import SpecialLayout from '../layouts/SpecialLayout.js';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm.js';
-import SelectFaction from '../components/SelectFaction.js';
-import RegisterFailure from '../components/RegisterFailure.js';
+import { useUser } from '../contexts/UserContext.js';
 
-import { API_BASE_URL } from '../config.js';
-
-export default function RegisterPage({ navigate }) {
-  const [registrationStatus, setRegistrationStatus] = useState(null);
+export function RegisterPage() {
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const { register, isAuthenticated } = useUser();
+  const navigate = useNavigate();
 
   const handleRegister = async (userData) => {
+    setLoading(true);
+    setErrors({});
     try {
-      const response = await fetch(`/api/authentication/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      const responseBody = await response.text();
-      console.log('Response body:', responseBody);
-
-      if (response.ok) {
-        setRegistrationStatus('success');
-      } else {
-        setRegistrationStatus('failure');
-      }
+      await register(userData);
+      navigate('/login');
     } catch (error) {
-      console.error('Error while sign up:', error);
-      setRegistrationStatus('failure');
+      if (error.response && error.response.data) {
+        setErrors(error.response.data); // Capture les erreurs spécifiques
+      } else {
+        console.log('Unexpected error:', error);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
-    <SpecialLayout navigate={navigate}>
-      {registrationStatus === 'success' ? (
-        <SelectFaction navigate={navigate} />
-      ) : registrationStatus === 'failure' ? (
-        <RegisterFailure onRegister={handleRegister} />
-      ) : (
-        <RegisterForm onRegister={handleRegister} /> 
-      )}
-    </SpecialLayout>
+    <div className="login-page">
+      {loading && <p>Registering...</p>}
+      <RegisterForm onRegister={handleRegister} errors={errors} />
+    </div>
+  );
+}
+
+export function RegisterSuccessPage() {
+  return (
+    <div>
+      <p>You are now registered and you may now log in</p>
+      <Link to="/login">Login Page</Link>
+    </div>
   );
 }

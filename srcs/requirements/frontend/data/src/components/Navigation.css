@@ -1,0 +1,159 @@
+/* Logo */
+.logo {
+    width: 35px;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: rotate(10deg);
+}
+
+/* Barre de navigation */
+.topnav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    background-color: #222;
+    color: white;
+    position: relative; /* Pour permettre au menu déroulant de se positionner correctement */
+}
+
+.topnav a {
+    font-weight: bold;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 20px;
+    text-decoration: none;
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+.topnav a:hover {
+    color: goldenrod; /* Couleur du texte au survol */
+}
+
+/* Lien actif (page en cours) */
+.topnav a.active {
+    color: goldenrod; /* Couleur du texte pour la page active */
+}
+
+/* Avatar et profil */
+.right-profile {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.username {
+    font-size: 22px;
+    font-weight: bold;
+    color: white;
+}
+
+.username:hover {
+    color: goldenrod;
+}
+
+.username.active {
+    color: goldenrod;
+}
+
+.avatarprofile img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+
+/* Menu déroulant */
+/* Menu déroulant */
+.dropdown-menu {
+    position: absolute;
+    top: 130%;  /* Déplace le menu un peu plus bas */
+    right: 0;   /* Aligné à droite */
+    z-index: 100;
+    background-color: #333 !important;  /* Force le fond à être #333 */
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    width: 250px;  /* Largeur du cadre plus grande que les boutons */
+    display: block;  /* Affichage en bloc, pas en flex */
+    text-align: center;  /* Centre le texte des liens et boutons */
+}
+
+/* Menu visible */
+.right-profile .dropdown-menu {
+    display: block;
+}
+
+/* Liens et boutons */
+.dropdown-menu a,
+.dropdown-menu button {
+    display: block;  /* S'assurer que chaque élément occupe une ligne complète */
+    padding: 8px 12px;  /* Réduit un peu la taille des boutons */
+    color: white;
+    text-decoration: none;
+    font-size: 14px;  /* Réduit la taille du texte */
+    background-color: #444;  /* Fond commun pour tous les boutons */
+    cursor: pointer;
+    width: 90%;  /* Largeur des boutons */
+    margin: 5px auto;  /* Centre les éléments et ajoute de l'espacement entre eux */
+    border-radius: 5px;
+    border: 1px solid #555;  /* Bordure claire commune */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Survol des liens et boutons */
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+    background-color: #555;  /* Légère variation au survol */
+}
+
+/* Supprimer la marge après le dernier bouton */
+.dropdown-menu a:last-child,
+.dropdown-menu button:last-child {
+    margin-bottom: 0;
+}
+
+/* Bouton Logout spécifique avec texte rouge */
+.dropdown-menu button.logout {
+    color: red; /* Texte rouge pour Logout */
+}
+
+/* Survol du bouton Logout */
+.dropdown-menu button.logout:hover {
+    background-color: #555;  /* Légèrement plus clair au survol */
+}
+
+
+
+/* Compatibilité mobile */
+@media (max-width: 768px) {
+    .topnav a {
+        font-size: 18px;
+    }
+
+    .username {
+        font-size: 20px;
+    }
+
+    .avatarprofile img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .dropdown-menu {
+        min-width: 150px;
+    }
+}

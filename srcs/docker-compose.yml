@@ -1,22 +1,37 @@
 version: '3'
 
 services:
+  init_media:
+    image: alpine:latest
+    user: root
+    volumes:
+      - ./volumes/static:/source
+      - media_vol:/media
+      - static_vol:/static_files
+    command: sh -c "chown -R 101:101 /media && chmod -R 755 /media && chmod 1755 /media && chown -R 101:101 /static_files && chmod -R 755 /static_files && chmod 1755 /static_files && cp -r /source/* /static_files/"
+
   nginx:
-    image: nginx:latest
+    build: ./nginx
     container_name: nginx
+    depends_on:
+      - init_media
     restart: on-failure
     volumes:
-      - ./.conf/nginx:/etc/nginx/conf.d
+      - media_vol:/media
+      - static_vol:/static_files
+      - ./ssl:/etc/nginx/ssl:ro
     networks:
       - backend
       - frontend
     ports:
-      - "8080:8080"
+      - "8443:443"
 
   frontend:
     build: ./requirements/frontend
     container_name: frontend
     restart: on-failure
+    env_file:
+      - .env/.env.frontend
     depends_on:
       - nginx
     networks:
@@ -24,21 +39,29 @@ services:
     volumes:
     - frontend_data:/app
     - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+    - static_vol:/app/static
 
   authentication:
     build: ./requirements/authentication
     container_name: authentication
     volumes:
       - ./requirements/authentication/src:/app
-      - secrets_vol:/run/secrets:ro
+      - media_vol:/app/media
+      - static_vol:/app/static_files
+      - ./.env:/app/.env
     restart: on-failure
+    secrets:
+      - db_user
+      - db_password
+      - oauth_42_client_id
+      - oauth_42_client_secret
+      - gmail_app_password
+      - gmail_host_user
     env_file:
       - .env/.env.web
     depends_on:
-      - nginx
       - postgres
+      - redis
     networks:
       - backend
 
@@ -46,35 +69,60 @@ services:
     build: ./requirements/pong
     container_name: pong
     volumes:
-      - ./requirements/pong:/app
+      - ./requirements/pong/src:/app
     restart: on-failure
     depends_on:
       - nginx
-      - postgres
+      - redis
     networks:
       - backend
-    
+
+  hagarrio:
+    build: ./requirements/hagarrio
+    container_name: hagarrio
+    volumes:
+      - ./requirements/hagarrio/src:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+      - redis
+    networks:
+      - backend
+
   tournament:
     build: ./requirements/tournament
     container_name: tournament
     volumes:
-      - ./requirements/tournament:/app
+      - ./requirements/tournament/src:/app
     restart: on-failure
     depends_on:
       - nginx
-      - postgres
+      - redis
     networks:
       - backend
     
-  matchmaking:
-    build: ./requirements/matchmaking
-    container_name: matchmaking
+  gamemanager:
+    build: ./requirements/game_manager
+    container_name: gamemanager
+    secrets:
+      - db_user
+      - db_password
     volumes:
-      - ./requirements/matchmaking:/app
+      - ./requirements/game_manager/src:/app
     restart: on-failure
+    env_file:
+      - .env/.env.web
     depends_on:
       - nginx
-      - postgres
+    networks:
+      - backend
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: on-failure
+    volumes:
+      - redis_data:/data
     networks:
       - backend
 
@@ -82,20 +130,28 @@ services:
     image: postgres:13
     container_name: postgres
     restart: on-failure
+    secrets:
+      - db_user
+      - db_password
     env_file:
       - .env/.env.postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - secrets_vol:/run/secrets:ro
+      - ./postgres/:/docker-entrypoint-initdb.d/
     networks:
       - backend
-    command: # pour les logs
+    command:
       - "postgres"
       - "-c"
       - "log_statement=all"
       - "-c"
       - "log_connections=on"
-  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   adminer:
     image: adminer
     container_name: adminer
@@ -106,6 +162,22 @@ services:
       - postgres
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
+
+  ia:
+    build: ./requirements/ia
+    container_name: ia
+    volumes:
+      - ./requirements/ia/src:/app
+    restart: on-failure
+    depends_on:
+      - nginx
+    networks:
+      - backend
+    ports:
+    - "6000:6000"
+    command: python manage.py runserver 0.0.0.0:6000
+
+  
     
 networks:
   backend:
@@ -121,14 +193,22 @@ volumes:
       device: ./requirements/frontend/data
       o: bind
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./requirements/postgres/data
-      o: bind
-  secrets_vol:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./.secrets
-      o: bind
+  media_vol:
+  static_vol:
+  redis_data:
+
+secrets:
+  db_user:
+    file: ./.secrets/db_user
+  db_password:
+    file: ./.secrets/db_password
+  oauth_42_client_id:
+    file: ./.secrets/oauth_42_client_id
+  oauth_42_client_secret:
+    file: ./.secrets/oauth_42_client_secret
+  gmail_app_password:
+    file: ./.secrets/gmail_app_password
+  gmail_host_user:
+    file: ./.secrets/gmail_host_user
+
+  

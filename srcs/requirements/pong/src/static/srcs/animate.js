@@ -1,15 +1,31 @@
-import { controls, updateControls } from './controls.js';
-import { updateBallPosition } from './ball.js'
-import { updatePadsPosition } from './pad.js'
-import { checkCollisions } from './collisions.js';
+import * as THREE from '../.js/three.module.js';
+import { updateBallPosition } from './object/ball.js'
+import { updatePadsPosition } from './object/pad.js'
 import { renderer, camera, scene } from './renderer.js';
+import { updateMap2Mixer } from './object/map2.js'
+import { controls } from './controls.js'
 
-function animate() {
-    requestAnimationFrame(animate);
-    updateControls();
-    updatePadsPosition();
-    updateBallPosition();
-    renderer.render(scene, camera);
+let animationId;
+const clock = new THREE.Clock();
+
+function startGame() {
+	animate();
 }
 
-export default animate;
+function animate() {
+	animationId = requestAnimationFrame(animate);
+	const delta = clock.getDelta();
+	updateMap2Mixer(delta);
+	renderer.render(scene, camera);
+}
+
+function updateGame(state) {
+	updateBallPosition(state.bp);
+	updatePadsPosition(state.pp);
+}
+
+function stopAnimation() {
+	cancelAnimationFrame(animationId);
+}
+
+export { startGame, updateGame, stopAnimation };
